@@ -7,9 +7,9 @@ This lightweight board tracks Member 4 deliverables until a shared issue tracker
 | T31 | Repo workflow, integration convention and PR rules | P0 | Day 1 | Done on branch; team/repo-setting sign-off pending | None |
 | T32 | Repeatable local or Docker environment | P0 | Day 1-2 | Bootstrap and health-check scripts added; Docker execution pending | Docker Desktop and app services |
 | T33 | API integration-test scaffold | P0 | Day 2-3 | Scaffold added; execution pending Python and backend `/health` | Backend health endpoint |
-| T34 | Core workflow tests | P0 | Day 3-5 | Prediction, delay and conflict slices added; completion/history pending | Stable core API and prediction rules |
-| T35 | CSV import | P2 | Day 5 | Blocked until core workflow is green | Core workflow tests |
-| T36 | Management report/export | P1 | Day 5-6 | Not started | Report API and KPI queries |
+| T34 | Core workflow tests | P0 | Day 3-5 | Full test implemented; runtime pass pending | Stable core API and prediction rules |
+| T35 | CSV import | P2 | Day 5 | Deferred: core workflow has not passed | Core workflow tests |
+| T36 | Management report/export | P1 | Day 5-6 | Contract, workflow assertions and JSON export added; runtime pending | Report API and KPI queries |
 | T37 | Security and continuity checklist | P1 | Day 5-6 | Not started | Environment and deployment decisions |
 | T38 | Demo/staging deployment | P0 | Day 6-7 | Not started | Integrated build |
 | T39 | UAT and defect triage | P0 | Day 6-7 | Not started | Testable demo path |
@@ -47,3 +47,12 @@ This lightweight board tracks Member 4 deliverables until a shared issue tracker
 - JSON object/list response shapes fail with readable contract errors.
 - `docs/defect-log.md` defines P0-P2 severity, evidence and closure rules.
 - Current workstation and integration dependencies are recorded as environment blockers, not unverified product defects.
+
+## Day 5 exit evidence
+
+- A final zero-remaining reading precedes the visit transition to `completed`.
+- Completed history must include the exact created visit.
+- The management report reconciles visit ID, cargo and the persisted 30-minute delay.
+- `scripts/export-vessel-report.ps1` validates and exports the API report as JSON.
+- Generated operational reports are excluded from Git.
+- CSV import remains deferred because the core workflow has not produced a green runtime result.

@@ -8,12 +8,12 @@ from api_client import ApiClient
 pytestmark = pytest.mark.integration
 
 
-def test_operations_workflow_prediction_delay_and_berth_conflict(
+def test_core_operations_workflow_and_management_report(
     health_response: dict,
     api_client: ApiClient,
     seeded_ids: dict[str, str],
 ) -> None:
-    scenario_start = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(hours=1)
+    scenario_start = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(hours=2)
     visit = api_client.request_object(
         "POST",
         "/vessel-visits",
@@ -108,3 +108,46 @@ def test_operations_workflow_prediction_delay_and_berth_conflict(
     assert dashboard.get("next_vessel_eta"), "Dashboard must expose the next-vessel ETA."
     assert dashboard.get("expected_berth_release"), "Dashboard must expose berth release."
     assert dashboard.get("berth_conflict") is True
+
+    final_reading = api_client.request_object(
+        "POST",
+        f"/vessel-visits/{visit_id}/readings",
+        {
+            "timestamp": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+            "source": "qa-day5-test",
+            "unloaded_tons": 1000,
+            "remaining_tons": 0,
+            "observed_rate_tph": 200,
+        },
+        expected_status=201,
+    )
+    assert final_reading.get("id"), "Final reading response must contain an id."
+
+    completed_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    completed = api_client.request_object(
+        "PATCH",
+        f"/vessel-visits/{visit_id}",
+        {
+            "unload_end": completed_at,
+            "departure": completed_at,
+            "status": "completed",
+        },
+    )
+    assert completed.get("status") == "completed"
+
+    history = api_client.request_list("GET", "/vessel-visits?status=completed")
+    history_visit = next(
+        (item for item in history if str(item.get("id")) == str(visit_id)),
+        None,
+    )
+    assert history_visit, "Completed visit must appear in history."
+
+    report = api_client.request_object("GET", f"/reports/vessel/{visit_id}")
+    assert str(report.get("visit_id")) == str(visit_id)
+    assert report.get("status") == "completed"
+    assert report.get("cargo_tons") == pytest.approx(1000.0)
+    assert report.get("total_delay_minutes") == pytest.approx(30.0)
+    assert report.get("planned_arrival")
+    assert report.get("actual_arrival")
+    assert report.get("unload_start")
+    assert report.get("unload_end")

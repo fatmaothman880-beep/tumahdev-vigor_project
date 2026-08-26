@@ -27,6 +27,8 @@ Values must never be inferred as valid when required rate or timestamp data is m
 | `GET` | `/vessel-visits?status=completed` | Completed visit history |
 | `GET` | `/reports/vessel/{visit_id}` | Management summary for one visit |
 
+Completed-history responses are JSON arrays. The vessel report follows `docs/report-contract.md` and is generated from persisted visit, reading and delay records.
+
 ## Minimum entities
 
 ### Vessel
@@ -73,3 +75,4 @@ The Day 3 integration test proposes these top-level fields: `visit`, `progress_p
 - Authentication approach for demo write operations.
 - Seeded vessel and berth IDs used by environment-independent integration tests.
 - Collection response shape and ordering for readings and delays.
+- Vessel-report fields and metric ownership.

@@ -11,9 +11,9 @@ venv/
 node_modules/
 dist/
 coverage/
+artifacts/
 
 .idea/
 .vscode/
 .DS_Store
 Thumbs.db
-

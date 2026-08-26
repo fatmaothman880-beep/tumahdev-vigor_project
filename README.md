@@ -66,13 +66,23 @@ python -m pytest -m integration --require-api
 
 The default API URL is `http://localhost:8000`. Override it with `API_BASE_URL` or `--api-base-url`. See [tests/integration/README.md](tests/integration/README.md).
 
+## Vessel report export
+
+After completing a visit, export its management report from the API:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\export-vessel-report.ps1 -VisitId '<visit-id>'
+```
+
+Generated reports are written under `artifacts/` by default and are not committed. See [docs/report-contract.md](docs/report-contract.md).
+
 ## Repository layout
 
 ```text
 .github/                 Pull-request template
 docs/                    Workflow, task board and shared API contract
 sample_data/             Versioned, non-sensitive demo data
-scripts/                 Environment lifecycle commands
+scripts/                 Environment and report commands
 tests/integration/        API integration-test scaffold
 compose.yaml             Repeatable PostgreSQL environment
 .env.example             Safe configuration template
