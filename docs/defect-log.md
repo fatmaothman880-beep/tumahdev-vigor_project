@@ -2,6 +2,8 @@
 
 Use this log for integration defects that affect the MVP demo path. Environment blockers are recorded separately so they are not confused with product defects.
 
+Feature-freeze note: no product defect can be closed or accepted without execution evidence. Post-freeze code changes require a defect ID and focused regression result.
+
 ## Severity
 
 | Severity | Meaning | Release rule |

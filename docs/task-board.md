@@ -13,7 +13,7 @@ This lightweight board tracks Member 4 deliverables until a shared issue tracker
 | T37 | Security and continuity checklist | P1 | Day 5-6 | Checklist/scripts added; integrated checks and restore test blocked | Environment and deployment decisions |
 | T38 | Demo/staging deployment | P0 | Day 6-7 | Runbook/smoke test ready; deployment blocked | Integrated build |
 | T39 | UAT and defect triage | P0 | Day 6-7 | Checklist and triage process ready; execution blocked | Testable demo path |
-| T40 | Demo script, README and handover | P0 | Day 7-8 | Not started | Deployment and UAT evidence |
+| T40 | Demo script, README and handover | P0 | Day 7-8 | Package prepared; rehearsal/final evidence blocked | Deployment and UAT evidence |
 
 ## Day 1 exit evidence
 
@@ -65,3 +65,11 @@ This lightweight board tracks Member 4 deliverables until a shared issue tracker
 - Database backup procedure writes only to ignored artifacts by default.
 - Security/continuity and UAT checklists use Pass/Fail/Blocked states with evidence requirements.
 - Deployment and UAT remain blocked; no application services or approved demo host are available.
+
+## Day 7 exit evidence
+
+- Member 4 feature freeze is declared; stretch work remains excluded.
+- The operator demo script covers the active board, reading/ETA, delay, conflict, history/report and explicit scope boundary in 5-8 minutes.
+- Release gates prohibit tagging or merging to `main` while required evidence is blocked.
+- Handover lists delivered artifacts, required final evidence, known limitations and prioritized backlog.
+- Defect closure and demo rehearsal remain blocked until the integrated application is runnable.

@@ -92,6 +92,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\smoke-test.ps1
 
 Deployment, security/continuity and UAT procedures are in `docs/deployment-runbook.md`, `docs/security-continuity-checklist.md` and `docs/uat-checklist.md`.
 
+## Feature freeze and handover
+
+Member 4 feature work is frozen. The timed demo, release gates and handover/backlog are documented in `docs/demo-script.md`, `docs/release-checklist.md` and `docs/handover.md`. Do not add stretch features while any P0 gate remains blocked.
+
 ## Repository layout
 
 ```text
@@ -116,3 +120,4 @@ compose.yaml             Repeatable PostgreSQL environment
 - Frontend and backend application services are not yet present.
 - Database migrations and seed records belong to the database workstream and are not yet present.
 - API and schema contracts are initial Day 1 drafts pending team sign-off.
+- Deployment, integration tests, UAT and rehearsal remain unexecuted until Members 1-3 are integrated and Docker/Python are runnable.
