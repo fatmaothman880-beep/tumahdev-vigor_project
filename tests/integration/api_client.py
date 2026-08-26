@@ -19,7 +19,7 @@ class ApiClient:
         path: str,
         payload: dict[str, Any] | None = None,
         expected_status: int = 200,
-    ) -> dict[str, Any]:
+    ) -> Any:
         data = None if payload is None else json.dumps(payload).encode("utf-8")
         request = urllib.request.Request(
             f"{self.base_url}{path}",
@@ -48,6 +48,22 @@ class ApiClient:
         except json.JSONDecodeError as exc:
             raise ApiError(f"{method} {path} did not return valid JSON: {body}") from exc
 
+        return result
+
+    def request_object(
+        self,
+        method: str,
+        path: str,
+        payload: dict[str, Any] | None = None,
+        expected_status: int = 200,
+    ) -> dict[str, Any]:
+        result = self.request(method, path, payload, expected_status)
         if not isinstance(result, dict):
             raise ApiError(f"{method} {path} must return a JSON object, got: {result!r}")
+        return result
+
+    def request_list(self, method: str, path: str) -> list[dict[str, Any]]:
+        result = self.request(method, path)
+        if not isinstance(result, list) or not all(isinstance(item, dict) for item in result):
+            raise ApiError(f"{method} {path} must return a JSON object list, got: {result!r}")
         return result

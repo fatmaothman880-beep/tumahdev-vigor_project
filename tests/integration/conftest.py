@@ -31,6 +31,11 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=os.getenv("TEST_BERTH_ID"),
         help="ID of a seeded berth available for workflow tests.",
     )
+    group.addoption(
+        "--test-next-vessel-id",
+        default=os.getenv("TEST_NEXT_VESSEL_ID"),
+        help="ID of a second seeded vessel used for berth-conflict tests.",
+    )
 
 
 @pytest.fixture(scope="session")
@@ -47,10 +52,18 @@ def api_client(api_base_url: str) -> ApiClient:
 def seeded_ids(pytestconfig: pytest.Config) -> dict[str, str]:
     vessel_id = pytestconfig.getoption("--test-vessel-id")
     berth_id = pytestconfig.getoption("--test-berth-id")
-    if vessel_id and berth_id:
-        return {"vessel_id": str(vessel_id), "berth_id": str(berth_id)}
+    next_vessel_id = pytestconfig.getoption("--test-next-vessel-id")
+    if vessel_id and berth_id and next_vessel_id:
+        return {
+            "vessel_id": str(vessel_id),
+            "berth_id": str(berth_id),
+            "next_vessel_id": str(next_vessel_id),
+        }
 
-    message = "Workflow tests require TEST_VESSEL_ID and TEST_BERTH_ID from seeded data."
+    message = (
+        "Workflow tests require TEST_VESSEL_ID, TEST_NEXT_VESSEL_ID and "
+        "TEST_BERTH_ID from seeded data."
+    )
     if pytestconfig.getoption("--require-api"):
         pytest.fail(message)
     pytest.skip(message)

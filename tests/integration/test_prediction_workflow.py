@@ -8,13 +8,13 @@ from api_client import ApiClient
 pytestmark = pytest.mark.integration
 
 
-def test_readings_update_active_dashboard_prediction(
+def test_operations_workflow_prediction_delay_and_berth_conflict(
     health_response: dict,
     api_client: ApiClient,
     seeded_ids: dict[str, str],
 ) -> None:
-    scenario_start = datetime.now(timezone.utc).replace(microsecond=0)
-    visit = api_client.request(
+    scenario_start = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(hours=1)
+    visit = api_client.request_object(
         "POST",
         "/vessel-visits",
         {
@@ -48,7 +48,7 @@ def test_readings_update_active_dashboard_prediction(
         },
     ]
     for reading in readings:
-        created = api_client.request(
+        created = api_client.request_object(
             "POST",
             f"/vessel-visits/{visit_id}/readings",
             reading,
@@ -56,7 +56,45 @@ def test_readings_update_active_dashboard_prediction(
         )
         assert created.get("id"), "Create-reading response must contain an id."
 
-    dashboard = api_client.request("GET", "/dashboard/active")
+    next_visit = api_client.request_object(
+        "POST",
+        "/vessel-visits",
+        {
+            "vessel_id": seeded_ids["next_vessel_id"],
+            "planned_arrival": (scenario_start + timedelta(hours=2)).isoformat(),
+            "berth_id": seeded_ids["berth_id"],
+            "cargo_tons": 800,
+            "status": "scheduled",
+        },
+        expected_status=201,
+    )
+    assert next_visit.get("id"), "Create-next-visit response must contain an id."
+
+    delay_start = scenario_start + timedelta(minutes=40)
+    delay = api_client.request_object(
+        "POST",
+        f"/vessel-visits/{visit_id}/delays",
+        {
+            "start": delay_start.isoformat(),
+            "end": (delay_start + timedelta(minutes=30)).isoformat(),
+            "category": "equipment",
+            "cause": "Conveyor inspection",
+            "equipment": "conveyor-demo-1",
+            "responsible_area": "operations",
+        },
+        expected_status=201,
+    )
+    delay_id = delay.get("id")
+    assert delay_id, "Create-delay response must contain an id."
+    assert delay.get("duration_minutes") == pytest.approx(30.0)
+
+    delays = api_client.request_list("GET", f"/vessel-visits/{visit_id}/delays")
+    saved_delay = next((item for item in delays if str(item.get("id")) == str(delay_id)), None)
+    assert saved_delay, "Created delay must appear in the visit delay list."
+    assert saved_delay.get("cause") == "Conveyor inspection"
+    assert saved_delay.get("category") == "equipment"
+
+    dashboard = api_client.request_object("GET", "/dashboard/active")
     active_visit = dashboard.get("visit") or {}
     prediction = dashboard.get("prediction") or {}
 
@@ -67,3 +105,6 @@ def test_readings_update_active_dashboard_prediction(
     assert prediction.get("target_time"), "A positive valid rate must produce an ETA."
     assert prediction.get("generated_at"), "Prediction must disclose when it was generated."
     assert prediction.get("data_quality"), "Prediction must disclose data quality."
+    assert dashboard.get("next_vessel_eta"), "Dashboard must expose the next-vessel ETA."
+    assert dashboard.get("expected_berth_release"), "Dashboard must expose berth release."
+    assert dashboard.get("berth_conflict") is True

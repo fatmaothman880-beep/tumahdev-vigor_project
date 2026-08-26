@@ -49,6 +49,8 @@ At least one cargo quantity must be present. Negative cargo or rate values are i
 
 An end time must not precede its start time.
 
+Create responses return HTTP 201 and include `duration_minutes` when both timestamps are present. Delay list responses are JSON arrays ordered by start time.
+
 ### Prediction
 
 `generated_at`, optional `target_time`, `method`, `inputs`, `data_quality`
@@ -70,3 +72,4 @@ The Day 3 integration test proposes these top-level fields: `visit`, `progress_p
 - Active-dashboard JSON nesting.
 - Authentication approach for demo write operations.
 - Seeded vessel and berth IDs used by environment-independent integration tests.
+- Collection response shape and ordering for readings and delays.
