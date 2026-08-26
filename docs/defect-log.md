@@ -23,6 +23,7 @@ Use this log for integration defects that affect the MVP demo path. Environment 
 | ENV-001 | Open | Docker CLI is not available to the current shell | Install/start Docker Desktop and reopen the terminal |
 | ENV-002 | Open | Windows Store Python cannot launch in the current logon session | Repair/reinstall Python or reopen in a session where `py --version` works |
 | ENV-003 | Open | Backend and seeded vessel/berth IDs are not present on this branch | Integrate backend/data branches and provide test IDs |
+| ENV-004 | Open | No frontend/backend demo build or approved staging URL exists | Integrate application branches and select an approved demo host |
 
 ## Daily triage procedure
 

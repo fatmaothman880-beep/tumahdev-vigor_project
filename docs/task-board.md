@@ -10,9 +10,9 @@ This lightweight board tracks Member 4 deliverables until a shared issue tracker
 | T34 | Core workflow tests | P0 | Day 3-5 | Full test implemented; runtime pass pending | Stable core API and prediction rules |
 | T35 | CSV import | P2 | Day 5 | Deferred: core workflow has not passed | Core workflow tests |
 | T36 | Management report/export | P1 | Day 5-6 | Contract, workflow assertions and JSON export added; runtime pending | Report API and KPI queries |
-| T37 | Security and continuity checklist | P1 | Day 5-6 | Not started | Environment and deployment decisions |
-| T38 | Demo/staging deployment | P0 | Day 6-7 | Not started | Integrated build |
-| T39 | UAT and defect triage | P0 | Day 6-7 | Not started | Testable demo path |
+| T37 | Security and continuity checklist | P1 | Day 5-6 | Checklist/scripts added; integrated checks and restore test blocked | Environment and deployment decisions |
+| T38 | Demo/staging deployment | P0 | Day 6-7 | Runbook/smoke test ready; deployment blocked | Integrated build |
+| T39 | UAT and defect triage | P0 | Day 6-7 | Checklist and triage process ready; execution blocked | Testable demo path |
 | T40 | Demo script, README and handover | P0 | Day 7-8 | Not started | Deployment and UAT evidence |
 
 ## Day 1 exit evidence
@@ -56,3 +56,12 @@ This lightweight board tracks Member 4 deliverables until a shared issue tracker
 - `scripts/export-vessel-report.ps1` validates and exports the API report as JSON.
 - Generated operational reports are excluded from Git.
 - CSV import remains deferred because the core workflow has not produced a green runtime result.
+
+## Day 6 exit evidence
+
+- Deployment runbook requires a recorded URL, commit, timestamp and passing smoke/integration results.
+- API/frontend smoke checks are automated in `scripts/smoke-test.ps1`.
+- Tracked environment files, private keys and high-confidence token patterns are checked automatically.
+- Database backup procedure writes only to ignored artifacts by default.
+- Security/continuity and UAT checklists use Pass/Fail/Blocked states with evidence requirements.
+- Deployment and UAT remain blocked; no application services or approved demo host are available.

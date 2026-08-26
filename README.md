@@ -76,6 +76,22 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\export-vessel-repo
 
 Generated reports are written under `artifacts/` by default and are not committed. See [docs/report-contract.md](docs/report-contract.md).
 
+## Day 6 release checks
+
+Run the tracked-file security audit:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\security-check.ps1
+```
+
+After deploying the integrated application, run the API/frontend smoke check:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\smoke-test.ps1
+```
+
+Deployment, security/continuity and UAT procedures are in `docs/deployment-runbook.md`, `docs/security-continuity-checklist.md` and `docs/uat-checklist.md`.
+
 ## Repository layout
 
 ```text
