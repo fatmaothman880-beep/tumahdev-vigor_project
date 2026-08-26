@@ -1,6 +1,6 @@
 # MVP 1 Handover
 
-Status: Member 4 handover package prepared; final acceptance evidence is pending integration and runtime execution.
+Status: Member 4 documentation handover complete; MVP release is blocked pending integration and runtime acceptance. See `docs/final-acceptance.md`.
 
 ## Delivered by Member 4
 

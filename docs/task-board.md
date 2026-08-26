@@ -13,7 +13,7 @@ This lightweight board tracks Member 4 deliverables until a shared issue tracker
 | T37 | Security and continuity checklist | P1 | Day 5-6 | Checklist/scripts added; integrated checks and restore test blocked | Environment and deployment decisions |
 | T38 | Demo/staging deployment | P0 | Day 6-7 | Runbook/smoke test ready; deployment blocked | Integrated build |
 | T39 | UAT and defect triage | P0 | Day 6-7 | Checklist and triage process ready; execution blocked | Testable demo path |
-| T40 | Demo script, README and handover | P0 | Day 7-8 | Package prepared; rehearsal/final evidence blocked | Deployment and UAT evidence |
+| T40 | Demo script, README and handover | P0 | Day 7-8 | Documentation complete; release/rehearsal blocked | Deployment and UAT evidence |
 
 ## Day 1 exit evidence
 
@@ -73,3 +73,12 @@ This lightweight board tracks Member 4 deliverables until a shared issue tracker
 - Release gates prohibit tagging or merging to `main` while required evidence is blocked.
 - Handover lists delivered artifacts, required final evidence, known limitations and prioritized backlog.
 - Defect closure and demo rehearsal remain blocked until the integrated application is runnable.
+
+## Day 8 exit evidence
+
+- Repository integrity and the tracked-file security audit pass.
+- Fresh startup fails because Docker CLI is unavailable.
+- API smoke testing fails because no backend is running.
+- Python, strict integration tests, backup/restore, UAT and rehearsal remain blocked.
+- `docs/final-acceptance.md` records the exact candidate, evidence and release blockers.
+- Outcome is `BLOCKED - NOT RELEASED`; no tag or merge to `main` was performed.

@@ -96,6 +96,8 @@ Deployment, security/continuity and UAT procedures are in `docs/deployment-runbo
 
 Member 4 feature work is frozen. The timed demo, release gates and handover/backlog are documented in `docs/demo-script.md`, `docs/release-checklist.md` and `docs/handover.md`. Do not add stretch features while any P0 gate remains blocked.
 
+Day 8 acceptance is recorded in `docs/final-acceptance.md`. The current outcome is **blocked, not released** because the integrated application and required runtime evidence are unavailable.
+
 ## Repository layout
 
 ```text

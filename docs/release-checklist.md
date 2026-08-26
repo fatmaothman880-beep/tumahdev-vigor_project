@@ -6,11 +6,11 @@ Feature freeze is declared by the commit containing this checklist. No stretch f
 
 | Field | Value |
 | --- | --- |
-| Candidate commit | Run `git rev-parse HEAD` after integration |
-| Candidate branch | `develop` after approved member PRs merge |
+| Candidate commit | `b0e4e331cf2d5a97b699534c93641ed144be70c6` (Member 4 candidate only) |
+| Candidate branch | `M4-QA,-Integration,-DevOps-&-Reporting-Lead` |
 | Demo URL | Not assigned |
 | Feature freeze | Active for Member 4 work |
-| Release status | Blocked |
+| Release status | Blocked - not released |
 
 ## Required gates
 
@@ -26,6 +26,8 @@ Feature freeze is declared by the commit containing this checklist. No stretch f
 | Demo rehearsal completes in 5-8 minutes | Blocked | Rehearsal record in `docs/demo-script.md` |
 | Limitations and backlog are approved | Prepared | `docs/handover.md` |
 | Exact accepted commit is recorded/tagged | Blocked | Commit hash and release tag |
+
+Day 8 evidence is recorded in `docs/final-acceptance.md`. The static tracked-secret check passed, but the full security/continuity gate remains blocked because application and restore checks cannot run.
 
 ## Freeze rules
 
