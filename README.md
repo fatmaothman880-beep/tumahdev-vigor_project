@@ -29,20 +29,42 @@ Prerequisites:
 Start the shared PostgreSQL database:
 
 ```powershell
-Copy-Item .env.example .env
-docker compose up -d db
-docker compose ps
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-environment.ps1
 ```
 
 Stop it with:
 
 ```powershell
-docker compose down
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\stop-environment.ps1
 ```
 
 To also remove local database data, use `docker compose down -v`. This is destructive and should only be used when a clean database is intentional.
 
 The backend and frontend Compose services will be added after their application shells and Dockerfiles exist. Until then, their expected ports and URLs are recorded in `.env.example` and [docs/api-contract.md](docs/api-contract.md).
+
+## Integration tests
+
+Create a virtual environment and install the test dependency:
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements-dev.txt
+```
+
+Run the integration scaffold:
+
+```powershell
+python -m pytest -m integration
+```
+
+When the backend is required to be running, use strict mode so an unreachable API fails instead of skipping:
+
+```powershell
+python -m pytest -m integration --require-api
+```
+
+The default API URL is `http://localhost:8000`. Override it with `API_BASE_URL` or `--api-base-url`. See [tests/integration/README.md](tests/integration/README.md).
 
 ## Repository layout
 
@@ -50,6 +72,8 @@ The backend and frontend Compose services will be added after their application 
 .github/                 Pull-request template
 docs/                    Workflow, task board and shared API contract
 sample_data/             Versioned, non-sensitive demo data
+scripts/                 Environment lifecycle commands
+tests/integration/        API integration-test scaffold
 compose.yaml             Repeatable PostgreSQL environment
 .env.example             Safe configuration template
 ```

@@ -5,8 +5,8 @@ This lightweight board tracks Member 4 deliverables until a shared issue tracker
 | ID | Deliverable | Priority | Target | Status | Dependency |
 | --- | --- | --- | --- | --- | --- |
 | T31 | Repo workflow, integration convention and PR rules | P0 | Day 1 | Done on branch; team/repo-setting sign-off pending | None |
-| T32 | Repeatable local or Docker environment | P0 | Day 1-2 | Environment skeleton added; app services pending | Backend and database shells |
-| T33 | API integration-test scaffold | P0 | Day 2-3 | Not started | Backend health endpoint |
+| T32 | Repeatable local or Docker environment | P0 | Day 1-2 | Bootstrap and health-check scripts added; Docker execution pending | Docker Desktop and app services |
+| T33 | API integration-test scaffold | P0 | Day 2-3 | Scaffold added; execution pending Python and backend `/health` | Backend health endpoint |
 | T34 | Core workflow tests | P0 | Day 3-5 | Not started | Stable core API and prediction rules |
 | T35 | CSV import | P2 | Day 5 | Blocked until core workflow is green | Core workflow tests |
 | T36 | Management report/export | P1 | Day 5-6 | Not started | Report API and KPI queries |
@@ -23,3 +23,11 @@ This lightweight board tracks Member 4 deliverables until a shared issue tracker
 - PostgreSQL can be started independently through Compose.
 - The shared API contract has an initial reviewable draft.
 - Cross-team agreement and GitHub protection settings remain explicit follow-up actions.
+
+## Day 2 exit evidence
+
+- `scripts/start-environment.ps1` validates Compose, starts PostgreSQL and waits for a healthy container.
+- `scripts/stop-environment.ps1` provides the non-destructive default shutdown path.
+- `pytest` integration configuration supports local, CI and staging API URLs.
+- The health contract test skips when an API is intentionally absent and fails in `--require-api` mode.
+- Runtime verification remains blocked on this workstation until Docker and Python are available to the shell and the backend health endpoint is merged.
