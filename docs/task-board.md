@@ -7,7 +7,7 @@ This lightweight board tracks Member 4 deliverables until a shared issue tracker
 | T31 | Repo workflow, integration convention and PR rules | P0 | Day 1 | Done on branch; team/repo-setting sign-off pending | None |
 | T32 | Repeatable local or Docker environment | P0 | Day 1-2 | Bootstrap and health-check scripts added; Docker execution pending | Docker Desktop and app services |
 | T33 | API integration-test scaffold | P0 | Day 2-3 | Scaffold added; execution pending Python and backend `/health` | Backend health endpoint |
-| T34 | Core workflow tests | P0 | Day 3-5 | Not started | Stable core API and prediction rules |
+| T34 | Core workflow tests | P0 | Day 3-5 | Prediction slice added; delay/conflict/completion/history pending | Stable core API and prediction rules |
 | T35 | CSV import | P2 | Day 5 | Blocked until core workflow is green | Core workflow tests |
 | T36 | Management report/export | P1 | Day 5-6 | Not started | Report API and KPI queries |
 | T37 | Security and continuity checklist | P1 | Day 5-6 | Not started | Environment and deployment decisions |
@@ -31,3 +31,11 @@ This lightweight board tracks Member 4 deliverables until a shared issue tracker
 - `pytest` integration configuration supports local, CI and staging API URLs.
 - The health contract test skips when an API is intentionally absent and fails in `--require-api` mode.
 - Runtime verification remains blocked on this workstation until Docker and Python are available to the shell and the backend health endpoint is merged.
+
+## Day 3 exit evidence
+
+- The API client reports method, path, expected status and response body on contract failures.
+- The prediction workflow creates an active visit and adds two timestamped readings.
+- Assertions cover progress, remaining cargo, positive rate, ETA generation timestamp and data quality.
+- Seeded vessel/berth IDs and dashboard nesting are documented contract dependencies.
+- Runtime execution remains pending Python, a running API and seeded IDs.

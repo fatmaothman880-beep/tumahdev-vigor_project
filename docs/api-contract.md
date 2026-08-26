@@ -57,7 +57,9 @@ An end time must not precede its start time.
 
 ### ActiveDashboard
 
-The aggregate response must include the active vessel and visit, progress percentage, remaining cargo, effective rate, prediction, expected berth release, next-vessel ETA and conflict status. Exact nesting remains a team sign-off item.
+The Day 3 integration test proposes these top-level fields: `visit`, `progress_percent`, `remaining_tons`, `effective_rate_tph`, `prediction`, `expected_berth_release`, `next_vessel_eta`, and `berth_conflict`.
+
+`prediction` must contain `generated_at`, optional `target_time`, `method`, `inputs`, and `data_quality`. This nesting remains a team sign-off item; update the contract and test together if the team selects another shape.
 
 ## Open sign-off decisions
 
@@ -67,3 +69,4 @@ The aggregate response must include the active vessel and visit, progress percen
 - Data-quality enum values and stale-reading threshold.
 - Active-dashboard JSON nesting.
 - Authentication approach for demo write operations.
+- Seeded vessel and berth IDs used by environment-independent integration tests.
