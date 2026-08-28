@@ -1,19 +1,34 @@
+# Secrets and local environment files
 .env
 .env.*
 !.env.example
 
+# Python generated files
 __pycache__/
 *.py[cod]
-.pytest_cache/
+
+# Virtual environments
 .venv/
 venv/
 
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage/
+
+# Frontend dependencies and builds
 node_modules/
 dist/
-coverage/
+
+# Generated project artifacts
 artifacts/
 
-.idea/
+# Editors and operating systems
 .vscode/
+.idea/
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
