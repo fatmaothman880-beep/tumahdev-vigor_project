@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.font-data {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fadein {
+  animation: fadein 0.2s ease-out;
+}
+
+@media print {
+  aside,
+  header,
+  .print-hide {
+    display: none !important;
+  }
+  body,
+  #report {
+    background: white !important;
+  }
+}
