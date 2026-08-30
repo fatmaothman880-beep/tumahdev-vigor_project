@@ -1,7 +1,6 @@
 import { ArrowLeft, Printer } from "lucide-react";
 import type { AppData } from "../hooks/useAppData";
-import { fmtDateTime, fmtT, fmtTime, fmtTph, minutesBetween } from "../lib/format";
-import { NOW } from "../mock/mockData";
+import { fmtDateTime, fmtFullDateTime, fmtT, fmtTph, minutesBetween } from "../lib/format";
 import { Card } from "../components/ui/Layout";
 import { ErrorState } from "../components/ui/States";
 import StatusBadge from "../components/ui/StatusBadge";
@@ -39,7 +38,7 @@ export default function VesselReport({ data, vesselId, back }: { data: AppData; 
           </div>
           <div className="text-right">
             <div className="text-[11px] font-bold uppercase tracking-widest text-teal">Vessel summary report</div>
-            <div className="text-[11px] text-gray-500">Generated {fmtDateTime(NOW)} EAT (UTC+3)</div>
+            <div className="text-[11px] text-gray-500">Generated {fmtDateTime(new Date())} EAT (UTC+3)</div>
           </div>
         </div>
 
@@ -54,19 +53,19 @@ export default function VesselReport({ data, vesselId, back }: { data: AppData; 
             <div className="text-sm space-y-1 text-ink">
               <div className="flex justify-between">
                 <span className="text-gray-500">Planned arrival</span>
-                <span className="tabular-nums">{fmtTime(vessel.plannedArrival)}</span>
+                <span className="tabular-nums">{fmtFullDateTime(vessel.plannedArrival)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Actual arrival</span>
-                <span className="tabular-nums">{fmtTime(vessel.actualArrival)}</span>
+                <span className="tabular-nums">{fmtFullDateTime(vessel.actualArrival)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Unload start</span>
-                <span className="tabular-nums">{fmtTime(vessel.unloadStart)}</span>
+                <span className="tabular-nums">{fmtFullDateTime(vessel.unloadStart)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Unload finish</span>
-                <span className="tabular-nums">{fmtTime(vessel.unloadFinish)}</span>
+                <span className="tabular-nums">{fmtFullDateTime(vessel.unloadFinish)}</span>
               </div>
             </div>
           </div>

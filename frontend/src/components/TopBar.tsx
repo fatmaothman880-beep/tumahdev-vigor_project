@@ -1,16 +1,22 @@
 import { Menu } from "lucide-react";
 import { fmtTime, EAT_LABEL } from "../lib/format";
+import { NotificationBell } from "./ui/Alerts";
+import type { OperationalAlert } from "../types";
 
 export default function TopBar({
   title,
   breadcrumb,
   setMobileOpen,
   now,
+  alerts,
+  onSelectVessel,
 }: {
   title: string;
   breadcrumb?: string;
   setMobileOpen: (v: boolean) => void;
   now: Date;
+  alerts: OperationalAlert[];
+  onSelectVessel: (id: number) => void;
 }) {
   return (
     <header className="sticky top-0 z-20 flex items-center gap-3 px-4 sm:px-6 py-3.5 bg-white border-b border-line">
@@ -32,6 +38,7 @@ export default function TopBar({
         <span className="hidden lg:inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold bg-sand-tint text-[#8A6224]">
           Demo mode — mock data
         </span>
+        <NotificationBell alerts={alerts} onSelectVessel={onSelectVessel} />
         <div className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold bg-brand-green-tint text-brand-green-deep">
           OM
         </div>

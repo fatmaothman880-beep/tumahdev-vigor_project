@@ -23,6 +23,16 @@ export async function updateVesselVisit(id: number, patch: Partial<VesselVisit>)
   return apiFetch<VesselVisit>(`/vessel-visits/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
 }
 
+export async function editVesselVisit(id: number, data: mock.EditVesselVisitInput): Promise<VesselVisit | null> {
+  if (USE_MOCK_API) return mock.editVesselVisit(id, data);
+  return apiFetch<VesselVisit>(`/vessel-visits/${id}`, { method: "PATCH", body: JSON.stringify(data) });
+}
+
+export async function cancelVesselVisit(id: number): Promise<VesselVisit | null> {
+  if (USE_MOCK_API) return mock.cancelVesselVisit(id);
+  return apiFetch<VesselVisit>(`/vessel-visits/${id}`, { method: "PATCH", body: JSON.stringify({ status: "Cancelled" }) });
+}
+
 export async function completeVesselVisit(id: number): Promise<VesselVisit | null> {
   if (USE_MOCK_API) return mock.completeVesselVisit(id);
   return apiFetch<VesselVisit>(`/vessel-visits/${id}`, {

@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from "react";
-import type { VesselVisit } from "../../types";
+import type { RateUnit, VesselVisit } from "../../types";
 import type { AddReadingInput } from "../../mock/mockServices";
 import Field, { inputCls } from "./Field";
 import { fmtDateTime, fmtT, EAT_LABEL } from "../../lib/format";
-import { NOW } from "../../mock/mockData";
+import { RateUnitToggle } from "./RateValue";
+import { convertToTph } from "../../lib/units";
 
 export default function ReadingForm({
   vessel,
@@ -14,7 +15,8 @@ export default function ReadingForm({
   onCancel: () => void;
   onSave: (data: AddReadingInput) => void;
 }) {
-  const [form, setForm] = useState({ unloadedT: "", remainingT: "", observedRateTph: "", source: "Manual" as AddReadingInput["source"] });
+  const [rateUnit, setRateUnit] = useState<RateUnit>("tph");
+  const [form, setForm] = useState({ unloadedT: "", remainingT: "", observedRate: "", source: "Manual" as AddReadingInput["source"], notes: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -27,13 +29,13 @@ export default function ReadingForm({
     const e: Record<string, string> = {};
     const u = Number(form.unloadedT);
     const r = Number(form.remainingT);
-    const rate = Number(form.observedRateTph);
+    const rate = Number(form.observedRate);
     if (form.unloadedT === "" || u < 0) e.unloadedT = "Enter a valid non-negative quantity.";
     if (form.remainingT === "" || r < 0) e.remainingT = "Enter a valid non-negative quantity.";
     if (form.unloadedT !== "" && form.remainingT !== "" && u + r !== vessel.cargoTotalT) {
       e.remainingT = e.remainingT || `Unloaded + remaining should equal total cargo (${fmtT(vessel.cargoTotalT)}).`;
     }
-    if (form.observedRateTph !== "" && rate < 0) e.observedRateTph = "Rate cannot be negative.";
+    if (form.observedRate !== "" && rate < 0) e.observedRate = "Rate cannot be negative.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -44,8 +46,9 @@ export default function ReadingForm({
     onSave({
       unloadedT: Number(form.unloadedT),
       remainingT: Number(form.remainingT),
-      observedRateTph: form.observedRateTph === "" ? 0 : Number(form.observedRateTph),
+      observedRateTph: form.observedRate === "" ? 0 : Math.round(convertToTph(Number(form.observedRate), rateUnit)),
       source: form.source,
+      notes: form.notes || undefined,
     });
   };
 
@@ -54,11 +57,14 @@ export default function ReadingForm({
       <Field label="Unloaded cargo" required hint="In tons (t)" error={errors.unloadedT}>
         <input type="number" min={0} className={inputCls(errors.unloadedT)} value={form.unloadedT} onChange={(e) => autofillRemaining(e.target.value)} />
       </Field>
-      <Field label="Remaining cargo" required hint="In tons (t)" error={errors.remainingT}>
+      <Field label="Remaining cargo" required hint="Calculated automatically from total cargo — adjust if needed" error={errors.remainingT}>
         <input type="number" min={0} className={inputCls(errors.remainingT)} value={form.remainingT} onChange={(e) => set("remainingT", e.target.value)} />
       </Field>
-      <Field label="Observed unloading rate" hint="In t/h — leave 0 if temporarily stopped" error={errors.observedRateTph}>
-        <input type="number" min={0} className={inputCls(errors.observedRateTph)} value={form.observedRateTph} onChange={(e) => set("observedRateTph", e.target.value)} />
+      <Field label="Observed unloading rate" hint="Leave blank or 0 if temporarily stopped" error={errors.observedRate}>
+        <div className="flex gap-2 items-center">
+          <input type="number" min={0} step="any" className={inputCls(errors.observedRate)} value={form.observedRate} onChange={(e) => set("observedRate", e.target.value)} placeholder={rateUnit === "tph" ? "e.g. 410" : "e.g. 6.8"} />
+          <RateUnitToggle unit={rateUnit} onChange={setRateUnit} />
+        </div>
       </Field>
       <Field label="Source" required>
         <select className={inputCls()} value={form.source} onChange={(e) => set("source", e.target.value as AddReadingInput["source"])}>
@@ -67,8 +73,11 @@ export default function ReadingForm({
           <option>Calculated</option>
         </select>
       </Field>
+      <Field label="Notes" hint="Optional">
+        <input className={inputCls()} value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Any context for this reading" />
+      </Field>
       <div className="text-[11px] mb-3 text-gray-500">
-        Timestamp: {fmtDateTime(NOW)} · {EAT_LABEL} (recorded automatically)
+        Timestamp: {fmtDateTime(new Date())} · {EAT_LABEL} (recorded automatically)
       </div>
       <div className="flex gap-2 pt-3 border-t border-line">
         <button type="submit" className="rounded-lg px-4 py-2 text-sm font-semibold text-white bg-brand-green hover:bg-brand-green-deep transition-colors">

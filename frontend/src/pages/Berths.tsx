@@ -1,12 +1,13 @@
 import { AlertTriangle, Anchor } from "lucide-react";
 import type { AppData } from "../hooks/useAppData";
-import { computePrediction, berthRiskFor } from "../lib/prediction";
+import type { OperationalModel } from "../hooks/useOperationalModel";
+import { berthRiskFor } from "../lib/prediction";
 import { fmtPct, fmtTime } from "../lib/format";
 import { Card, PageHeader } from "../components/ui/Layout";
 
-export default function Berths({ data, openVessel }: { data: AppData; openVessel: (id: number) => void }) {
-  const { vessels, readings, berths } = data;
-  const now = new Date();
+export default function Berths({ data, model, openVessel }: { data: AppData; model: OperationalModel; openVessel: (id: number) => void }) {
+  const { vessels, berths } = data;
+  const { predictions } = model;
 
   return (
     <div>
@@ -14,7 +15,7 @@ export default function Berths({ data, openVessel }: { data: AppData; openVessel
       <div className="grid md:grid-cols-3 gap-4">
         {berths.map((b) => {
           const occupant = vessels.find((v) => v.berthId === b.id && (v.status === "Unloading" || v.status === "Berthed"));
-          const pred = occupant ? computePrediction(occupant, readings, now) : null;
+          const pred = occupant ? predictions[occupant.id] : null;
           const risk = occupant && pred ? berthRiskFor(occupant, pred, vessels) : null;
           return (
             <Card key={b.id} className="p-4">

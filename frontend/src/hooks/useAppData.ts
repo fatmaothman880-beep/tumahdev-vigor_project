@@ -4,7 +4,7 @@ import * as vesselApi from "../api/vesselApi";
 import * as readingApi from "../api/readingApi";
 import * as delayApi from "../api/delayApi";
 import * as mock from "../mock/mockServices";
-import type { AddDelayInput, AddReadingInput, CreateVesselVisitInput } from "../mock/mockServices";
+import type { AddDelayInput, AddReadingInput, CreateVesselVisitInput, EditVesselVisitInput } from "../mock/mockServices";
 import type { ToastState } from "../components/ui/Feedback";
 
 export interface AppData {
@@ -95,5 +95,23 @@ export function useAppData() {
     [loadAll]
   );
 
-  return { data, loading, error, toast, reload: loadAll, createVessel, addReading, addDelay, completeVessel };
+  const editVessel = useCallback(
+    async (vesselId: number, input: EditVesselVisitInput) => {
+      await vesselApi.editVesselVisit(vesselId, input);
+      await loadAll();
+      setToast({ type: "success", message: "Vessel plan updated." });
+    },
+    [loadAll]
+  );
+
+  const cancelVessel = useCallback(
+    async (vesselId: number) => {
+      await vesselApi.cancelVesselVisit(vesselId);
+      await loadAll();
+      setToast({ type: "success", message: "Vessel visit cancelled." });
+    },
+    [loadAll]
+  );
+
+  return { data, loading, error, toast, reload: loadAll, createVessel, addReading, addDelay, completeVessel, editVessel, cancelVessel };
 }
