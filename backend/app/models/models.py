@@ -22,6 +22,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
+from app.models.workflow import SiteConfiguration, SiteVessel, OperationalTask, TaskHistory  # noqa: F401
 
 
 class BerthStatus(str, enum.Enum):
@@ -33,6 +34,8 @@ class BerthStatus(str, enum.Enum):
 class VisitStatus(str, enum.Enum):
     PLANNED = "PLANNED"
     ARRIVED = "ARRIVED"
+    BERTHED = "BERTHED"
+    DELAYED = "DELAYED"
     UNLOADING = "UNLOADING"
     COMPLETED = "COMPLETED"
     DEPARTED = "DEPARTED"
@@ -162,6 +165,10 @@ class Berth(Base):
 
 class VesselVisit(Base):
     __tablename__ = "vessel_visits"
+
+    planned_unload_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    planned_completion: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    planned_rate_tph: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -641,4 +648,4 @@ class AuditRecord(Base):
     __table_args__ = (
         Index("ix_audit_records_entity", "entity_name", "entity_id"),
         Index("ix_audit_records_created_at", "created_at"),
-    )    
+    )

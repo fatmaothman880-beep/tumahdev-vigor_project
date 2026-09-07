@@ -1,27 +1,21 @@
 import { AlertTriangle, Anchor } from "lucide-react";
 import type { AppData } from "../hooks/useAppData";
-import { computePrediction, berthRiskFor } from "../lib/prediction";
+import type { OperationalModel } from "../hooks/useOperationalModel";
+import { berthRiskFor } from "../lib/prediction";
 import { fmtPct, fmtTime } from "../lib/format";
 import { Card, PageHeader } from "../components/ui/Layout";
 
-export default function Berths({ data, openVessel }: { data: AppData; openVessel: (id: string | number) => void }) {
-  const { vessels, readings, berths } = data;
-  const now = new Date();
+export default function Berths({ data, model, openVessel }: { data: AppData; model: OperationalModel; openVessel: (id: string | number) => void }) {
+  const { vessels, berths } = data;
+  const { predictions } = model;
 
   return (
     <div>
       <PageHeader eyebrow="Operations" title="Berths" />
       <div className="grid md:grid-cols-3 gap-4">
         {berths.map((b) => {
-          const occupant = vessels.find(
-            (vessel) =>
-              String(vessel.berthId) === String(b.id) &&
-              (
-                vessel.status === "Unloading" ||
-                vessel.status === "Berthed"
-              ),
-          );
-          const pred = occupant ? computePrediction(occupant, readings, now) : null;
+          const occupant = vessels.find((v) => v.berthId === b.id && (v.status === "Unloading" || v.status === "Berthed"));
+          const pred = occupant ? predictions[occupant.id] : null;
           const risk = occupant && pred ? berthRiskFor(occupant, pred, vessels) : null;
           return (
             <Card key={b.id} className="p-4">
@@ -30,11 +24,7 @@ export default function Berths({ data, openVessel }: { data: AppData; openVessel
                   <Anchor size={16} className="text-teal" />
                   <span className="font-bold text-ink">{b.name}</span>
                 </div>
-                {b.lengthM > 0 && (
-                  <span className="text-[11px] font-semibold uppercase text-gray-500">
-                    {b.lengthM}m
-                  </span>
-                )}
+                {b.lengthM > 0 && <span className="text-[11px] font-semibold uppercase text-gray-500">{b.lengthM}m</span>}
               </div>
               <div className="text-xs mb-3 text-gray-500">{b.notes}</div>
               {occupant && pred && risk ? (

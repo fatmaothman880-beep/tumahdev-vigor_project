@@ -8,6 +8,9 @@ from app.models.models import VisitStatus
 
 
 class VesselVisitCreate(BaseModel):
+    planned_unload_start: datetime | None = None
+    planned_completion: datetime | None = None
+    planned_rate_tph: Decimal | None = Field(default=None, gt=0, decimal_places=2)
     vessel_id: UUID
     berth_id: UUID
     cargo_type: str = Field(min_length=1, max_length=100)
@@ -26,6 +29,9 @@ class VesselVisitCreate(BaseModel):
 
 
 class VesselVisitUpdate(BaseModel):
+    planned_unload_start: datetime | None = None
+    planned_completion: datetime | None = None
+    planned_rate_tph: Decimal | None = Field(default=None, gt=0, decimal_places=2)
     berth_id: UUID | None = None
     cargo_type: str | None = Field(
         default=None,
@@ -54,6 +60,9 @@ class VesselVisitUpdate(BaseModel):
 
 
 class VesselVisitResponse(BaseModel):
+    planned_unload_start: datetime | None
+    planned_completion: datetime | None
+    planned_rate_tph: Decimal | None
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID

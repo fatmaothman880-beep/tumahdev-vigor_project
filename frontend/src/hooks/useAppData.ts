@@ -4,15 +4,20 @@ import * as vesselApi from "../api/vesselApi";
 import * as readingApi from "../api/readingApi";
 import * as delayApi from "../api/delayApi";
 import * as mock from "../mock/mockServices";
-import type { AddDelayInput, AddReadingInput, CreateVesselVisitInput } from "../mock/mockServices";
+import { getBerths } from "../api/berthApi";
+import { getPredictions } from "../api/predictionApi";
+import { USE_MOCK_API } from "../api/client";
+import type { PredictionData } from "../types";
+import type { AddDelayInput, AddReadingInput, CreateVesselVisitInput, EditVesselVisitInput } from "../mock/mockServices";
 import type { ToastState } from "../components/ui/Feedback";
 
 export interface AppData {
+  predictions?: Record<string, PredictionData>;
   vessels: VesselVisit[];
   berths: Berth[];
-  readings: Record<string, OperationalReading[]>;
-  delays: Record<string, DelayEvent[]>;
-  events: Record<string, OperationalEvent[]>;
+  readings: Record<string | number, OperationalReading[]>;
+  delays: Record<string | number, DelayEvent[]>;
+  events: Record<string | number, OperationalEvent[]>;
 }
 
 /**
@@ -26,23 +31,33 @@ export function useAppData() {
   const [error, setError] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
 
-  const loadAll = useCallback(async () => {
-    setLoading(true);
+  const loadAll = useCallback(async (background = false) => {
+    if (!background) setLoading(true);
     setError(false);
     try {
-      const [vessels, berths] = await Promise.all([vesselApi.getVesselVisits(), mock.getBerths()]);
+      const [vessels, berths, predictions] = await Promise.all([
+        vesselApi.getVesselVisits(), getBerths(), USE_MOCK_API ? undefined : getPredictions(),
+      ]);
       const readingsEntries = await Promise.all(vessels.map(async (v) => [v.id, await readingApi.getReadings(v.id)] as const));
       const delaysEntries = await Promise.all(vessels.map(async (v) => [v.id, await delayApi.getDelays(v.id)] as const));
-      const eventsEntries = await Promise.all(vessels.map(async (v) => [v.id, await mock.getEvents(v.id)] as const));
+      const eventsEntries = await Promise.all(vessels.map(async (v) => [v.id, USE_MOCK_API ? await mock.getEvents(v.id) : [
+        ...(v.registeredAt ? [{id: `registered-${v.id}`, time: v.registeredAt, text: "Visit registered."}] : []),
+        ...(readingsEntries.find(([id]) => id === v.id)?.[1] || []).map(r => ({id: `reading-${r.id}`, time: r.timestamp, text: `Reading recorded: ${r.unloadedT} t unloaded.`})),
+        ...(delaysEntries.find(([id]) => id === v.id)?.[1] || []).map(d => ({id: `delay-${d.id}`, time: d.start, text: `${d.category}: ${d.description}`})),
+      ].sort((a,b) => a.time.getTime() - b.time.getTime())] as const));
       setData({
+        predictions,
         vessels,
         berths,
         readings: Object.fromEntries(readingsEntries),
         delays: Object.fromEntries(delaysEntries),
         events: Object.fromEntries(eventsEntries),
       });
+      return true;
     } catch (e) {
       setError(true);
+      setToast({type: "error", message: e instanceof Error ? e.message : "Unable to load API data"});
+      return false;
     } finally {
       setLoading(false);
     }
@@ -50,6 +65,8 @@ export function useAppData() {
 
   useEffect(() => {
     loadAll();
+    const interval = setInterval(() => { void loadAll(true); }, 30000);
+    return () => clearInterval(interval);
   }, [loadAll]);
 
   useEffect(() => {
@@ -61,8 +78,8 @@ export function useAppData() {
   const createVessel = useCallback(
     async (input: CreateVesselVisitInput) => {
       const vessel = await vesselApi.createVesselVisit(input);
-      await loadAll();
-      setToast({ type: "success", message: "Vessel visit created." });
+      const refreshed = await loadAll(true);
+      if (refreshed) setToast({ type: "success", message: "Vessel visit created." });
       return vessel;
     },
     [loadAll]
@@ -71,8 +88,8 @@ export function useAppData() {
   const addReading = useCallback(
     async (vesselId: string | number, input: AddReadingInput) => {
       await readingApi.addReading(vesselId, input);
-      await loadAll();
-      setToast({ type: "success", message: "Reading saved. Dashboard updated." });
+      const refreshed = await loadAll(true);
+      if (refreshed) setToast({ type: "success", message: "Reading saved. Dashboard updated." });
     },
     [loadAll]
   );
@@ -80,20 +97,42 @@ export function useAppData() {
   const addDelay = useCallback(
     async (vesselId: string | number, input: AddDelayInput) => {
       await delayApi.addDelay(vesselId, input);
-      await loadAll();
-      setToast({ type: "success", message: "Delay recorded." });
+      const refreshed = await loadAll(true);
+      if (refreshed) setToast({ type: "success", message: "Delay recorded." });
     },
     [loadAll]
   );
 
   const completeVessel = useCallback(
     async (vesselId: string | number) => {
-      await vesselApi.completeVesselVisit(vesselId);
-      await loadAll();
-      setToast({ type: "success", message: "Vessel visit completed." });
+      try { await vesselApi.completeVesselVisit(vesselId); }
+      catch (e) {
+        setToast({type: "error", message: e instanceof Error ? e.message : "Unable to complete visit"});
+        return;
+      }
+      const refreshed = await loadAll(true);
+      if (refreshed) setToast({ type: "success", message: "Vessel visit completed." });
     },
     [loadAll]
   );
 
-  return { data, loading, error, toast, reload: loadAll, createVessel, addReading, addDelay, completeVessel };
+  const editVessel = useCallback(
+    async (vesselId: string | number, input: EditVesselVisitInput) => {
+      await vesselApi.editVesselVisit(vesselId, input);
+      const refreshed = await loadAll(true);
+      if (refreshed) setToast({ type: "success", message: "Vessel plan updated." });
+    },
+    [loadAll]
+  );
+
+  const cancelVessel = useCallback(
+    async (vesselId: string | number) => {
+      await vesselApi.cancelVesselVisit(vesselId);
+      const refreshed = await loadAll(true);
+      if (refreshed) setToast({ type: "success", message: "Vessel visit cancelled." });
+    },
+    [loadAll]
+  );
+
+  return { data, loading, error, toast, reload: () => loadAll(), createVessel, addReading, addDelay, completeVessel, editVessel, cancelVessel };
 }

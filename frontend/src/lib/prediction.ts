@@ -20,10 +20,10 @@ import type {
 } from "../types";
 
 export function latestReading(
-  readings: Record<string, OperationalReading[]>,
+  readings: Record<string | number, OperationalReading[]>,
   vesselId: string | number
 ): OperationalReading | null {
-  const list = readings[String(vesselId)] || [];
+  const list = readings[vesselId] || [];
   return list.length ? list[list.length - 1] : null;
 }
 
@@ -37,7 +37,7 @@ export function dataQualityFor(reading: OperationalReading | null, now: Date): D
 
 export function computePrediction(
   vessel: VesselVisit,
-  readings: Record<string, OperationalReading[]>,
+  readings: Record<string | number, OperationalReading[]>,
   now: Date
 ): PredictionData {
   const r = latestReading(readings, vessel.id);
@@ -81,7 +81,7 @@ export function berthRiskFor(
   prediction: PredictionData,
   vessels: VesselVisit[]
 ): BerthRiskInfo {
-  const nextVessel = vessels.find((v) => v.id === vessel.nextVesselId) || null;
+  const nextVessel = vessel.scheduledNext || vessels.find((v) => v.id === vessel.nextVesselId) || null;
   if (!nextVessel || !prediction.berthReleaseAvailable || !prediction.berthRelease) {
     return { risk: "unknown", nextVessel, overlapMin: 0, nextEta: null };
   }
@@ -89,7 +89,7 @@ export function berthRiskFor(
   if (!nextEta) {
     return { risk: "unknown", nextVessel, overlapMin: 0, nextEta: null };
   }
-  const overlapMin = minutesBetween(nextEta, prediction.berthRelease);
+  const overlapMin = minutesBetween(nextEta, prediction.berthRelease) + (nextVessel.berthPreparationMin || 0);
   if (overlapMin > 0) {
     return { risk: "conflict", nextVessel, overlapMin, nextEta };
   }

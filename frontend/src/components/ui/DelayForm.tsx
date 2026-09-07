@@ -3,7 +3,7 @@ import { Anchor, CloudRain, HelpCircle, PackageX, Ship, Users, Wrench } from "lu
 import type { DelayCategory } from "../../types";
 import type { AddDelayInput } from "../../mock/mockServices";
 import Field, { inputCls } from "./Field";
-import { NOW } from "../../mock/mockData";
+import { toDateTimeLocal } from "../../lib/format";
 
 const CATEGORIES: { v: DelayCategory; Icon: typeof Wrench }[] = [
   { v: "Equipment", Icon: Wrench },
@@ -15,16 +15,24 @@ const CATEGORIES: { v: DelayCategory; Icon: typeof Wrench }[] = [
   { v: "Other", Icon: HelpCircle },
 ];
 
-export default function DelayForm({ onCancel, onSave }: { onCancel: () => void; onSave: (data: AddDelayInput) => void }) {
-  const [form, setForm] = useState({ start: "", end: "", category: "Equipment" as DelayCategory, area: "", description: "" });
+/**
+ * "Confirm" wording is deliberate: this form records an ACTUAL delay that
+ * already happened, which the risk engine (lib/riskEngine.ts) treats as
+ * authoritative over any automatic at-risk forecast. It is distinct from
+ * the automatic "At risk" state, which needs no operator input at all.
+ */
+export default function DelayForm({ onCancel, onSave }: { onCancel: () => void; onSave: (data: AddDelayInput) => void | Promise<void> }) {
+  const now = new Date();
+  const [form, setForm] = useState({
+    start: toDateTimeLocal(new Date(now.getTime() - 30 * 60000)),
+    end: toDateTimeLocal(now),
+    category: "Equipment" as DelayCategory,
+    area: "",
+    description: "",
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
-
-  const mk = (hh: number, mm: number) => {
-    const d = new Date(NOW);
-    d.setHours(hh, mm, 0, 0);
-    return d;
-  };
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -36,22 +44,23 @@ export default function DelayForm({ onCancel, onSave }: { onCancel: () => void; 
     return Object.keys(e).length === 0;
   };
 
-  const submit = (ev: FormEvent) => {
+  const submit = async (ev: FormEvent) => {
     ev.preventDefault();
-    if (!validate()) return;
-    const [sh, sm] = form.start.split(":").map(Number);
-    const [eh, em] = form.end.split(":").map(Number);
-    onSave({ start: mk(sh, sm), end: mk(eh, em), category: form.category, area: form.area, description: form.description });
+    if (saving || !validate()) return;
+    setSaving(true);
+    try { await onSave({ start: new Date(form.start), end: new Date(form.end), category: form.category, area: form.area, description: form.description }); }
+    catch (e) { setErrors({submit: e instanceof Error ? e.message : "Unable to save"}); }
+    finally { setSaving(false); }
   };
 
   return (
     <form onSubmit={submit}>
       <div className="grid sm:grid-cols-2 gap-x-4">
-        <Field label="Start time" required error={errors.start}>
-          <input type="time" className={inputCls(errors.start)} value={form.start} onChange={(e) => set("start", e.target.value)} />
+        <Field label="Start" required error={errors.start}>
+          <input type="datetime-local" className={inputCls(errors.start)} value={form.start} onChange={(e) => set("start", e.target.value)} />
         </Field>
-        <Field label="End time" required error={errors.end}>
-          <input type="time" className={inputCls(errors.end)} value={form.end} onChange={(e) => set("end", e.target.value)} />
+        <Field label="End" required error={errors.end}>
+          <input type="datetime-local" className={inputCls(errors.end)} value={form.end} onChange={(e) => set("end", e.target.value)} />
         </Field>
       </div>
       <Field label="Category" required>
@@ -77,9 +86,10 @@ export default function DelayForm({ onCancel, onSave }: { onCancel: () => void; 
       <Field label="Description / reason" required error={errors.description}>
         <textarea rows={2} className={inputCls(errors.description)} value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="Briefly describe the cause of the delay" />
       </Field>
+      {errors.submit && <p role="alert" className="text-sm text-danger">{errors.submit}</p>}
       <div className="flex gap-2 pt-3 border-t border-line">
-        <button type="submit" className="rounded-lg px-4 py-2 text-sm font-semibold text-white bg-brand-green hover:bg-brand-green-deep transition-colors">
-          Record delay
+        <button type="submit" className="rounded-lg px-4 py-2 text-sm font-semibold text-white bg-danger hover:opacity-90 transition-opacity">
+          Confirm delay
         </button>
         <button type="button" onClick={onCancel} className="rounded-lg px-4 py-2 text-sm font-semibold border border-line-strong text-ink bg-paper hover:bg-line/40 transition-colors">
           Cancel

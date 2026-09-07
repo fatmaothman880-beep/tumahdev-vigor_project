@@ -1,7 +1,7 @@
 import type { Berth } from "../types";
 import type { CreateVesselVisitInput } from "../mock/mockServices";
 import { PageHeader } from "../components/ui/Layout";
-import VesselForm from "../components/ui/VesselForm";
+import VesselForm, { type VesselFormOutput } from "../components/ui/VesselForm";
 
 export default function NewVessel({
   berths,
@@ -10,12 +10,29 @@ export default function NewVessel({
 }: {
   berths: Berth[];
   onCancel: () => void;
-  onSave: (data: CreateVesselVisitInput) => void;
+  onSave: (data: CreateVesselVisitInput) => void | Promise<void>;
 }) {
+  const handleSave = (data: VesselFormOutput) => {
+    return onSave({
+      vesselId: data.vesselId,
+      name: data.name,
+      reference: data.reference,
+      cargo: data.cargo,
+      cargoTotalT: data.cargoTotalT,
+      berthId: data.berthId,
+      status: data.status,
+      plannedArrival: data.plannedArrival,
+      plannedUnloadStart: data.plannedUnloadStart,
+      plannedCompletion: data.plannedCompletion,
+      plannedRateTph: data.plannedRateTph,
+      notes: data.notes,
+    });
+  };
+
   return (
     <div>
       <PageHeader eyebrow="Operations" title="New vessel visit" />
-      <VesselForm berths={berths} onCancel={onCancel} onSave={onSave} />
+      <VesselForm berths={berths} mode="create" onCancel={onCancel} onSave={handleSave} />
     </div>
   );
 }

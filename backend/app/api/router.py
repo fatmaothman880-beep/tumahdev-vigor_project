@@ -10,6 +10,10 @@ from app.api.routes.visits import router as visits_router
 from app.api.routes.upcoming_calls import router as upcoming_calls_router
 from app.api.routes.delays import router as delays_router
 api_router = APIRouter()
+from app.api.routes.workflow import router as workflow_router
+api_router.include_router(workflow_router)
+from app.api.routes.integration import router as integration_router
+api_router.include_router(integration_router)
 api_router.include_router(health_router)
 api_router.include_router(vessels_router)
 api_router.include_router(berths_router)

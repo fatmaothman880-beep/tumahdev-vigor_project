@@ -6,6 +6,7 @@ const MAP: Record<VesselStatus, { bg: string; fg: string; dot: string }> = {
   Berthed: { bg: "bg-teal-tint", fg: "text-teal", dot: "bg-teal" },
   Unloading: { bg: "bg-brand-green-tint", fg: "text-brand-green-deep", dot: "bg-brand-green" },
   Delayed: { bg: "bg-amber-tint", fg: "text-amber", dot: "bg-amber" },
+  Cancelled: { bg: "bg-slate-100", fg: "text-slate-600", dot: "bg-slate-400" },
   Completed: { bg: "bg-gray-100", fg: "text-ink-soft", dot: "bg-ink-soft" },
 };
 
