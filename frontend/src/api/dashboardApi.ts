@@ -2,6 +2,9 @@ import { apiFetch, USE_MOCK_API } from "./client";
 import * as mock from "../mock/mockServices";
 import type { ActiveDashboardResponse } from "../types";
 import { computePrediction, berthRiskFor } from "../lib/prediction";
+import { getVesselVisits } from "./vesselApi";
+import { getPredictions } from "./predictionApi";
+import { getReadings } from "./readingApi";
 
 /**
  * GET /dashboard/active — see README "Real API contract" and
@@ -12,7 +15,19 @@ import { computePrediction, berthRiskFor } from "../lib/prediction";
  */
 export async function getActiveDashboard(): Promise<ActiveDashboardResponse | null> {
   if (!USE_MOCK_API) {
-    return apiFetch<ActiveDashboardResponse>(`/dashboard/active`);
+    const [visits, forecasts] = await Promise.all([getVesselVisits(), getPredictions()]);
+    const active = visits.find(v => ["Unloading", "Berthed", "Delayed"].includes(v.status));
+    if (!active) return null;
+    const p = forecasts[active.id];
+    if (!p) throw new Error("No forecast returned for the active visit");
+    const readings = await getReadings(active.id);
+    const latest = readings[readings.length - 1];
+    const risk = berthRiskFor(active, p, visits);
+    return {visit_id: active.id, vessel_name: active.name, status: active.status,
+      cargo_total_t: active.cargoTotalT, cargo_remaining_t: p.remainingT, progress_pct: p.progressPct,
+      effective_rate_tph: p.effectiveRateTph, estimated_unload_finish: p.eta?.toISOString() || null,
+      expected_berth_release: p.berthRelease?.toISOString() || null, next_vessel_eta: risk.nextEta?.toISOString() || null,
+      berth_risk: risk.risk, data_quality: p.dataQuality, last_update: latest?.timestamp.toISOString() || ""};
   }
   const vessels = await mock.getVesselVisits();
   const readings = await mock.getAllReadings();

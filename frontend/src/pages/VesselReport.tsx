@@ -1,27 +1,16 @@
 import { ArrowLeft, Printer } from "lucide-react";
 import type { AppData } from "../hooks/useAppData";
-import { fmtDateTime, fmtT, fmtTime, fmtTph, minutesBetween } from "../lib/format";
+import { fmtDateTime, fmtFullDateTime, fmtT, fmtTph, minutesBetween } from "../lib/format";
 import { Card } from "../components/ui/Layout";
 import { ErrorState } from "../components/ui/States";
 import StatusBadge from "../components/ui/StatusBadge";
 
 export default function VesselReport({ data, vesselId, back }: { data: AppData; vesselId: string | number; back: () => void }) {
-  const { vessels, delays, berths } = data;
-  const vessel = vessels.find(
-    (item) =>
-      String(item.id) === String(vesselId),
-  );
+  const { vessels, delays } = data;
+  const vessel = vessels.find((v) => v.id === vesselId);
+  if (!vessel) return <ErrorState onRetry={back} />;
 
-  if (!vessel) {
-    return <ErrorState onRetry={back} />;
-  }
-
-  const berth = berths.find(
-    (item) =>
-      String(item.id) === String(vessel.berthId),
-  );
-
-  const vesselDelays = delays[String(vessel.id)] || [];
+  const vesselDelays = delays[vessel.id] || [];
   const totalDelayMin = vesselDelays.reduce((s, d) => s + minutesBetween(d.start, d.end), 0);
   const turnaroundMin = vessel.actualArrival && vessel.unloadFinish ? minutesBetween(vessel.actualArrival, vessel.unloadFinish) : null;
   const unloadMin = vessel.unloadStart && vessel.unloadFinish ? minutesBetween(vessel.unloadStart, vessel.unloadFinish) : null;
@@ -49,17 +38,13 @@ export default function VesselReport({ data, vesselId, back }: { data: AppData; 
           </div>
           <div className="text-right">
             <div className="text-[11px] font-bold uppercase tracking-widest text-teal">Vessel summary report</div>
-            <div className="text-[11px] text-gray-500">
-              Generated {fmtDateTime(new Date())} EAT (UTC+3)
-            </div>
+            <div className="text-[11px] text-gray-500">Generated {fmtDateTime(new Date())} EAT (UTC+3)</div>
           </div>
         </div>
 
         <h2 className="text-2xl font-bold mb-1 text-ink">{vessel.name}</h2>
         <div className="text-sm mb-6 text-gray-500 flex items-center gap-2">
-          {vessel.reference} · {vessel.cargo} ·{" "}
-          {berth?.name || vessel.berthId} ·{" "}
-          <StatusBadge status={vessel.status} />
+          {vessel.reference} · {vessel.cargo} · {data.berths.find(b => b.id === vessel.berthId)?.name || vessel.berthId} · <StatusBadge status={vessel.status} />
         </div>
 
         <div className="grid sm:grid-cols-3 gap-5 mb-6">
@@ -68,19 +53,19 @@ export default function VesselReport({ data, vesselId, back }: { data: AppData; 
             <div className="text-sm space-y-1 text-ink">
               <div className="flex justify-between">
                 <span className="text-gray-500">Planned arrival</span>
-                <span className="tabular-nums">{fmtTime(vessel.plannedArrival)}</span>
+                <span className="tabular-nums">{fmtFullDateTime(vessel.plannedArrival)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Actual arrival</span>
-                <span className="tabular-nums">{fmtTime(vessel.actualArrival)}</span>
+                <span className="tabular-nums">{fmtFullDateTime(vessel.actualArrival)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Unload start</span>
-                <span className="tabular-nums">{fmtTime(vessel.unloadStart)}</span>
+                <span className="tabular-nums">{fmtFullDateTime(vessel.unloadStart)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Unload finish</span>
-                <span className="tabular-nums">{fmtTime(vessel.unloadFinish)}</span>
+                <span className="tabular-nums">{fmtFullDateTime(vessel.unloadFinish)}</span>
               </div>
             </div>
           </div>
@@ -149,8 +134,7 @@ export default function VesselReport({ data, vesselId, back }: { data: AppData; 
         </div>
 
         <div className="text-[11px] mt-6 pt-4 border-t border-line text-gray-500">
-          Smart Port Operations MVP-1 — decision-support report generated
-          from recorded operational data.
+          Illustrative data — Smart Port Operations MVP-1. Decision-support prototype; not a record of automated machinery control.
         </div>
         </div>
       </Card>

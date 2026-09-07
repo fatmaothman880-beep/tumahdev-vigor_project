@@ -99,6 +99,8 @@ def get_active_dashboard(
             VesselVisit.status.in_(
                 [
                     VisitStatus.ARRIVED,
+                    VisitStatus.BERTHED,
+                    VisitStatus.DELAYED,
                     VisitStatus.UNLOADING,
                 ]
             )

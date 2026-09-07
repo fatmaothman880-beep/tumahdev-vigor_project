@@ -1,4 +1,4 @@
-import { apiFetch, USE_MOCK_API } from "./client";
+import { apiFetch, apiList, USE_MOCK_API } from "./client";
 import * as mock from "../mock/mockServices";
 import type {
   DelayEvent,
@@ -12,14 +12,15 @@ import {
 function mapDelay(event: BackendDelay): DelayEvent {
   return {
     id: event.id,
+    ongoing: event.end_time === null,
     start: new Date(event.start_time),
     end: event.end_time
       ? new Date(event.end_time)
-      : new Date(event.start_time),
+      : new Date(),
     category: toDelayCategory(event.category),
     area: event.responsible_area || event.equipment || "—",
     description:
-      event.description || event.cause || "No description",
+      (event.end_time === null ? "Ongoing — " : "") + (event.description || event.cause || "No description"),
   };
 }
 
@@ -30,7 +31,7 @@ export async function getDelays(
     return mock.getDelays(vesselId);
   }
 
-  const events = await apiFetch<BackendDelay[]>(
+  const events = await apiList<BackendDelay>(
     `/visits/${encodeURIComponent(String(vesselId))}/delays`,
   );
 
@@ -53,7 +54,7 @@ export async function addDelay(
         start_time: data.start.toISOString(),
         end_time: data.end.toISOString(),
         category: data.category,
-        cause: data.description || data.category,
+        cause: (data.description || data.category).slice(0, 150),
         responsible_area: data.area || null,
         equipment:
           data.category === "Equipment"

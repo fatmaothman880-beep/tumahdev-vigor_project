@@ -1,19 +1,12 @@
-import type {
-  DelayEvent,
-  OperationalReading,
-  VesselStatus,
-  VesselVisit,
-} from "../types";
-import {
-  berths,
-  delaysByVessel,
-  eventsByVessel,
-  genId,
-  mk,
-  NOW,
-  readingsByVessel,
-  vessels,
-} from "./mockData";
+import type { DelayEvent, OperationalReading, VesselStatus, VesselVisit } from "../types";
+import { berths, delaysByVessel, eventsByVessel, genId, mk, readingsByVessel, vessels } from "./mockData";
+
+/**
+ * In-memory mock "database". Mirrors the shape the real FastAPI + PostgreSQL
+ * backend will eventually own (see README "Real API contract"). Every
+ * function below returns a Promise so swapping src/api's implementation for
+ * real fetch() calls later requires no changes in components or pages.
+ */
 
 let db = {
   vessels: [...vessels],
@@ -25,107 +18,68 @@ let db = {
 const delay = <T,>(value: T, ms = 220): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(value), ms));
 
-const clone = <T,>(value: T): T =>
-  JSON.parse(JSON.stringify(value)) as T;
+const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
 
-function reviveVessel(value: VesselVisit): VesselVisit {
+// Dates survive JSON round-trip as strings — revive every Date field we use.
+function reviveVessel(v: any): VesselVisit {
   return {
-    ...value,
-    plannedArrival: value.plannedArrival
-      ? new Date(value.plannedArrival)
-      : null,
-    actualArrival: value.actualArrival
-      ? new Date(value.actualArrival)
-      : null,
-    unloadStart: value.unloadStart
-      ? new Date(value.unloadStart)
-      : null,
-    unloadFinish: value.unloadFinish
-      ? new Date(value.unloadFinish)
-      : null,
-    etaOverride: value.etaOverride
-      ? new Date(value.etaOverride)
-      : null,
+    ...v,
+    registeredAt: v.registeredAt ? new Date(v.registeredAt) : null,
+    plannedArrival: v.plannedArrival ? new Date(v.plannedArrival) : null,
+    actualArrival: v.actualArrival ? new Date(v.actualArrival) : null,
+    plannedUnloadStart: v.plannedUnloadStart ? new Date(v.plannedUnloadStart) : null,
+    unloadStart: v.unloadStart ? new Date(v.unloadStart) : null,
+    plannedCompletion: v.plannedCompletion ? new Date(v.plannedCompletion) : null,
+    unloadFinish: v.unloadFinish ? new Date(v.unloadFinish) : null,
+    etaOverride: v.etaOverride ? new Date(v.etaOverride) : null,
   };
 }
 
-export async function getVesselVisits(
-  status?: VesselStatus,
-): Promise<VesselVisit[]> {
+export async function getVesselVisits(status?: VesselStatus): Promise<VesselVisit[]> {
   const list = db.vessels.map(reviveVessel);
-
-  return delay(
-    status
-      ? list.filter((vessel) => vessel.status === status)
-      : list,
-  );
+  return delay(status ? list.filter((v) => v.status === status) : list);
 }
 
-export async function getVesselVisit(
-  id: string | number,
-): Promise<VesselVisit | null> {
-  const vessel = db.vessels.find(
-    (item) => String(item.id) === String(id),
-  );
-
-  return delay(vessel ? reviveVessel(vessel) : null);
+export async function getVesselVisit(id: string | number): Promise<VesselVisit | null> {
+  const v = db.vessels.find((x) => x.id === id);
+  return delay(v ? reviveVessel(v) : null);
 }
 
-export async function getReadings(
-  id: string | number,
-): Promise<OperationalReading[]> {
-  const key = String(id);
-
-  const list = (db.readings[key] || []).map((reading) => ({
-    ...reading,
-    timestamp: new Date(reading.timestamp),
-  }));
-
+export async function getReadings(id: string | number): Promise<OperationalReading[]> {
+  const list = (db.readings[id] || []).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }));
   return delay(list);
 }
 
-export async function getDelays(
-  id: string | number,
-): Promise<DelayEvent[]> {
-  const key = String(id);
-
-  const list = (db.delays[key] || []).map((event) => ({
-    ...event,
-    start: new Date(event.start),
-    end: new Date(event.end),
-  }));
-
+export async function getDelays(id: string | number): Promise<DelayEvent[]> {
+  const list = (db.delays[id] || []).map((d) => ({ ...d, start: new Date(d.start), end: new Date(d.end) }));
   return delay(list);
 }
 
 export async function getEvents(id: string | number) {
-  const key = String(id);
-
-  const list = (db.events[key] || []).map((event) => ({
-    ...event,
-    time: new Date(event.time),
-  }));
-
+  const list = (db.events[id] || []).map((e) => ({ ...e, time: new Date(e.time) }));
   return delay(list);
 }
 
 export async function getAllReadings() {
   return delay(clone(db.readings));
 }
-
 export async function getAllDelays() {
   return delay(clone(db.delays));
 }
-
 export async function getAllEvents() {
   return delay(clone(db.events));
 }
-
 export async function getBerths() {
   return delay(clone(berths));
 }
 
+/**
+ * Planned/actual datetime fields arrive from <input type="datetime-local">
+ * as "YYYY-MM-DDTHH:MM" strings — the browser parses those as local time
+ * when handed straight to `new Date(...)`, which is what we want here.
+ */
 export interface CreateVesselVisitInput {
+  vesselId?: string;
   name: string;
   reference: string;
   cargo: string;
@@ -133,19 +87,15 @@ export interface CreateVesselVisitInput {
   berthId: string;
   status: VesselStatus;
   plannedArrival: string;
+  plannedUnloadStart?: string;
+  plannedCompletion?: string;
+  plannedRateTph?: number;
+  notes?: string;
 }
 
-export async function createVesselVisit(
-  data: CreateVesselVisitInput,
-): Promise<VesselVisit> {
+export async function createVesselVisit(data: CreateVesselVisitInput): Promise<VesselVisit> {
   const id = genId();
-  const key = String(id);
-  const [plannedHour, plannedMinute] = (
-    data.plannedArrival || "00:00"
-  )
-    .split(":")
-    .map(Number);
-
+  const now = new Date();
   const vessel: VesselVisit = {
     id,
     name: data.name,
@@ -154,75 +104,83 @@ export async function createVesselVisit(
     cargoTotalT: data.cargoTotalT,
     berthId: data.berthId,
     status: data.status,
-    plannedArrival: mk(plannedHour, plannedMinute),
-    actualArrival:
-      data.status !== "Planned" ? new Date(NOW) : null,
-    unloadStart:
-      data.status === "Unloading" ? new Date(NOW) : null,
+    registeredAt: now,
+    plannedArrival: data.plannedArrival ? new Date(data.plannedArrival) : null,
+    actualArrival: data.status !== "Planned" ? now : null,
+    plannedUnloadStart: data.plannedUnloadStart ? new Date(data.plannedUnloadStart) : null,
+    unloadStart: data.status === "Unloading" ? now : null,
+    plannedCompletion: data.plannedCompletion ? new Date(data.plannedCompletion) : null,
     unloadFinish: null,
+    plannedRateTph: data.plannedRateTph ?? null,
     nextVesselId: null,
     postUnloadBufferMin: 20,
+    notes: data.notes || "",
   };
-
   db.vessels = [...db.vessels, vessel];
-  db.events = {
-    ...db.events,
-    [key]: [
-      {
-        id: genId(),
-        time: new Date(NOW),
-        text: "Vessel visit created.",
-      },
-    ],
-  };
-
+  db.events = { ...db.events, [id]: [{ id: genId(), time: now, text: "Vessel visit registered." }] };
   return delay(vessel);
 }
 
-export async function updateVesselVisit(
-  id: string | number,
-  patch: Partial<VesselVisit>,
-): Promise<VesselVisit | null> {
+/**
+ * Editable planning fields for a vessel visit — used by the "Edit" action
+ * on planned (and not-yet-completed) visits. Deliberately a subset of
+ * VesselVisit: identity fields (id) and system-derived fields (registeredAt)
+ * are never edited here.
+ */
+export interface EditVesselVisitInput {
+  name: string;
+  reference: string;
+  cargo: string;
+  cargoTotalT: number;
+  berthId: string;
+  status: VesselStatus;
+  plannedArrival: string;
+  plannedUnloadStart: string;
+  plannedCompletion: string;
+  plannedRateTph?: number;
+  notes?: string;
+}
+
+export async function editVesselVisit(id: string | number, data: EditVesselVisitInput): Promise<VesselVisit | null> {
+  const patch: Partial<VesselVisit> = {
+    name: data.name,
+    reference: data.reference || "—",
+    cargo: data.cargo,
+    cargoTotalT: data.cargoTotalT,
+    berthId: data.berthId,
+    status: data.status,
+    plannedArrival: data.plannedArrival ? new Date(data.plannedArrival) : null,
+    plannedUnloadStart: data.plannedUnloadStart ? new Date(data.plannedUnloadStart) : null,
+    plannedCompletion: data.plannedCompletion ? new Date(data.plannedCompletion) : null,
+    plannedRateTph: data.plannedRateTph ?? null,
+    notes: data.notes || "",
+  };
+  const result = await updateVesselVisit(id, patch);
+  db.events = { ...db.events, [id]: [...(db.events[id] || []), { id: genId(), time: new Date(), text: "Vessel plan updated." }] };
+  return result;
+}
+
+export async function updateVesselVisit(id: string | number, patch: Partial<VesselVisit>): Promise<VesselVisit | null> {
   let updated: VesselVisit | null = null;
-
-  db.vessels = db.vessels.map((vessel) => {
-    if (String(vessel.id) !== String(id)) {
-      return vessel;
-    }
-
-    updated = {
-      ...vessel,
-      ...patch,
-    };
-
+  db.vessels = db.vessels.map((v) => {
+    if (v.id !== id) return v;
+    updated = { ...v, ...patch };
     return updated;
   });
-
   return delay(updated);
 }
 
-export async function completeVesselVisit(
-  id: string | number,
-): Promise<VesselVisit | null> {
-  const key = String(id);
+export async function completeVesselVisit(id: string | number): Promise<VesselVisit | null> {
+  const now = new Date();
+  const result = await updateVesselVisit(id, { status: "Completed", unloadFinish: now });
+  db.events = { ...db.events, [id]: [...(db.events[id] || []), { id: genId(), time: now, text: "Vessel visit completed." }] };
+  return result;
+}
 
-  const result = await updateVesselVisit(id, {
-    status: "Completed",
-    unloadFinish: new Date(NOW),
-  });
-
-  db.events = {
-    ...db.events,
-    [key]: [
-      ...(db.events[key] || []),
-      {
-        id: genId(),
-        time: new Date(NOW),
-        text: "Vessel visit completed.",
-      },
-    ],
-  };
-
+export async function cancelVesselVisit(id: string | number): Promise<VesselVisit | null> {
+  const now = new Date();
+  const result = await updateVesselVisit(id, { status: "Cancelled" });
+  db.events = { ...db.events, [id]: [...(db.events[id] || []), { id: genId(), time: now, text: "Vessel visit cancelled." }] };
   return result;
 }
 
@@ -231,39 +189,20 @@ export interface AddReadingInput {
   remainingT: number;
   observedRateTph: number;
   source: OperationalReading["source"];
+  notes?: string;
 }
 
-export async function addReading(
-  id: string | number,
-  data: AddReadingInput,
-): Promise<OperationalReading> {
-  const key = String(id);
-
-  const reading: OperationalReading = {
-    id: genId(),
-    timestamp: new Date(NOW),
-    ...data,
-  };
-
-  db.readings = {
-    ...db.readings,
-    [key]: [...(db.readings[key] || []), reading],
-  };
-
+export async function addReading(id: string | number, data: AddReadingInput): Promise<OperationalReading> {
+  const now = new Date();
+  const reading: OperationalReading = { id: genId(), timestamp: now, ...data };
+  db.readings = { ...db.readings, [id]: [...(db.readings[id] || []), reading] };
   db.events = {
     ...db.events,
-    [key]: [
-      ...(db.events[key] || []),
-      {
-        id: genId(),
-        time: new Date(NOW),
-        text:
-          `New operational reading logged ` +
-          `(${data.unloadedT.toLocaleString()} t unloaded).`,
-      },
+    [id]: [
+      ...(db.events[id] || []),
+      { id: genId(), time: now, text: `New operational reading logged (${data.unloadedT.toLocaleString()} t unloaded).` },
     ],
   };
-
   return delay(reading);
 }
 
@@ -275,43 +214,20 @@ export interface AddDelayInput {
   description: string;
 }
 
-export async function addDelay(
-  id: string | number,
-  data: AddDelayInput,
-): Promise<DelayEvent> {
-  const key = String(id);
-
-  const delayEvent: DelayEvent = {
-    id: genId(),
-    ...data,
-  };
-
-  db.delays = {
-    ...db.delays,
-    [key]: [...(db.delays[key] || []), delayEvent],
-  };
-
-  const minutes = Math.round(
-    (data.end.getTime() - data.start.getTime()) / 60000,
-  );
-
+export async function addDelay(id: string | number, data: AddDelayInput): Promise<DelayEvent> {
+  const delayEvent: DelayEvent = { id: genId(), ...data };
+  db.delays = { ...db.delays, [id]: [...(db.delays[id] || []), delayEvent] };
+  const mins = Math.round((data.end.getTime() - data.start.getTime()) / 60000);
   db.events = {
     ...db.events,
-    [key]: [
-      ...(db.events[key] || []),
-      {
-        id: genId(),
-        time: data.end,
-        text: `${data.category} delay recorded (${minutes} min).`,
-      },
-    ],
+    [id]: [...(db.events[id] || []), { id: genId(), time: data.end, text: `${data.category} delay confirmed (${mins} min).` }],
   };
-
   return delay(delayEvent);
 }
 
 export async function getHistory(): Promise<VesselVisit[]> {
-  return getVesselVisits("Completed");
+  const list = db.vessels.map(reviveVessel);
+  return delay(list.filter((v) => v.status === "Completed" || v.status === "Cancelled"));
 }
 
 export async function resetMockDb() {
@@ -322,3 +238,6 @@ export async function resetMockDb() {
     events: { ...eventsByVessel },
   };
 }
+
+// Re-exported so components needing a same-day clock time helper (e.g. quick demo forms) don't need to import mockData directly.
+export { mk };

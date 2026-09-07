@@ -9,6 +9,7 @@ from app.models.models import (
     OperationalReading,
     Prediction,
     VesselVisit,
+    VisitStatus,
 )
 from app.services.calculations import (
     calculate_berth_release,
@@ -96,7 +97,7 @@ def generate_prediction(
     effective_rate_tph = calculate_effective_rate(readings)
 
     estimated_finish = calculate_estimated_finish(
-        generated_at,
+        readings[-1].recorded_at if readings else generated_at,
         remaining_t,
         effective_rate_tph,
     )
@@ -110,6 +111,14 @@ def generate_prediction(
         readings,
         generated_at,
     )
+
+    if data_quality != DataQuality.VALID or (readings and readings[-1].unloading_status.value == "STOPPED"):
+        estimated_finish = None
+    if visit.status in (VisitStatus.CANCELLED, VisitStatus.DEPARTED, VisitStatus.DELAYED):
+        estimated_finish = None
+    if visit.status == VisitStatus.COMPLETED:
+        estimated_finish = visit.unload_end
+    expected_release = calculate_berth_release(estimated_finish, visit.post_unloading_minutes)
 
     prediction = Prediction(
         visit_id=visit.id,

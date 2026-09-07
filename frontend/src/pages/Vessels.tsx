@@ -1,26 +1,43 @@
 import { useState } from "react";
-import { AlertTriangle, CircleCheck, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import type { AppData } from "../hooks/useAppData";
+import type { OperationalModel } from "../hooks/useOperationalModel";
 import type { Page } from "../App";
 import type { VesselStatus } from "../types";
-import { computePrediction, berthRiskFor } from "../lib/prediction";
 import { fmtPct, fmtTime } from "../lib/format";
+import { PERIOD_LABEL, isWithinPeriod, type PeriodKey } from "../lib/periods";
 import { Card, PageHeader } from "../components/ui/Layout";
 import { EmptyState } from "../components/ui/States";
 import StatusBadge from "../components/ui/StatusBadge";
+import { RiskBadge } from "../components/ui/RiskBadge";
 
-const STATUSES: (VesselStatus | "All")[] = ["All", "Planned", "Arrived", "Berthed", "Unloading", "Delayed", "Completed"];
+const STATUSES: (VesselStatus | "All")[] = ["All", "Planned", "Arrived", "Berthed", "Unloading", "Delayed", "Completed", "Cancelled"];
+const PERIODS: PeriodKey[] = ["all", "today", "week", "month", "lastMonth", "year"];
 
-export default function Vessels({ data, go, openVessel }: { data: AppData; go: (p: Page) => void; openVessel: (id: string | number) => void }) {
+export default function Vessels({
+  data,
+  model,
+  now,
+  go,
+  openVessel,
+}: {
+  data: AppData;
+  model: OperationalModel;
+  now: Date;
+  go: (p: Page) => void;
+  openVessel: (id: string | number) => void;
+}) {
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<VesselStatus | "All">("All");
-  const { vessels, readings } = data;
-  const now = new Date();
+  const [period, setPeriod] = useState<PeriodKey>("all");
+  const { vessels } = data;
+  const { predictions, risks } = model;
 
   const filtered = vessels.filter((v) => {
     const matchesQ = !q || v.name.toLowerCase().includes(q.toLowerCase()) || v.reference.toLowerCase().includes(q.toLowerCase());
     const matchesStatus = statusFilter === "All" || v.status === statusFilter;
-    return matchesQ && matchesStatus;
+    const matchesPeriod = isWithinPeriod(v.registeredAt, period, now);
+    return matchesQ && matchesStatus && matchesPeriod;
   });
 
   return (
@@ -34,15 +51,28 @@ export default function Vessels({ data, go, openVessel }: { data: AppData; go: (
           </button>
         }
       />
-      <Card className="p-3 mb-4 flex flex-col sm:flex-row gap-2.5">
-        <div className="relative flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search by vessel name or reference…"
-            className="w-full rounded-lg pl-9 pr-3 py-2 text-sm outline-none bg-paper border border-line text-ink"
-          />
+      <Card className="p-3 mb-4 space-y-2.5">
+        <div className="flex flex-col sm:flex-row gap-2.5">
+          <div className="relative flex-1">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search by vessel name or reference…"
+              className="w-full rounded-lg pl-9 pr-3 py-2 text-sm outline-none bg-paper border border-line text-ink"
+            />
+          </div>
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value as PeriodKey)}
+            className="rounded-lg px-3 py-2 text-sm outline-none bg-paper border border-line text-ink-soft font-medium"
+          >
+            {PERIODS.map((p) => (
+              <option key={p} value={p}>
+                {PERIOD_LABEL[p]}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="flex gap-1.5 overflow-x-auto">
           {STATUSES.map((s) => (
@@ -61,10 +91,10 @@ export default function Vessels({ data, go, openVessel }: { data: AppData; go: (
 
       <Card>
         {filtered.length === 0 ? (
-          <EmptyState title="No vessel visits found" body="Try a different search or filter, or create a new vessel visit." actionLabel="New vessel visit" onAction={() => go("vessel-new")} />
+          <EmptyState title="No vessel visits found" body="Try a different search, status, or period, or create a new vessel visit." actionLabel="New vessel visit" onAction={() => go("vessel-new")} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[820px]">
+            <table className="w-full text-sm min-w-[860px]">
               <thead>
                 <tr className="text-left text-[11px] font-bold uppercase tracking-wide text-gray-500 border-b border-line">
                   <th className="px-4 py-3">Vessel</th>
@@ -79,12 +109,8 @@ export default function Vessels({ data, go, openVessel }: { data: AppData; go: (
               </thead>
               <tbody>
                 {filtered.map((v) => {
-                  const pred = computePrediction(v, readings, now);
-                  const risk = berthRiskFor(v, pred, vessels);
-                  const berth = data.berths.find(
-                    (item) =>
-                      String(item.id) === String(v.berthId),
-                  );
+                  const pred = predictions[v.id];
+                  const risk = risks[v.id];
                   return (
                     <tr key={v.id} onClick={() => openVessel(v.id)} className="cursor-pointer hover:bg-black/[0.02] transition-colors border-b border-line">
                       <td className="px-4 py-3 font-semibold text-ink">
@@ -92,9 +118,7 @@ export default function Vessels({ data, go, openVessel }: { data: AppData; go: (
                         <div className="text-[11px] font-normal text-gray-500">{v.reference}</div>
                       </td>
                       <td className="px-4 py-3 text-ink-soft">{v.cargo}</td>
-                      <td className="px-4 py-3 text-ink-soft">
-                        {berth?.name || v.berthId}
-                      </td>
+                      <td className="px-4 py-3 text-ink-soft">{data.berths.find(b => b.id === v.berthId)?.name || v.berthId}</td>
                       <td className="px-4 py-3">
                         <StatusBadge status={v.status} />
                       </td>
@@ -104,20 +128,8 @@ export default function Vessels({ data, go, openVessel }: { data: AppData; go: (
                       <td className="px-4 py-3 text-right tabular-nums font-medium text-ink">
                         {v.status === "Unloading" || v.status === "Berthed" ? fmtPct(pred.progressPct) : v.status === "Completed" ? "100.0%" : "—"}
                       </td>
-                      <td className="px-4 py-3 text-right tabular-nums text-ink">{pred.etaAvailable ? fmtTime(pred.eta) : "—"}</td>
-                      <td className="px-4 py-3">
-                        {risk.risk === "conflict" ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-danger">
-                            <AlertTriangle size={13} /> Conflict
-                          </span>
-                        ) : risk.risk === "low" ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-green-deep">
-                            <CircleCheck size={13} /> Low
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-500">—</span>
-                        )}
-                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-ink">{pred?.etaAvailable ? fmtTime(pred.eta) : "—"}</td>
+                      <td className="px-4 py-3">{risk ? <RiskBadge risk={risk} compact /> : <span className="text-xs text-gray-500">—</span>}</td>
                     </tr>
                   );
                 })}

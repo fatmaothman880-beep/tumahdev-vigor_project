@@ -1,4 +1,4 @@
-import { apiFetch, USE_MOCK_API } from "./client";
+import { apiFetch, apiList, USE_MOCK_API } from "./client";
 import * as mock from "../mock/mockServices";
 import type {
   EntityId,
@@ -40,7 +40,7 @@ export async function getReadings(
   const encodedId = encodeURIComponent(String(vesselId));
 
   const [backendReadings, visit] = await Promise.all([
-    apiFetch<BackendReading[]>(
+    apiList<BackendReading>(
       `/visits/${encodedId}/readings`,
     ),
     apiFetch<BackendVisit>(`/visits/${encodedId}`),
@@ -82,7 +82,7 @@ export async function addReading(
             ? "ACTIVE"
             : "STOPPED",
         packaging_status: null,
-        notes: null,
+        notes: data.notes || null,
       }),
     },
   );

@@ -19,6 +19,9 @@ export interface BackendVessel {
 }
 
 export interface BackendVisit {
+  planned_unload_start: string | null;
+  planned_completion: string | null;
+  planned_rate_tph: string | number | null;
   id: string;
   vessel_id: string;
   berth_id: string;
@@ -106,9 +109,10 @@ export function toBackendStatus(status: VesselStatus): string {
   const statuses: Record<VesselStatus, string> = {
     Planned: "PLANNED",
     Arrived: "ARRIVED",
-    Berthed: "ARRIVED",
+    Berthed: "BERTHED",
     Unloading: "UNLOADING",
-    Delayed: "CANCELLED",
+    Delayed: "DELAYED",
+    Cancelled: "CANCELLED",
     Completed: "COMPLETED",
   };
 
@@ -122,7 +126,9 @@ export function toFrontendStatus(status: string): VesselStatus {
     UNLOADING: "Unloading",
     COMPLETED: "Completed",
     DEPARTED: "Completed",
-    CANCELLED: "Delayed",
+    CANCELLED: "Cancelled",
+    BERTHED: "Berthed",
+    DELAYED: "Delayed",
   };
 
   return statuses[status] ?? "Planned";
@@ -134,6 +140,11 @@ export function mapVisit(
 ): VesselVisit {
   return {
     id: visit.id,
+    registeredAt: toDate(visit.created_at),
+    plannedUnloadStart: toDate(visit.planned_unload_start),
+    plannedCompletion: toDate(visit.planned_completion),
+    plannedRateTph: visit.planned_rate_tph == null ? null : toNumber(visit.planned_rate_tph),
+    notes: visit.notes || "",
     name: vessel.name,
     reference: vessel.imo_reference || "—",
     cargo: visit.cargo_type,
@@ -185,6 +196,7 @@ export function mapReading(
 
   return {
     id: reading.id,
+    notes: reading.notes || "",
     timestamp: new Date(reading.recorded_at),
     source: toFrontendReadingSource(reading.source),
     unloadedT,
