@@ -1,0 +1,6 @@
+{
+  "name": "Vigor Smart Port Operations",
+  "description": "Vessel Operations & Berth Intelligence System for Vigor Cement Works · Zanzibar",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-ink: #14181A;
+    --color-ink-soft: #3F4A47;
+    --color-paper: #F7F5F0;
+    --color-line: #E1DED4;
+    --color-line-strong: #C9C4B6;
+    --color-vigor-green: #0C9349;
+    --color-vigor-green-deep: #0A7A3D;
+    --color-vigor-green-tint: #E7F4EB;
+    --color-teal: #0E7C86;
+    --color-teal-tint: #E4F1F2;
+    --color-sand: #C99A5B;
+    --color-sand-tint: #F4EBDB;
+    --color-amber: #B5760F;
+    --color-amber-tint: #FBF0DD;
+    --color-danger: #AE3B2E;
+    --color-danger-tint: #F8E7E3;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  code, kbd, samp, pre, .font-mono {
+    font-family: 'IBM Plex Mono', monospace, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
+  }
+}
+
+/* Custom scrollbars for high data density operational panels */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #C9C4B6;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3F4A47;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}
