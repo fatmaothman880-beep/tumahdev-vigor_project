@@ -29,6 +29,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { calculatePaymentAccountTotals } from '../lib/paymentEngine';
+import { OverdueTasks } from '../components/ui/OverdueTasks';
 
 interface DashboardProps {
   onSelectVessel: (vesselId: string) => void;
@@ -117,7 +118,9 @@ export function Dashboard({
           subtext="100% fleet operational"
           icon={<Ship className="w-5 h-5" />}
           variant="success"
-        />
+      />
+
+      <OverdueTasks onSelectVessel={onSelectVessel} />
         <KpiCard
           label="Currently Unloading"
           value={currentlyUnloadingCount}

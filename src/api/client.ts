@@ -567,10 +567,11 @@ class ApiClient {
           };
         }
         this.stateRevision = remoteState.revision;
-      } else {
-        // First integrated run: enrich the frontend baseline with normalized
-        // backend master data, then establish the durable state document.
-        if (vessels.status === 'fulfilled' && Array.isArray(vessels.value) && vessels.value.length > 0) {
+      }
+
+      // Always merge backend master data. A previously persisted state must
+      // not hide vessels or berths added later by site configuration.
+      if (vessels.status === 'fulfilled' && Array.isArray(vessels.value) && vessels.value.length > 0) {
           const existingVessels = this.store.vessels;
           const additions = vessels.value
             .map(adaptBackendVessel)
@@ -584,8 +585,8 @@ class ApiClient {
                 )
             );
           this.store.vessels = [...existingVessels, ...additions];
-        }
-        if (berths.status === 'fulfilled' && Array.isArray(berths.value) && berths.value.length > 0) {
+      }
+      if (berths.status === 'fulfilled' && Array.isArray(berths.value) && berths.value.length > 0) {
           const existingBerths = this.store.berths;
           const additions = berths.value
             .map(adaptBackendBerth)
@@ -598,7 +599,11 @@ class ApiClient {
                 )
             );
           this.store.berths = [...existingBerths, ...additions];
-        }
+      }
+
+      if (!remoteState?.state) {
+        // First integrated run: establish the durable state document after
+        // adding normalized backend master data.
         if (operationalState.status === 'fulfilled') {
           this.stateRevision = operationalState.value.revision;
           await this.persistOperationalState();

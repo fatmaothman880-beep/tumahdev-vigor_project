@@ -5,6 +5,7 @@ import { StatusBadge, OperationsHealthBadge, DataQualityBadge } from '../compone
 import { formatTonnage, formatDateTime } from '../lib/format';
 import { Ship, Plus, Search, ArrowRight, Anchor, Navigation } from 'lucide-react';
 import { Vessel } from '../types';
+import { SiteRegistry } from '../components/ui/SiteRegistry';
 
 interface VesselsProps {
   onSelectVessel: (vesselId: string) => void;
@@ -72,6 +73,8 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
           Add Vessel Visit / Fleet Vessel
         </button>
       </PageHeader>
+
+      <SiteRegistry />
 
       {/* Fleet KPI overview */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -161,7 +164,7 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
                       <div className="text-[10px]">MMSI {vessel.mmsi || 'N/A'}</div>
                     </td>
                     <td className="py-3 px-4 font-mono font-semibold text-[#14181A]">
-                      {formatTonnage(vessel.capacityT)}
+                      {vessel.capacityT > 0 ? formatTonnage(vessel.capacityT) : 'Not verified'}
                     </td>
                     <td className="py-3 px-4 font-mono text-[#3F4A47]">
                       {voyage ? (

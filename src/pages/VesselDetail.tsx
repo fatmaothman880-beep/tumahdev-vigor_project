@@ -12,6 +12,7 @@ import {
 } from '../components/ui/StatusBadge';
 import { DualProgress, ProgressBar } from '../components/ui/DualProgress';
 import { VesselCycleTimeline } from '../components/ui/VesselCycleTimeline';
+import { OperationalChecklist } from '../components/ui/OperationalChecklist';
 import {
   formatCurrency,
   formatDateTime,
@@ -256,6 +257,12 @@ export function VesselDetail({
 
       {/* Full Vessel Cycle Timeline */}
       {voyage && <VesselCycleTimeline voyage={voyage} />}
+
+      <OperationalChecklist
+        vesselId={vessel.id}
+        visitId={voyage?.id}
+        readOnly={voyage?.status === 'COMPLETED'}
+      />
 
       {/* 2-Column Core Operational Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
