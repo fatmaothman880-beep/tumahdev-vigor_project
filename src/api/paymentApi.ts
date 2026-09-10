@@ -4,7 +4,7 @@
  */
 
 import { PaymentAccount, PaymentTransaction } from '../types';
-import { USE_MOCK_API } from './client';
+import { apiFetch, BackendOperationalStateEnvelope, USE_MOCK_API } from './client';
 
 export interface RecordTransactionDto {
   paymentAccountId: string;
@@ -22,10 +22,12 @@ export interface RecordTransactionDto {
 
 export async function getPaymentAccounts(): Promise<PaymentAccount[]> {
   if (USE_MOCK_API) return [];
-  return [];
+  const response = await apiFetch<BackendOperationalStateEnvelope>('/operations/state');
+  return response.state?.paymentAccounts ?? [];
 }
 
 export async function getPaymentTransactions(): Promise<PaymentTransaction[]> {
   if (USE_MOCK_API) return [];
-  return [];
+  const response = await apiFetch<BackendOperationalStateEnvelope>('/operations/state');
+  return response.state?.paymentTransactions ?? [];
 }

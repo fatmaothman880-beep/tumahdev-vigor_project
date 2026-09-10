@@ -3,9 +3,10 @@
  */
 
 import { Voyage } from '../types';
-import { USE_MOCK_API } from './client';
+import { apiFetch, BackendOperationalStateEnvelope, USE_MOCK_API } from './client';
 
 export async function getVoyages(): Promise<Voyage[]> {
   if (USE_MOCK_API) return [];
-  return [];
+  const response = await apiFetch<BackendOperationalStateEnvelope>('/operations/state');
+  return response.state?.voyages ?? [];
 }

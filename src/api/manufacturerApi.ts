@@ -4,9 +4,10 @@
  */
 
 import { ManufacturerQueueEntry } from '../types';
-import { USE_MOCK_API } from './client';
+import { apiFetch, BackendOperationalStateEnvelope, USE_MOCK_API } from './client';
 
 export async function getManufacturerQueue(): Promise<ManufacturerQueueEntry[]> {
   if (USE_MOCK_API) return [];
-  return [];
+  const response = await apiFetch<BackendOperationalStateEnvelope>('/operations/state');
+  return response.state?.manufacturerQueue ?? [];
 }

@@ -140,6 +140,13 @@ export async function apiFetch<T>(
       } else {
         errorMsg = JSON.stringify(detail);
       }
+    } else if (responseData && typeof responseData === 'object' && 'error' in responseData) {
+      const backendError = (responseData as { error?: { message?: unknown } }).error;
+      if (typeof backendError?.message === 'string') {
+        errorMsg = backendError.message;
+      } else if (backendError?.message) {
+        errorMsg = JSON.stringify(backendError.message);
+      }
     }
 
     throw new ApiError(errorMsg, response.status, responseData);
@@ -177,12 +184,37 @@ export interface AppStore {
   connectionInfo: ConnectionInfo;
 }
 
+export type PersistedOperationalState = Pick<
+  AppStore,
+  | 'vessels'
+  | 'berths'
+  | 'voyages'
+  | 'fuelOperations'
+  | 'paymentAccounts'
+  | 'paymentTransactions'
+  | 'vesselPositions'
+  | 'manufacturerQueue'
+  | 'operationalReadings'
+  | 'delayEvents'
+  | 'systemSettings'
+>;
+
+export interface BackendOperationalStateEnvelope {
+  state: Partial<PersistedOperationalState> | null;
+  revision: number;
+  updated_at: string | null;
+}
+
 type Listener = () => void;
 
 class ApiClient {
   private store: AppStore;
   private listeners: Set<Listener> = new Set();
   private healthIntervalId: number | null = null;
+  private stateSyncTimerId: number | null = null;
+  private stateRevision = 0;
+  private stateSyncInFlight = false;
+  private stateSyncPending = false;
 
   constructor() {
     this.store = this.loadFromStorage();
@@ -237,13 +269,96 @@ class ApiClient {
     };
   }
 
-  private saveToStorage(): void {
+  private saveToStorage(syncBackend = true): void {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.store));
     } catch {
       // Quota exceeded
     }
     this.notify();
+    if (syncBackend) {
+      this.queueBackendStateSync();
+    }
+  }
+
+  private getPersistedOperationalState(): PersistedOperationalState {
+    const {
+      vessels,
+      berths,
+      voyages,
+      fuelOperations,
+      paymentAccounts,
+      paymentTransactions,
+      vesselPositions,
+      manufacturerQueue,
+      operationalReadings,
+      delayEvents,
+      systemSettings,
+    } = this.store;
+    return {
+      vessels,
+      berths,
+      voyages,
+      fuelOperations,
+      paymentAccounts,
+      paymentTransactions,
+      vesselPositions,
+      manufacturerQueue,
+      operationalReadings,
+      delayEvents,
+      systemSettings,
+    };
+  }
+
+  private queueBackendStateSync(): void {
+    if (
+      USE_MOCK_API ||
+      this.store.connectionInfo.apiHealth !== 'healthy' ||
+      typeof window === 'undefined'
+    ) {
+      return;
+    }
+    if (this.stateSyncTimerId !== null) {
+      window.clearTimeout(this.stateSyncTimerId);
+    }
+    this.stateSyncTimerId = window.setTimeout(() => {
+      this.stateSyncTimerId = null;
+      void this.persistOperationalState();
+    }, 500);
+  }
+
+  private async persistOperationalState(): Promise<void> {
+    if (this.stateSyncInFlight) {
+      this.stateSyncPending = true;
+      return;
+    }
+    this.stateSyncInFlight = true;
+    try {
+      const response = await apiFetch<BackendOperationalStateEnvelope>('/operations/state', {
+        method: 'PUT',
+        body: JSON.stringify({
+          state: this.getPersistedOperationalState(),
+          expected_revision: this.stateRevision,
+        }),
+      });
+      this.stateRevision = response.revision;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        this.store.connectionInfo.errorMessage =
+          'A newer operations update exists on the server. Refresh before editing again.';
+        this.notify();
+      } else {
+        this.store.connectionInfo.errorMessage =
+          'The API is online, but the latest operations update could not be saved.';
+        this.notify();
+      }
+    } finally {
+      this.stateSyncInFlight = false;
+      if (this.stateSyncPending) {
+        this.stateSyncPending = false;
+        this.queueBackendStateSync();
+      }
+    }
   }
 
   public subscribe(listener: Listener): () => void {
@@ -410,54 +525,114 @@ class ApiClient {
       await this.syncFromBackend();
     }
 
-    this.saveToStorage();
+    this.saveToStorage(false);
     return this.store.connectionInfo;
   }
 
   public async syncFromBackend(): Promise<void> {
     try {
-      const [vessels, berths, dashboard] = await Promise.allSettled([
+      const [operationalState, vessels, berths, dashboard] = await Promise.allSettled([
+        apiFetch<BackendOperationalStateEnvelope>('/operations/state'),
         apiFetch<any[]>('/vessels?limit=50'),
         apiFetch<any[]>('/berths?limit=50'),
         apiFetch<any>('/dashboard/active'),
       ]);
 
-      if (vessels.status === 'fulfilled' && Array.isArray(vessels.value) && vessels.value.length > 0) {
-        const mappedVessels = vessels.value.map(adaptBackendVessel);
-        // Merge with existing vessels
-        this.store.vessels = mappedVessels;
-      }
-
-      if (berths.status === 'fulfilled' && Array.isArray(berths.value) && berths.value.length > 0) {
-        const mappedBerths = berths.value.map(adaptBackendBerth);
-        this.store.berths = mappedBerths;
+      const remoteState =
+        operationalState.status === 'fulfilled' ? operationalState.value : null;
+      if (remoteState?.state) {
+        const state = remoteState.state;
+        const arrayKeys: Array<keyof PersistedOperationalState> = [
+          'vessels',
+          'berths',
+          'voyages',
+          'fuelOperations',
+          'paymentAccounts',
+          'paymentTransactions',
+          'vesselPositions',
+          'manufacturerQueue',
+          'operationalReadings',
+          'delayEvents',
+        ];
+        for (const key of arrayKeys) {
+          const value = state[key];
+          if (Array.isArray(value)) {
+            (this.store[key] as unknown[]) = value;
+          }
+        }
+        if (state.systemSettings && typeof state.systemSettings === 'object') {
+          this.store.systemSettings = {
+            ...this.store.systemSettings,
+            ...state.systemSettings,
+          };
+        }
+        this.stateRevision = remoteState.revision;
+      } else {
+        // First integrated run: enrich the frontend baseline with normalized
+        // backend master data, then establish the durable state document.
+        if (vessels.status === 'fulfilled' && Array.isArray(vessels.value) && vessels.value.length > 0) {
+          const existingVessels = this.store.vessels;
+          const additions = vessels.value
+            .map(adaptBackendVessel)
+            .filter(
+              (candidate) =>
+                !existingVessels.some(
+                  (current) =>
+                    current.id === candidate.id ||
+                    current.name.toLowerCase() === candidate.name.toLowerCase() ||
+                    (current.imo && candidate.imo && current.imo === candidate.imo)
+                )
+            );
+          this.store.vessels = [...existingVessels, ...additions];
+        }
+        if (berths.status === 'fulfilled' && Array.isArray(berths.value) && berths.value.length > 0) {
+          const existingBerths = this.store.berths;
+          const additions = berths.value
+            .map(adaptBackendBerth)
+            .filter(
+              (candidate) =>
+                !existingBerths.some(
+                  (current) =>
+                    current.id === candidate.id ||
+                    current.name.toLowerCase() === candidate.name.toLowerCase()
+                )
+            );
+          this.store.berths = [...existingBerths, ...additions];
+        }
+        if (operationalState.status === 'fulfilled') {
+          this.stateRevision = operationalState.value.revision;
+          await this.persistOperationalState();
+        }
       }
 
       if (dashboard.status === 'fulfilled' && dashboard.value) {
         this.store.connectionInfo.backendActiveDashboard = dashboard.value;
 
-        // Synchronize active visit stats into V01 voyage if applicable
+        // Synchronize the normalized active visit into its matching full-cycle
+        // voyage. Keep the original demo fallback for a newly initialized site.
         const activeDash = dashboard.value;
-        const v01Voyage = this.store.voyages.find((v) => v.id === 'voy-01');
-        if (v01Voyage && activeDash.unloaded_t !== undefined) {
-          v01Voyage.unloadedTonnes = Number(activeDash.unloaded_t) || v01Voyage.unloadedTonnes;
+        const activeVoyage =
+          this.store.voyages.find((v) => v.id === activeDash.visit_id) ||
+          this.store.voyages.find((v) => v.id === 'voy-01');
+        if (activeVoyage && activeDash.unloaded_t !== undefined) {
+          activeVoyage.unloadedTonnes = Number(activeDash.unloaded_t) || activeVoyage.unloadedTonnes;
           if (activeDash.unloading_rate_tph) {
-            v01Voyage.unloadingRateTph = Number(activeDash.unloading_rate_tph);
+            activeVoyage.unloadingRateTph = Number(activeDash.unloading_rate_tph);
           }
           if (activeDash.estimated_unload_finish) {
-            v01Voyage.forecastUnloadEnd = activeDash.estimated_unload_finish;
+            activeVoyage.forecastUnloadEnd = activeDash.estimated_unload_finish;
           }
           if (activeDash.expected_berth_release) {
-            v01Voyage.expectedBerthRelease = activeDash.expected_berth_release;
+            activeVoyage.expectedBerthRelease = activeDash.expected_berth_release;
           }
           if (activeDash.berth_conflict !== undefined) {
-            v01Voyage.berthConflict = activeDash.berth_conflict;
+            activeVoyage.berthConflict = activeDash.berth_conflict;
           }
         }
       }
 
       this.recalculateAll();
-      this.saveToStorage();
+      this.saveToStorage(false);
     } catch {
       // Sync error - keep local cache
     }

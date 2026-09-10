@@ -4,7 +4,7 @@
  */
 
 import { FuelOperation } from '../types';
-import { apiFetch, USE_MOCK_API } from './client';
+import { apiFetch, BackendOperationalStateEnvelope, USE_MOCK_API } from './client';
 
 export interface UpdateFuelScheduleDto {
   scheduledStart: string;
@@ -16,6 +16,6 @@ export async function getFuelOperations(): Promise<FuelOperation[]> {
   if (USE_MOCK_API) {
     return [];
   }
-  // Currently served via client storage / future endpoint
-  return [];
+  const response = await apiFetch<BackendOperationalStateEnvelope>('/operations/state');
+  return response.state?.fuelOperations ?? [];
 }
