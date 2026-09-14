@@ -1,3 +1,4 @@
+import { rotationInPeriod, RotationPeriod } from '../lib/rotationPeriod';
 import React, { useState } from 'react';
 import { useAppData } from '../hooks/useAppData';
 import { PageHeader, KpiCard, Modal } from '../components/ui/KpiCard';
@@ -15,18 +16,24 @@ interface VoyagesProps {
 }
 
 export function Voyages({ onSelectVessel }: VoyagesProps) {
-  const { voyages, vessels, api } = useAppData();
+  const { voyages, vessels, manufacturers = [], api } = useAppData();
   const [filter, setFilter] = useState<'ALL' | 'ACTIVE' | 'COMPLETED'>('ALL');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  const [period, setPeriod] = useState<RotationPeriod>('DAY');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [manufacturerId, setManufacturerId] = useState('mtwara');
 
   // New Voyage form
   const [vesselId, setVesselId] = useState('v-01');
   const [voyageNum, setVoyageNum] = useState('VG-2026-085');
-  const [origin, setOrigin] = useState('Tanga Port');
-  const [destination, setDestination] = useState('VIGOR Berth B01 (Zanzibar)');
+  const [origin, setOrigin] = useState('Mtwara Cement Factory');
+  const [destination, setDestination] = useState('Mangapwani Berth');
   const [plannedCargo, setPlannedCargo] = useState('9500');
 
   const filteredVoyages = voyages.filter((v) => {
+    if (!rotationInPeriod(v.cycleStart || v.plannedUnloadStart, period, new Date(), from, to)) return false;
     if (filter === 'ACTIVE') return v.status === 'ACTIVE';
     if (filter === 'COMPLETED') return v.status === 'COMPLETED';
     return true;
@@ -58,7 +65,21 @@ export function Voyages({ onSelectVessel }: VoyagesProps) {
       postUnloadBufferHours: 1.5,
       expectedBerthRelease: new Date(new Date(plannedUnload).getTime() + 1.5 * 3600000).toISOString(),
       assignedBerthId: 'B01',
-      manufacturerName: 'Tanga Cement PLC (Mamba Wharf)',
+      manufacturerId,
+      manufacturerName: manufacturers.find(m => m.id === manufacturerId)?.name || 'Mtwara Cement Factory',
+      cycleStart: now.toISOString(),
+      fuelRequired: false,
+      outboundDeparturePlanned: plannedUnload,
+      outboundDepartureForecast: plannedUnload,
+      manufacturerSlotPlanned: mfrEta,
+      manufacturerLoadingEndForecast: new Date(now.getTime() + 60 * 3600000).toISOString(),
+      manufacturerDeparturePlanned: new Date(now.getTime() + 62 * 3600000).toISOString(),
+      manufacturerDepartureForecast: new Date(now.getTime() + 62 * 3600000).toISOString(),
+      returnEtaPlanned: new Date(now.getTime() + 94 * 3600000).toISOString(),
+      returnEtaForecast: new Date(now.getTime() + 94 * 3600000).toISOString(),
+      blockerDescription: '',
+      berthConflict: false,
+      predictedAnchorageWaitHours: 0,
       manufacturerEtaPlanned: mfrEta,
       manufacturerEtaForecast: mfrEta,
       manufacturerSlotForecast: new Date(new Date(mfrEta).getTime() + 12 * 3600000).toISOString(),
@@ -88,6 +109,13 @@ export function Voyages({ onSelectVessel }: VoyagesProps) {
         </button>
       </PageHeader>
 
+      <div className="flex flex-wrap items-center gap-3 text-xs">
+        <label>Rotation period <select aria-label="Rotation period" value={period} onChange={e => setPeriod(e.target.value as RotationPeriod)} className="p-2 border rounded-lg bg-white">
+          <option value="DAY">Today</option><option value="WEEK">This week</option><option value="MONTH">This month</option><option value="YEAR">This year</option><option value="ALL">All time</option><option value="CUSTOM">Custom dates</option>
+        </select></label>
+        {period === 'CUSTOM' && <><label>From <input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label><label>To <input type="date" min={from} value={to} onChange={e => setTo(e.target.value)} /></label></>}
+        <span>{filteredVoyages.length} rotations · cycle start date · EAT (week starts Monday)</span>
+      </div>
       {/* Filter tabs */}
       <div className="flex items-center gap-2">
         {(['ALL', 'ACTIVE', 'COMPLETED'] as const).map((tab) => (
@@ -107,6 +135,7 @@ export function Voyages({ onSelectVessel }: VoyagesProps) {
 
       {/* Voyage Cards List */}
       <div className="space-y-4">
+        {filteredVoyages.length === 0 && <p className="p-6 bg-white border rounded-xl text-sm">No rotations match this period and status.</p>}
         {filteredVoyages.map((voyage) => (
           <div
             key={voyage.id}
@@ -146,7 +175,7 @@ export function Voyages({ onSelectVessel }: VoyagesProps) {
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[#3F4A47] uppercase block font-sans">Berth B01 Release</span>
+                  <span className="text-[10px] text-[#3F4A47] uppercase block font-sans">Mangapwani Berth Release</span>
                   <span className="font-semibold text-[#14181A]">
                     {formatTime(voyage.expectedBerthRelease)}
                   </span>
@@ -186,6 +215,11 @@ export function Voyages({ onSelectVessel }: VoyagesProps) {
             </select>
           </div>
 
+          <label className="block font-semibold">Manufacturer / Works
+            <select value={manufacturerId} onChange={e => { setManufacturerId(e.target.value); setOrigin(manufacturers.find(m => m.id === e.target.value)?.works || ''); }} className="w-full p-2 border rounded-lg">
+              {manufacturers.map(m => <option key={m.id} value={m.id}>{m.name} · {m.works}</option>)}
+            </select>
+          </label>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-[#14181A] mb-1">Voyage Number *</label>

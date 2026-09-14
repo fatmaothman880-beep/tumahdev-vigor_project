@@ -5,7 +5,6 @@ import {
   Ship,
   Anchor,
   Route,
-  MapPinned,
   Factory,
   Fuel,
   CreditCard,
@@ -24,7 +23,6 @@ export type NavPageId =
   | 'vessel-detail'
   | 'berths'
   | 'voyages'
-  | 'tracking'
   | 'manufacturer-queue'
   | 'fuel'
   | 'payments'
@@ -72,9 +70,8 @@ export function Sidebar({
       title: 'OPERATIONS',
       items: [
         { id: 'vessels', label: 'Vessels', icon: <Ship className="w-4 h-4" /> },
-        { id: 'berths', label: 'VIGOR Berth', icon: <Anchor className="w-4 h-4" /> },
+        { id: 'berths', label: 'Mangapwani Berth', icon: <Anchor className="w-4 h-4" /> },
         { id: 'voyages', label: 'Voyages', icon: <Route className="w-4 h-4" /> },
-        { id: 'tracking', label: 'Live Tracking', icon: <MapPinned className="w-4 h-4" /> },
         { id: 'manufacturer-queue', label: 'Manufacturer Queue', icon: <Factory className="w-4 h-4" /> },
         { id: 'fuel', label: 'Fuel / Oil', icon: <Fuel className="w-4 h-4" /> },
       ],

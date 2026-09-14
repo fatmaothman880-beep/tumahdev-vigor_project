@@ -8,7 +8,6 @@ import { Vessels } from './pages/Vessels';
 import { VesselDetail } from './pages/VesselDetail';
 import { Berths } from './pages/Berths';
 import { Voyages } from './pages/Voyages';
-import { Tracking } from './pages/Tracking';
 import { ManufacturerQueue } from './pages/ManufacturerQueue';
 import { Fuel } from './pages/Fuel';
 import { Payments } from './pages/Payments';
@@ -41,11 +40,9 @@ export function App() {
       case 'vessel-detail':
         return 'Single-Vessel Control Centre';
       case 'berths':
-        return 'VIGOR Berth Operations';
+        return 'Mangapwani Berth Operations';
       case 'voyages':
         return 'Voyage Rotations';
-      case 'tracking':
-        return 'Live Vessel Tracking';
       case 'manufacturer-queue':
         return 'Manufacturer Queue & Loading Slots';
       case 'fuel':
@@ -131,9 +128,6 @@ export function App() {
             <Voyages onSelectVessel={handleSelectVessel} />
           )}
 
-          {currentPage === 'tracking' && (
-            <Tracking onSelectVessel={handleSelectVessel} />
-          )}
 
           {currentPage === 'manufacturer-queue' && (
             <ManufacturerQueue

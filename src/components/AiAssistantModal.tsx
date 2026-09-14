@@ -40,7 +40,7 @@ export function AiAssistantModal({
 
   const quickPrompts = [
     'Why is MV VIGOR 03 delayed at Berth B01?',
-    'What happens if we wire the Tanga Cement balance now?',
+    'What happens if we wire the Mtwara Cement Factory balance now?',
     'How can we eliminate the 2.7h anchorage idle time?',
     'Summarize current fleet cycle status for management.',
   ];
@@ -67,7 +67,7 @@ export function AiAssistantModal({
           { label: 'Inspect MV VIGOR 03', onClick: () => { onClose(); onSelectVessel('v-03'); } },
         ];
       } else if (lower.includes('tanga') || lower.includes('payment') || lower.includes('wire')) {
-        reply = `**Tanga Cement Payment Gate Status:**\n\n• Invoice total: TZS 500,000,000.\n• Currently cleared: TZS 300,000,000 (60%).\n• **Remaining balance due: TZS 200,000,000** before tomorrow 17:00 EAT.\n• Because payment is under the 100% threshold, Tanga Cement has **withheld confirmed slot scheduling** for MV VIGOR 01. Once the wire transaction is cleared, the system will instantly flag eligibility as confirmed.`;
+        reply = `**Mtwara Cement Factory Payment Gate Status:**\n\n• Invoice total: TZS 500,000,000.\n• Currently cleared: TZS 300,000,000 (60%).\n• **Remaining balance due: TZS 200,000,000** before tomorrow 17:00 EAT.\n• Because payment is under the 100% threshold, Mtwara Cement Factory has **withheld confirmed slot scheduling** for MV VIGOR 01. Once the wire transaction is cleared, the system will instantly flag eligibility as confirmed.`;
         actions = [
           { label: 'Record Wire Payment', onClick: () => { onClose(); onNavigateToPayments(); } },
         ];
@@ -77,7 +77,7 @@ export function AiAssistantModal({
           { label: 'View Scenario Controls in Admin', onClick: () => { onClose(); } },
         ];
       } else {
-        reply = `**Fleet Operations Summary:**\n• **MV VIGOR 01**: Discharging at B01 (72% unloaded, rate 605 t/h). Release forecast: **${formatTime(v1?.expectedBerthRelease)}**.\n• **MV VIGOR 02**: Northbound in Pemba Channel at 10.8 kts. ETA Tanga tomorrow morning. 100% paid.\n• **MV VIGOR 03**: Southbound returning to Zanzibar laden with 9,400T cement. Berth conflict detected (+${formatHoursAndMinutes(v3?.predictedAnchorageWaitHours || 2.7)} anchorage wait).`;
+        reply = `**Fleet Operations Summary:**\n• **MV VIGOR 01**: Discharging at B01 (72% unloaded, rate 605 t/h). Release forecast: **${formatTime(v1?.expectedBerthRelease)}**.\n• **MV VIGOR 02**: Northbound in Pemba Channel at 10.8 kts. ETA Mtwara tomorrow morning. 100% paid.\n• **MV VIGOR 03**: Southbound returning to Zanzibar laden with 9,400T cement. Berth conflict detected (+${formatHoursAndMinutes(v3?.predictedAnchorageWaitHours || 2.7)} anchorage wait).`;
         actions = [
           { label: 'Open Control Tower', onClick: () => { onClose(); } },
         ];

@@ -163,7 +163,7 @@ export function Dashboard({
             <div className="text-lg font-mono font-bold text-[#14181A]">{atMfrCount} vessel</div>
           </div>
           <span className="text-xs font-mono text-[#B5760F] bg-[#FBF0DD] px-2 py-0.5 rounded">
-            Tanga Port
+            Mtwara Port
           </span>
         </div>
         <div className="bg-white border border-[#E1DED4] rounded-lg p-3 flex items-center justify-between">
@@ -237,7 +237,7 @@ export function Dashboard({
                   <StatusBadge stage="SAILING_TO_MANUFACTURER" />
                 </div>
                 <p className="text-xs text-[#3F4A47]">
-                  Cruising northward in Pemba Channel at 10.8 knots. ETA Tanga Cement Wharf tomorrow{' '}
+                  Cruising northward in Pemba Channel at 10.8 knots. ETA Mtwara Cement Factory tomorrow{' '}
                   <strong className="text-[#14181A] font-mono">
                     {formatTime(voyages.find((v) => v.vesselId === 'v-02')?.manufacturerEtaForecast)}
                   </strong>
@@ -285,7 +285,7 @@ export function Dashboard({
               <CreditCard className="w-4 h-4 text-[#C99A5B]" />
             </div>
             <h3 className="text-base font-bold text-[#14181A]">MV VIGOR 01</h3>
-            <p className="text-xs text-[#3F4A47] mt-0.5">Tanga Cement Advance Payment</p>
+            <p className="text-xs text-[#3F4A47] mt-0.5">Mtwara Cement Factory Advance Payment</p>
 
             <div className="mt-4 p-3 bg-[#F7F5F0] rounded-lg border border-[#E1DED4] space-y-2">
               <div className="flex justify-between items-center text-xs">
@@ -313,7 +313,7 @@ export function Dashboard({
             </div>
 
             <div className="mt-3 p-2.5 bg-[#FBF0DD] border border-[#B5760F]/30 rounded-lg text-xs text-[#B5760F]">
-              <strong>Potential Downstream Impact:</strong> If balance is not wired by deadline, Tanga manufacturer loading slot will be deferred, delaying subsequent return rotation by up to 28 hours.
+              <strong>Potential Downstream Impact:</strong> If balance is not wired by deadline, Mtwara manufacturer loading slot will be deferred, delaying subsequent return rotation by up to 28 hours.
             </div>
           </div>
 

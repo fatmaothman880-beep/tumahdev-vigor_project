@@ -67,3 +67,11 @@ def test_state_rejects_stale_revision():
             FrontendStateUpdate(state=state_payload(), expected_revision=0), db
         )
     assert error.value.status_code == 409
+
+
+def test_manufacturer_directory_roundtrips():
+    db = FakeSession()
+    payload = state_payload()
+    payload["manufacturers"] = [{"id": "mtwara", "name": "Mtwara Cement Factory", "works": "Mtwara Cement Factory"}]
+    created = update_operational_state(FrontendStateUpdate(state=payload, expected_revision=0), db)
+    assert get_operational_state(db).state["manufacturers"] == payload["manufacturers"]

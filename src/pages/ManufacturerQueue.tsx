@@ -30,6 +30,7 @@ export function ManufacturerQueue({
   onNavigateToPayments,
 }: ManufacturerQueueProps) {
   const {
+    manufacturers = [],
     manufacturerQueue,
     vessels,
     voyages,
@@ -38,6 +39,10 @@ export function ManufacturerQueue({
     api,
   } = useAppData();
 
+  const [addingManufacturer, setAddingManufacturer] = useState(false);
+  const [name, setName] = useState('');
+  const [works, setWorks] = useState('');
+  const [error, setError] = useState('');
   const [selectedQueueItem, setSelectedQueueItem] = useState<any | null>(null);
   const [confirmedDate, setConfirmedDate] = useState('');
   const [confirmedPos, setConfirmedPos] = useState('1');
@@ -45,8 +50,8 @@ export function ManufacturerQueue({
   const handleOpenConfirmModal = (item: any) => {
     setSelectedQueueItem(item);
     setConfirmedDate(
-      item.confirmedLoadingSlot
-        ? new Date(item.confirmedLoadingSlot).toISOString().slice(0, 16)
+      item.confirmedSlot
+        ? new Date(item.confirmedSlot).toISOString().slice(0, 16)
         : new Date(Date.now() + 24 * 3600000).toISOString().slice(0, 16)
     );
     setConfirmedPos(String(item.confirmedQueuePosition || item.predictedQueuePosition || 1));
@@ -70,7 +75,7 @@ export function ManufacturerQueue({
       <PageHeader
         eyebrow="SUPPLY CHAIN GATES"
         title="Manufacturer Queue & Loading Slots"
-        description="Mainland cement manufacturers (Tanga Cement PLC & Mombasa Wharves). Coordinates financial clearance with physical berth allocation."
+        description="Mainland cement manufacturers (Mtwara Cement Factory). Coordinates financial clearance with physical berth allocation."
       >
         <button
           onClick={onNavigateToPayments}
@@ -81,6 +86,27 @@ export function ManufacturerQueue({
         </button>
       </PageHeader>
 
+      <section className="bg-white border border-[#E1DED4] rounded-xl p-4 space-y-3">
+        <div className="flex justify-between items-center gap-3">
+          <h2 className="text-sm font-bold">Manufacturers & Works</h2>
+          <button onClick={() => { setError(''); setAddingManufacturer(true); }} className="px-3 py-2 rounded-lg bg-[#0C9349] text-white text-xs font-semibold">Add Manufacturer / Works</button>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {manufacturers.map(m => <div key={m.id} className="border rounded-lg p-3 text-xs"><strong>{m.name}</strong><p className="mt-1">{m.works}</p></div>)}
+        </div>
+      </section>
+      <Modal isOpen={addingManufacturer} onClose={() => setAddingManufacturer(false)} title="Add Manufacturer / Works" subtitle="Saved manufacturers and works are available when creating voyage rotations.">
+        <form className="space-y-4 text-sm" onSubmit={e => {
+          e.preventDefault();
+          try { api.addManufacturer(name, works); setName(''); setWorks(''); setAddingManufacturer(false); }
+          catch (err) { setError((err as Error).message); }
+        }}>
+          <label className="block">Manufacturer name<input required value={name} onChange={e => setName(e.target.value)} className="block w-full border rounded-lg p-2 mt-1" /></label>
+          <label className="block">Works / Factory<input required value={works} onChange={e => setWorks(e.target.value)} className="block w-full border rounded-lg p-2 mt-1" /></label>
+          {error && <p role="alert" className="text-red-700">{error}</p>}
+          <div className="flex justify-end gap-3"><button type="button" onClick={() => setAddingManufacturer(false)}>Cancel</button><button type="submit" className="bg-[#0C9349] text-white rounded-lg px-4 py-2">Save Manufacturer</button></div>
+        </form>
+      </Modal>
       {/* Primary Supply Chain Callout */}
       <div className="p-4 bg-[#FBF0DD] rounded-xl border border-[#B5760F]/30 flex items-start gap-3">
         <AlertTriangle className="w-5 h-5 text-[#B5760F] shrink-0 mt-0.5" />
@@ -106,14 +132,14 @@ export function ManufacturerQueue({
         />
         <KpiCard
           label="Confirmed Slots"
-          value={manufacturerQueue.filter((q) => q.confirmedLoadingSlot).length}
+          value={manufacturerQueue.filter((q) => q.confirmedSlot).length}
           subtext="Firm terminal appointments"
           icon={<CheckCircle2 className="w-5 h-5" />}
           variant="success"
         />
         <KpiCard
           label="Payment Gate Withheld"
-          value={manufacturerQueue.filter((q) => !q.paymentEligible).length}
+          value={manufacturerQueue.filter((q) => !q.isEligible).length}
           subtext="Awaiting wire clearing"
           icon={<CreditCard className="w-5 h-5" />}
           variant="warning"
@@ -133,7 +159,7 @@ export function ManufacturerQueue({
             Mainland Queue Sequence & Gate Status
           </h3>
           <span className="text-xs font-mono text-[#3F4A47]">
-            Tanga Cement Wharf · Mamba Pier
+            Mtwara Cement Factory
           </span>
         </div>
 
@@ -170,11 +196,11 @@ export function ManufacturerQueue({
                     </td>
 
                     <td className="py-3 px-4 font-mono text-[#14181A]">
-                      {formatDateTime(item.arrivalEtaForecast)}
+                      {formatDateTime(item.eta)}
                     </td>
 
                     <td className="py-3 px-4">
-                      {item.paymentEligible ? (
+                      {item.isEligible ? (
                         <div className="flex items-center gap-1.5 text-[#0A7A3D] font-semibold">
                           <CheckCircle2 className="w-4 h-4" />
                           <span>ELIGIBLE (100% Paid)</span>
@@ -201,17 +227,17 @@ export function ManufacturerQueue({
                     </td>
 
                     <td className="py-3 px-4 font-mono">
-                      {item.confirmedLoadingSlot ? (
+                      {item.confirmedSlot ? (
                         <div>
                           <span className="text-[#0A7A3D] font-bold block">
-                            {formatDateTime(item.confirmedLoadingSlot)}
+                            {formatDateTime(item.confirmedSlot)}
                           </span>
                           <span className="text-[10px] text-[#3F4A47] font-sans">Firm appointment</span>
                         </div>
                       ) : (
                         <div>
                           <span className="text-[#14181A] block">
-                            {formatDateTime(item.predictedLoadingSlot)}
+                            {formatDateTime(item.predictedSlot)}
                           </span>
                           <span className="text-[10px] text-[#B5760F] font-sans">Forecast / Unconfirmed</span>
                         </div>
@@ -219,7 +245,7 @@ export function ManufacturerQueue({
                     </td>
 
                     <td className="py-3 px-4 font-mono text-[#3F4A47]">
-                      {item.estimatedLoadingRateTph} t/h
+                      {item.estimatedLoadingRateTph ? `${item.estimatedLoadingRateTph} t/h` : '—'}
                     </td>
 
                     <td className="py-3 px-4 text-right space-x-2">
@@ -244,7 +270,7 @@ export function ManufacturerQueue({
           isOpen={true}
           onClose={() => setSelectedQueueItem(null)}
           title="Record Manufacturer Confirmed Loading Slot"
-          subtitle={`Official Tanga berth appointment for ${vessels.find((v) => v.id === selectedQueueItem.vesselId)?.name || 'Vessel'}.`}
+          subtitle={`Official manufacturer berth appointment for ${vessels.find((v) => v.id === selectedQueueItem.vesselId)?.name || 'Vessel'}.`}
         >
           <form onSubmit={handleSaveConfirmation} className="space-y-4 text-xs">
             <div>

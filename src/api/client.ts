@@ -176,6 +176,7 @@ export interface AppStore {
   paymentAccounts: PaymentAccount[];
   paymentTransactions: PaymentTransaction[];
   vesselPositions: VesselPosition[];
+  manufacturers?: { id: string; name: string; works: string }[];
   manufacturerQueue: ManufacturerQueueEntry[];
   operationalReadings: OperationalReading[];
   delayEvents: DelayEvent[];
@@ -193,6 +194,7 @@ export type PersistedOperationalState = Pick<
   | 'paymentAccounts'
   | 'paymentTransactions'
   | 'vesselPositions'
+  | 'manufacturers'
   | 'manufacturerQueue'
   | 'operationalReadings'
   | 'delayEvents'
@@ -282,6 +284,7 @@ class ApiClient {
   }
 
   private getPersistedOperationalState(): PersistedOperationalState {
+    this.normalizeSite();
     const {
       vessels,
       berths,
@@ -290,6 +293,7 @@ class ApiClient {
       paymentAccounts,
       paymentTransactions,
       vesselPositions,
+      manufacturers,
       manufacturerQueue,
       operationalReadings,
       delayEvents,
@@ -303,6 +307,7 @@ class ApiClient {
       paymentAccounts,
       paymentTransactions,
       vesselPositions,
+      manufacturers,
       manufacturerQueue,
       operationalReadings,
       delayEvents,
@@ -391,7 +396,45 @@ class ApiClient {
     };
   }
 
+  private normalizeSite(): void {
+    const rename = (value: string) => value
+      .replace(/Tanga Cement PLC \(Mamba Wharf\)|Tanga Cement Works|Tanga Cement PLC|Tanga Cement Wharf|Tanga Cement/g, 'Mtwara Cement Factory')
+      .replace(/VIGOR Berth B01(?: \(Zanzibar\))?/g, 'Mangapwani Berth');
+    for (const rows of [this.store.voyages, this.store.paymentAccounts, this.store.manufacturerQueue, this.store.vesselPositions]) {
+      for (const row of rows) for (const key of Object.keys(row)) {
+        if (typeof row[key] === 'string') row[key] = rename(row[key]);
+      }
+    }
+    this.store.manufacturers ??= [];
+    if (!this.store.manufacturers.some(m => m.name === 'Mtwara Cement Factory')) {
+      this.store.manufacturers.unshift({ id: 'mtwara', name: 'Mtwara Cement Factory', works: 'Mtwara Cement Factory' });
+    }
+    this.store.berths = this.store.berths.filter(b => b.id === 'B01').map(b => ({ ...b, name: 'Mangapwani Berth', location: 'Mangapwani, Zanzibar' }));
+  }
+
+  public addManufacturer(name: string, works: string): string {
+    name = name.trim(); works = works.trim();
+    if (!name || !works) throw new Error('Enter both a manufacturer name and works.');
+    if (this.store.manufacturers?.some(m => m.name.toLowerCase() === name.toLowerCase() && m.works.toLowerCase() === works.toLowerCase())) {
+      throw new Error('This manufacturer and works already exist.');
+    }
+    const id = crypto.randomUUID();
+    this.store.manufacturers!.push({ id, name, works });
+    this.saveToStorage();
+    return id;
+  }
+
+  public addVoyage(voyage: Omit<Voyage, 'id' | 'createdAt' | 'updatedAt'>): Voyage {
+    const now = new Date().toISOString();
+    const created = { ...voyage, id: crypto.randomUUID(), createdAt: now, updatedAt: now };
+    this.store.voyages.unshift(created);
+    this.recalculateAll();
+    this.saveToStorage();
+    return created;
+  }
+
   public recalculateAll(): void {
+    this.normalizeSite();
     // 1. Update all payment accounts based on transactions
     this.store.paymentAccounts = this.store.paymentAccounts.map((acc) => {
       const totals = calculatePaymentAccountTotals(acc, this.store.paymentTransactions);
@@ -550,6 +593,7 @@ class ApiClient {
           'paymentAccounts',
           'paymentTransactions',
           'vesselPositions',
+          'manufacturers',
           'manufacturerQueue',
           'operationalReadings',
           'delayEvents',

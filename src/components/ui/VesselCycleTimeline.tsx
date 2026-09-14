@@ -79,7 +79,7 @@ export function VesselCycleTimeline({ voyage }: VesselCycleTimelineProps) {
     {
       id: 'step-mfr-pmt',
       name: 'Manufacturer Payment',
-      sub: 'Tanga Cement advance settlement',
+      sub: 'Mtwara Cement Factory advance settlement',
       icon: <CreditCard className="w-4 h-4" />,
       status:
         voyage.currentBlocker === 'MANUFACTURER_PAYMENT'
@@ -94,7 +94,7 @@ export function VesselCycleTimeline({ voyage }: VesselCycleTimelineProps) {
     {
       id: 'step-mfr-queue',
       name: 'Manufacturer Queue & Berth',
-      sub: 'Mamba Wharf loading slot',
+      sub: 'Mtwara Cement Factory loading slot',
       icon: <Factory className="w-4 h-4" />,
       status: voyage.manufacturerSlotConfirmed
         ? 'COMPLETED'
@@ -130,7 +130,7 @@ export function VesselCycleTimeline({ voyage }: VesselCycleTimelineProps) {
     {
       id: 'step-return',
       name: 'Return Transit',
-      sub: 'Tanga to Zanzibar Channel',
+      sub: 'Mtwara to Zanzibar Channel',
       icon: <Ship className="w-4 h-4" />,
       status:
         voyage.currentStage === 'RETURNING_TO_VIGOR'
@@ -146,7 +146,7 @@ export function VesselCycleTimeline({ voyage }: VesselCycleTimelineProps) {
     },
     {
       id: 'step-vigor-berth',
-      name: 'VIGOR Berth B01',
+      name: 'Mangapwani Berth',
       sub: 'Next rotation berthing',
       icon: <Anchor className="w-4 h-4" />,
       status: voyage.currentStage === 'BERTHED_AT_VIGOR' ? 'CURRENT' : 'UPCOMING',
