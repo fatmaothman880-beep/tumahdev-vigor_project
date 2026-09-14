@@ -1,39 +1,31 @@
-# Full Integration Architecture
+# Full integration
 
-The `full-integration` branch treats the repository-root React application as
-the frontend reference and adds the FastAPI/PostgreSQL implementation from
-`intergration-branch` around it. No frontend page or feature is removed.
+## Sources and preserved behavior
 
-## Runtime flow
+This branch combines `full-integration` at `faf6b8c5d993d02b4a9d22e9dbe8b663276a1ba9` with the local vessel-system frontend and supporting services at `7f2c070`.
 
-```text
-Browser :3000
-    -> Nginx static frontend
-    -> /api/v1 reverse proxy
-    -> FastAPI :8000
-    -> PostgreSQL :5432
-```
+The local executive dashboard, corporate branding, login, administration, assistant, fleet details, scheduling, finance, fuel, and reporting are retained. The target branch's entire FastAPI backend, PostgreSQL models, migrations, validation services, predictions, site workflow, seed scripts, and existing tests are retained.
 
-FastAPI owns normalized vessel, berth, visit, reading, prediction, delay,
-upcoming-call, and operational-checklist records. The larger frontend model has
-additional voyage-cycle, fuel, treasury, tracking, and manufacturer-queue
-fields. Those are persisted in PostgreSQL through the versioned
-`/api/v1/operations/state` integration contract.
+## Request flow
 
-On the first connected browser session, the complete frontend baseline is
-stored without dropping any UI-owned fields. Backend vessel and berth records
-are merged into that baseline. Later sessions hydrate from PostgreSQL. Every
-frontend mutation is debounced and saved with an expected revision; stale
-clients receive HTTP 409 instead of silently overwriting newer work.
+Browser -> Node gateway on port 3000 -> FastAPI on port 8000 -> PostgreSQL.
 
-## Service checks
+The Node gateway handles authentication, account administration, audit history, and the grounded assistant. All other `/api/v1` requests are forwarded to FastAPI after authentication and write-role checks. Operational errors, validation responses, and revision conflicts pass through unchanged. An unavailable backend produces HTTP 502 instead of storing operational changes in a second in-memory server.
 
-- Frontend: `http://localhost:3000`
-- API documentation: `http://localhost:8000/docs`
-- API health: `http://localhost:8000/api/v1/health`
-- Database health: `http://localhost:8000/api/v1/health/database`
-- Full-cycle state: `http://localhost:8000/api/v1/operations/state`
+Normalized port-call records and the wider frontend planning snapshot retain the branch's existing two-model design. The snapshot is stored in `frontend_operational_state` and uses revision checks; it does not replace normalized readings or visit records. Backend-only site workflow routes remain available through the gateway; this integration does not invent new site-specific screens.
 
-Run `scripts/start-environment.ps1` to build and start the whole stack. Run
-`scripts/smoke-test.ps1` after startup, then run
-`python -m pytest -m integration --require-api` for the live API checks.
+## Tracking removal
+
+The tracking page, API wrapper, navigation entry, position types, demo coordinates, position updates, and tracking alerts are removed. The operational schema rejects the old `vesselPositions` field. Migration `d54e0f060004` deletes that key from stored snapshots and advances their revision. The browser also drops the old key when loading cached state. Migration rollback restores only an empty field; deleted coordinates cannot be reconstructed.
+
+## Accounts and deployment
+
+The `auth_data` volume holds locally managed user accounts and the latest 500 audit entries. Optional MySQL account integration remains available through the imported adapter; it is not the operational persistence layer. Back up this volume alongside PostgreSQL. Set a stable `AUTH_SECRET` if sessions should survive restarts.
+
+Demo login accounts and the role switcher remain for evaluation. They must be replaced for a production rollout. Disabled accounts and changed roles are rechecked for each authenticated request. The imported default-password bypass has been removed.
+
+FastAPI is bound to loopback on the host and is intended to sit behind the gateway. The retained `nginx.conf` is an optional reverse-proxy example pointing at the Node gateway, not at FastAPI. Static-only hosting cannot run this complete stack.
+
+## Verification
+
+See `docs/integration-verification.md` for checks run for this merge and environment limitations. Existing historical handover and acceptance documents are retained as history; they are not evidence of current production acceptance.

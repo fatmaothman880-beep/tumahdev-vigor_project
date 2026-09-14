@@ -15,7 +15,6 @@ def state_payload():
         "fuelOperations": [],
         "paymentAccounts": [],
         "paymentTransactions": [],
-        "vesselPositions": [],
         "manufacturerQueue": [],
         "operationalReadings": [],
         "delayEvents": [],
@@ -67,3 +66,11 @@ def test_state_rejects_stale_revision():
             FrontendStateUpdate(state=state_payload(), expected_revision=0), db
         )
     assert error.value.status_code == 409
+from pydantic import ValidationError
+
+
+def test_tracking_state_is_rejected():
+    payload = state_payload()
+    payload['vesselPositions'] = [{'latitude': -6.1, 'longitude': 39.2}]
+    with pytest.raises(ValidationError):
+        FrontendStateUpdate(state=payload, expected_revision=0)

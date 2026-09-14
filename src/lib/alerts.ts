@@ -1,10 +1,9 @@
-import { Alert, Voyage, PaymentAccount, VesselPosition } from '../types';
-import { formatHoursAndMinutes, formatCurrency } from './format';
+import { Alert, Voyage, PaymentAccount } from '../types';
+import { formatHoursAndMinutes } from './format';
 
 export function generateSystemAlerts(
   voyages: Voyage[],
   payments: PaymentAccount[],
-  positions: VesselPosition[],
   currentB01ReleaseTime?: string
 ): Alert[] {
   const alerts: Alert[] = [];
@@ -64,7 +63,7 @@ export function generateSystemAlerts(
     }
   });
 
-  // 2. Berth Conflict Alerts
+  // 2. Berth Conflict Alerts (based on ETA, expected berth release, and buffer)
   voyages.forEach((voyage) => {
     if (voyage.berthConflict && voyage.predictedAnchorageWaitHours > 0) {
       alerts.push({
@@ -79,26 +78,6 @@ export function generateSystemAlerts(
         timestamp: new Date().toISOString(),
         acknowledged: false,
         linkTo: { page: 'berths', vesselId: voyage.vesselId, voyageId: voyage.id },
-      });
-    }
-  });
-
-  // 3. Tracking Data Quality Alerts
-  positions.forEach((pos) => {
-    if (pos.dataQuality === 'STALE') {
-      const voyage = voyages.find((v) => v.id === pos.voyageId);
-      alerts.push({
-        id: `alert-tracking-stale-${pos.id}`,
-        vesselId: pos.vesselId,
-        vesselName: voyage?.vesselName || 'Vessel',
-        voyageId: pos.voyageId,
-        type: 'TRACKING_STALE',
-        severity: 'INFO',
-        title: `INFO: Vessel Position Data Stale`,
-        message: `${voyage?.vesselName || 'Vessel'} tracking update is older than threshold (${pos.source}). ETA confidence reduced.`,
-        timestamp: new Date().toISOString(),
-        acknowledged: false,
-        linkTo: { page: 'tracking', vesselId: pos.vesselId, voyageId: pos.voyageId },
       });
     }
   });

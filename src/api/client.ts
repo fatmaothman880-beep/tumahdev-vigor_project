@@ -11,7 +11,6 @@ import {
   FuelOperation,
   PaymentAccount,
   PaymentTransaction,
-  VesselPosition,
   ManufacturerQueueEntry,
   OperationalReading,
   DelayEvent,
@@ -33,7 +32,7 @@ import {
 
 export const API_BASE_URL = (
   ((import.meta as unknown as { env: Record<string, string> }).env?.VITE_API_URL as string | undefined) ||
-  'http://localhost:8000/api/v1'
+  '/api/v1'
 ).replace(/\/+$/, '');
 
 export const USE_MOCK_API =
@@ -76,6 +75,14 @@ export async function apiFetch<T>(
   if (!headers.has('Accept')) {
     headers.set('Accept', 'application/json');
   }
+
+  // Automatically attach auth token if available
+  try {
+    const token = localStorage.getItem('vigor_auth_token') || sessionStorage.getItem('vigor_auth_token');
+    if (token && !headers.has('Authorization')) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+  } catch {}
 
   let response: Response;
   try {
@@ -175,7 +182,6 @@ export interface AppStore {
   fuelOperations: FuelOperation[];
   paymentAccounts: PaymentAccount[];
   paymentTransactions: PaymentTransaction[];
-  vesselPositions: VesselPosition[];
   manufacturerQueue: ManufacturerQueueEntry[];
   operationalReadings: OperationalReading[];
   delayEvents: DelayEvent[];
@@ -192,7 +198,6 @@ export type PersistedOperationalState = Pick<
   | 'fuelOperations'
   | 'paymentAccounts'
   | 'paymentTransactions'
-  | 'vesselPositions'
   | 'manufacturerQueue'
   | 'operationalReadings'
   | 'delayEvents'
@@ -248,6 +253,7 @@ class ApiClient {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
+        delete parsed.vesselPositions;
         if (parsed.vessels && parsed.voyages && parsed.berths) {
           return {
             ...parsed,
@@ -289,7 +295,6 @@ class ApiClient {
       fuelOperations,
       paymentAccounts,
       paymentTransactions,
-      vesselPositions,
       manufacturerQueue,
       operationalReadings,
       delayEvents,
@@ -302,7 +307,6 @@ class ApiClient {
       fuelOperations,
       paymentAccounts,
       paymentTransactions,
-      vesselPositions,
       manufacturerQueue,
       operationalReadings,
       delayEvents,
@@ -311,6 +315,11 @@ class ApiClient {
   }
 
   private queueBackendStateSync(): void {
+    // Read-only sessions must not attempt to initialize or overwrite shared state.
+    try {
+      const user = JSON.parse(localStorage.getItem('vigor_auth_user') || 'null');
+      if (!user || !['Admin', 'Operations'].includes(user.role)) return;
+    } catch { return; }
     if (
       USE_MOCK_API ||
       this.store.connectionInfo.apiHealth !== 'healthy' ||
@@ -328,6 +337,10 @@ class ApiClient {
   }
 
   private async persistOperationalState(): Promise<void> {
+    try {
+      const user = JSON.parse(localStorage.getItem('vigor_auth_user') || 'null');
+      if (!user || !['Admin', 'Operations'].includes(user.role)) return;
+    } catch { return; }
     if (this.stateSyncInFlight) {
       this.stateSyncPending = true;
       return;
@@ -549,7 +562,6 @@ class ApiClient {
           'fuelOperations',
           'paymentAccounts',
           'paymentTransactions',
-          'vesselPositions',
           'manufacturerQueue',
           'operationalReadings',
           'delayEvents',
@@ -682,10 +694,6 @@ class ApiClient {
     return this.store.paymentTransactions;
   }
 
-  public getVesselPositions(): VesselPosition[] {
-    return this.store.vesselPositions;
-  }
-
   public getManufacturerQueue(): ManufacturerQueueEntry[] {
     return this.store.manufacturerQueue;
   }
@@ -711,7 +719,6 @@ class ApiClient {
     return generateSystemAlerts(
       this.store.voyages,
       this.store.paymentAccounts,
-      this.store.vesselPositions,
       v1Voyage?.expectedBerthRelease
     );
   }
@@ -950,40 +957,6 @@ class ApiClient {
     }
   }
 
-  public updateVesselPosition(
-    vesselId: string,
-    latitude: number,
-    longitude: number,
-    speedKnots: number,
-    heading: number,
-    course: string
-  ): void {
-    const pos = this.store.vesselPositions.find((p) => p.vesselId === vesselId);
-    if (pos) {
-      pos.latitude = latitude;
-      pos.longitude = longitude;
-      pos.speedKnots = speedKnots;
-      pos.heading = heading;
-      pos.course = course;
-      pos.timestamp = new Date().toISOString();
-      pos.dataQuality = 'CURRENT';
-
-      const voyage = this.store.voyages.find((v) => v.vesselId === vesselId && v.status === 'ACTIVE');
-      if (voyage && speedKnots > 0) {
-        const remainingHours = pos.distanceRemainingNm / speedKnots;
-        const newEta = new Date(Date.now() + remainingHours * 3600000).toISOString();
-        if (voyage.currentStage === 'RETURNING_TO_VIGOR') {
-          voyage.returnEtaForecast = newEta;
-        } else if (voyage.currentStage === 'SAILING_TO_MANUFACTURER') {
-          voyage.manufacturerEtaForecast = newEta;
-        }
-      }
-
-      this.recalculateAll();
-      this.saveToStorage();
-    }
-  }
-
   public updateSystemSettings(settings: Partial<SystemSettings>): void {
     this.store.systemSettings = {
       ...this.store.systemSettings,
@@ -1037,20 +1010,17 @@ class ApiClient {
     }
 
     if (type === 'SOLVE_BERTH') {
-      // Adjust MV VIGOR 03 speed to 8.5 knots so arrival aligns with expected B01 release
-      const pos03 = this.store.vesselPositions.find((p) => p.vesselId === 'v-03');
+      // Adjust MV VIGOR 03 schedule so arrival aligns with expected B01 release
       const voy01 = this.store.voyages.find((v) => v.id === 'voy-01');
       const voy03 = this.store.voyages.find((v) => v.id === 'voy-03');
 
-      if (pos03 && voy01 && voy03) {
-        pos03.speedKnots = 8.5;
-        pos03.timestamp = new Date().toISOString();
+      if (voy01 && voy03) {
         // Set V03 arrival to 30 mins after B01 berth release
         const targetArrival = new Date(
           new Date(voy01.expectedBerthRelease).getTime() + 30 * 60000
         ).toISOString();
         voy03.returnEtaForecast = targetArrival;
-        voy03.conflictNotes = 'Eco-steaming engaged at 8.5 kts. Berth synced with MV VIGOR 01 departure.';
+        voy03.conflictNotes = 'Arrival schedule optimized to sync with MV VIGOR 01 departure from B01.';
         voy03.berthConflict = false;
         voy03.predictedAnchorageWaitHours = 0;
         this.recalculateAll();

@@ -186,7 +186,7 @@ export function ControlTower({
                 Option C: Designated Anchorage Charlie
               </div>
               <p className="leading-relaxed">
-                Hold MV VIGOR 03 at safe anchorage coordinates (06°05'S, 039°11'E) for approximately 2.7 hours until pilot boards for B01 berthing.
+                Schedule MV VIGOR 03 for an anchorage wait of approximately 2.7 hours until pilot boards for B01 berthing.
               </p>
             </div>
           </div>

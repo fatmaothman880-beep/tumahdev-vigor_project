@@ -148,7 +148,6 @@ export function CurrentBlockerBadge({ blocker, description }: { blocker: Current
     MANUFACTURER_BERTH: { name: 'MANUFACTURER BERTH OCCUPIED', isBlocked: true },
     LOADING: { name: 'LOADING DELAYED', isBlocked: true },
     MAINTENANCE: { name: 'MAINTENANCE HOLD', isBlocked: true },
-    TRACKING_DATA: { name: 'TRACKING DATA MISSING', isBlocked: true },
   };
 
   const info = labels[blocker] || { name: blocker, isBlocked: true };

@@ -18,7 +18,6 @@ import {
   formatTime,
   formatTonnage,
   formatRate,
-  formatCoordinates,
   formatHoursAndMinutes,
 } from '../lib/format';
 import { calculatePaymentAccountTotals } from '../lib/paymentEngine';
@@ -29,7 +28,7 @@ import {
   Fuel,
   CreditCard,
   Factory,
-  MapPinned,
+  Route,
   Clock,
   Plus,
   AlertTriangle,
@@ -56,7 +55,6 @@ export function VesselDetail({
     paymentAccounts,
     paymentTransactions,
     fuelOperations,
-    vesselPositions,
     operationalReadings,
     delayEvents,
     manufacturerQueue,
@@ -65,7 +63,6 @@ export function VesselDetail({
 
   const vessel = vessels.find((v) => v.id === vesselId);
   const voyage = voyages.find((v) => v.vesselId === vesselId && v.status === 'ACTIVE');
-  const pos = vesselPositions.find((p) => p.vesselId === vesselId);
   const fuel = fuelOperations.find((f) => f.vesselId === vesselId);
   const mfrPayment = paymentAccounts.find(
     (p) => p.vesselId === vesselId && p.category === 'MANUFACTURER'
@@ -241,7 +238,6 @@ export function VesselDetail({
             <OperationsHealthBadge health={voyage.health} />
             <RiskBadge risk={voyage.risk} />
             <StatusBadge stage={voyage.currentStage} />
-            {pos && <DataQualityBadge quality={pos.dataQuality} />}
           </div>
         )}
       </div>
@@ -611,46 +607,46 @@ export function VesselDetail({
           </div>
         </div>
 
-        {/* SECTION 7: VOYAGE & LIVE POSITION */}
+        {/* SECTION 7: VOYAGE SCHEDULE & ROTATION */}
         <div className="bg-white border border-[#E1DED4] rounded-xl p-5 space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4]">
             <h3 className="text-sm font-bold uppercase tracking-wider text-[#14181A] flex items-center gap-2">
-              <MapPinned className="w-4 h-4 text-[#0E7C86]" />
-              Voyage Position & Navigation
+              <Route className="w-4 h-4 text-[#0E7C86]" />
+              Voyage Schedule & Rotation
             </h3>
-            {pos && <DataQualityBadge quality={pos.dataQuality} />}
+            {voyage && <ScheduleSourceBadge source={voyage.scheduleSource} />}
           </div>
 
-          {pos ? (
+          {voyage ? (
             <div className="space-y-3 text-xs">
-              <div className="p-3 bg-[#F7F5F0] rounded-lg border border-[#E1DED4] space-y-1.5">
+              <div className="p-3 bg-[#F7F5F0] rounded-lg border border-[#E1DED4] space-y-2">
                 <div className="flex justify-between font-mono">
-                  <span className="text-[#3F4A47]">Coordinates:</span>
+                  <span className="text-[#3F4A47]">Rotation Route:</span>
                   <span className="font-bold text-[#14181A]">
-                    {formatCoordinates(pos.latitude, pos.longitude)}
+                    {voyage.origin} → {voyage.destination}
                   </span>
                 </div>
                 <div className="flex justify-between font-mono">
-                  <span className="text-[#3F4A47]">Speed & Course:</span>
+                  <span className="text-[#3F4A47]">Return ETA Forecast:</span>
                   <span className="font-bold text-[#14181A]">
-                    {pos.speedKnots.toFixed(1)} kts · {pos.course}
+                    {formatDateTime(voyage.returnEtaForecast)}
                   </span>
                 </div>
                 <div className="flex justify-between font-mono">
-                  <span className="text-[#3F4A47]">Distance to Destination:</span>
+                  <span className="text-[#3F4A47]">Expected Berth Release:</span>
                   <span className="font-bold text-[#0E7C86]">
-                    {pos.distanceRemainingNm.toFixed(1)} NM
+                    {formatDateTime(voyage.expectedBerthRelease)}
                   </span>
                 </div>
                 <div className="flex justify-between font-mono text-[11px] pt-1 border-t border-[#E1DED4]">
-                  <span className="text-[#3F4A47]">Tracking Telemetry Source:</span>
-                  <span className="text-[#14181A] font-semibold">{pos.source}</span>
+                  <span className="text-[#3F4A47]">Cycle Stage:</span>
+                  <span className="text-[#14181A] font-semibold">{voyage.currentStage}</span>
                 </div>
               </div>
             </div>
           ) : (
             <div className="p-4 bg-[#F7F5F0] rounded-lg text-xs text-[#3F4A47]">
-              Position telemetry currently unavailable.
+              No active voyage cycle recorded for this vessel.
             </div>
           )}
         </div>

@@ -13,7 +13,6 @@ class FullCycleOperationalState(BaseModel):
     fuelOperations: list[dict[str, Any]]
     paymentAccounts: list[dict[str, Any]]
     paymentTransactions: list[dict[str, Any]]
-    vesselPositions: list[dict[str, Any]]
     manufacturerQueue: list[dict[str, Any]]
     operationalReadings: list[dict[str, Any]]
     delayEvents: list[dict[str, Any]]

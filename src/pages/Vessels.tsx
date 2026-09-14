@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppData } from '../hooks/useAppData';
 import { PageHeader, KpiCard, Modal } from '../components/ui/KpiCard';
-import { StatusBadge, OperationsHealthBadge, DataQualityBadge } from '../components/ui/StatusBadge';
+import { StatusBadge, OperationsHealthBadge } from '../components/ui/StatusBadge';
 import { formatTonnage, formatDateTime } from '../lib/format';
 import { Ship, Plus, Search, ArrowRight, Anchor, Navigation } from 'lucide-react';
 import { Vessel } from '../types';
@@ -11,7 +11,7 @@ interface VesselsProps {
 }
 
 export function Vessels({ onSelectVessel }: VesselsProps) {
-  const { vessels, voyages, vesselPositions, api } = useAppData();
+  const { vessels, voyages, api } = useAppData();
   const [search, setSearch] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -44,10 +44,6 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
       active: true,
       capacityT: Number(newCapacity) || 10000,
       notes: newNotes.trim() || undefined,
-      trackingConfiguration: {
-        source: 'SIMULATION',
-        refreshIntervalSeconds: 300,
-      },
     });
 
     setIsAddModalOpen(false);
@@ -132,14 +128,13 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
                 <th className="py-3 px-4">Current Cycle</th>
                 <th className="py-3 px-4">Stage</th>
                 <th className="py-3 px-4">Health</th>
-                <th className="py-3 px-4">Tracking</th>
+                <th className="py-3 px-4">Berth / ETA</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E1DED4]">
               {filteredVessels.map((vessel) => {
                 const voyage = voyages.find((v) => v.vesselId === vessel.id && v.status === 'ACTIVE');
-                const pos = vesselPositions.find((p) => p.vesselId === vessel.id);
 
                 return (
                   <tr
@@ -181,16 +176,18 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
                     <td className="py-3 px-4">
                       {voyage ? <OperationsHealthBadge health={voyage.health} /> : '-'}
                     </td>
-                    <td className="py-3 px-4">
-                      {pos ? (
-                        <div className="space-y-0.5">
-                          <DataQualityBadge quality={pos.dataQuality} />
-                          <div className="text-[10px] font-mono text-[#3F4A47]">
-                            {pos.speedKnots.toFixed(1)} kts · {pos.source}
+                    <td className="py-3 px-4 font-mono text-[#3F4A47]">
+                      {voyage ? (
+                        <div>
+                          <span className="font-bold text-[#14181A]">
+                            {voyage.assignedBerthId || 'Berth B01'}
+                          </span>
+                          <div className="text-[10px] text-[#0E7C86]">
+                            ETA: {formatDateTime(voyage.returnEtaForecast)}
                           </div>
                         </div>
                       ) : (
-                        <DataQualityBadge quality="UNAVAILABLE" />
+                        '-'
                       )}
                     </td>
                     <td className="py-3 px-4 text-right">

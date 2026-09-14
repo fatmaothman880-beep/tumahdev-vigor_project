@@ -45,12 +45,9 @@ export type CurrentBlocker =
   | 'MANUFACTURER_QUEUE'
   | 'MANUFACTURER_BERTH'
   | 'LOADING'
-  | 'MAINTENANCE'
-  | 'TRACKING_DATA';
+  | 'MAINTENANCE';
 
 export type DataQuality = 'CURRENT' | 'STALE' | 'INSUFFICIENT' | 'UNAVAILABLE';
-
-export type TrackingSource = 'MANUAL' | 'SIMULATION' | 'AIS' | 'GPS';
 
 export type ScheduleSource = 'FORECAST' | 'PLANNED' | 'CONFIRMED' | 'ACTUAL' | 'SIMULATED';
 
@@ -90,11 +87,6 @@ export interface Vessel {
   active: boolean;
   capacityT: number;
   notes?: string;
-  trackingConfiguration?: {
-    source: TrackingSource;
-    deviceId?: string;
-    refreshIntervalSeconds: number;
-  };
   createdAt: string;
   updatedAt: string;
 }
@@ -212,24 +204,6 @@ export interface PaymentTransaction {
   enteredBy: string;
   notes?: string;
   createdAt: string;
-}
-
-export interface VesselPosition {
-  id: string;
-  vesselId: string;
-  voyageId: string;
-  latitude: number;
-  longitude: number;
-  speedKnots: number;
-  heading: number;
-  course: string;
-  timestamp: string;
-  source: TrackingSource;
-  accuracyM?: number;
-  dataQuality: DataQuality;
-  originName: string;
-  destinationName: string;
-  distanceRemainingNm: number;
 }
 
 export interface ManufacturerQueueEntry {
@@ -359,7 +333,6 @@ export interface Alert {
     | 'MANUFACTURER_QUEUE_RISK'
     | 'MANUFACTURER_SLOT_CHANGED'
     | 'ETA_SHIFT'
-    | 'TRACKING_STALE'
     | 'ANCHORAGE_WAIT_RISK'
     | 'LOADING_DELAY'
     | 'MAINTENANCE';
@@ -378,7 +351,6 @@ export interface Alert {
 export interface SystemSettings {
   postUnloadBerthBufferHours: number;
   arrivalOverdueGraceMinutes: number;
-  trackingStaleThresholdMinutes: number;
   paymentWarningThresholdHours: number;
   manufacturerEligibilityPercent: number; // 100
   defaultSailingSpeedKnots: number;

@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-smart_port}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-for-non-local-use}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -28,7 +28,7 @@ services:
       APP_DEBUG: ${APP_DEBUG:-false}
       CORS_ORIGINS: http://localhost:${FRONTEND_PORT:-3000},http://127.0.0.1:${FRONTEND_PORT:-3000}
     ports:
-      - "${BACKEND_PORT:-8000}:8000"
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -47,12 +47,20 @@ services:
         VITE_API_URL: /api/v1
     restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT:-3000}:80"
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      OPERATIONS_API_URL: http://backend:8000/api/v1
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      AUTH_DATA_PATH: /app/data/auth.json
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    volumes:
+      - auth_data:/app/data
     depends_on:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost/"]
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -60,3 +68,4 @@ services:
 
 volumes:
   postgres_data:
+  auth_data:

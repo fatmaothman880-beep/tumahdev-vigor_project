@@ -1,28 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppData } from './hooks/useAppData';
 import { Sidebar, NavPageId } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
+import { DashboardSummary } from './pages/DashboardSummary';
 import { Dashboard } from './pages/Dashboard';
 import { ControlTower } from './pages/ControlTower';
 import { Vessels } from './pages/Vessels';
 import { VesselDetail } from './pages/VesselDetail';
 import { Berths } from './pages/Berths';
 import { Voyages } from './pages/Voyages';
-import { Tracking } from './pages/Tracking';
 import { ManufacturerQueue } from './pages/ManufacturerQueue';
 import { Fuel } from './pages/Fuel';
 import { Payments } from './pages/Payments';
 import { AlertsPage } from './pages/AlertsPage';
 import { Reports, History } from './pages/Reports';
 import { Admin } from './pages/Admin';
+import { Login } from './pages/Login';
 import { AiAssistantModal } from './components/AiAssistantModal';
+import { AuthProvider, useAuth } from './auth/AuthContext';
 
-export function App() {
+function AppContent() {
   const { alerts, api, connectionInfo } = useAppData();
-  const [currentPage, setCurrentPage] = useState<NavPageId>('dashboard');
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const [currentPage, setCurrentPage] = useState<NavPageId>('dashboard-summary');
   const [selectedVesselId, setSelectedVesselId] = useState<string>('v-01');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) void api.testConnection();
+  }, [isAuthenticated, user?.id]);
+
+  // Loading indicator while reading storage token
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#F7F5F0] flex flex-col items-center justify-center text-[#14181A] font-mono text-xs gap-3">
+        <div className="w-8 h-8 rounded-full border-2 border-[#0A7A3D] border-t-transparent animate-spin" />
+        <div>Verifying VIGOR Corporate Session...</div>
+      </div>
+    );
+  }
+
+  // If not authenticated, render corporate login
+  if (!isAuthenticated) {
+    return <Login />;
+  }
 
   // Navigate to single vessel
   const handleSelectVessel = (vesselId: string) => {
@@ -32,6 +54,8 @@ export function App() {
 
   const getPageTitle = (): string => {
     switch (currentPage) {
+      case 'dashboard-summary':
+        return 'Dashboard Summary';
       case 'dashboard':
         return 'Operations Dashboard';
       case 'control-tower':
@@ -44,8 +68,6 @@ export function App() {
         return 'VIGOR Berth Operations';
       case 'voyages':
         return 'Voyage Rotations';
-      case 'tracking':
-        return 'Live Vessel Tracking';
       case 'manufacturer-queue':
         return 'Manufacturer Queue & Loading Slots';
       case 'fuel':
@@ -92,7 +114,23 @@ export function App() {
         />
 
         {/* Page Content Viewport */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1400px] w-full mx-auto">
+        <main
+          className={
+            currentPage === 'dashboard-summary'
+              ? 'flex-1 px-6 py-4 sm:px-8 sm:py-5 w-full max-w-[1560px] mx-auto flex flex-col justify-start min-h-0'
+              : 'flex-1 p-4 sm:p-6 lg:p-8 max-w-[1400px] w-full mx-auto'
+          }
+        >
+          {currentPage === 'dashboard-summary' && (
+            <DashboardSummary
+              onSelectVessel={handleSelectVessel}
+              onNavigateToBerths={() => setCurrentPage('berths')}
+              onNavigateToPayments={() => setCurrentPage('payments')}
+              onNavigateToAlerts={() => setCurrentPage('alerts')}
+              onNavigateToControlTower={() => setCurrentPage('control-tower')}
+            />
+          )}
+
           {currentPage === 'dashboard' && (
             <Dashboard
               onSelectVessel={handleSelectVessel}
@@ -129,10 +167,6 @@ export function App() {
 
           {currentPage === 'voyages' && (
             <Voyages onSelectVessel={handleSelectVessel} />
-          )}
-
-          {currentPage === 'tracking' && (
-            <Tracking onSelectVessel={handleSelectVessel} />
           )}
 
           {currentPage === 'manufacturer-queue' && (
@@ -173,11 +207,26 @@ export function App() {
       <AiAssistantModal
         isOpen={isAssistantOpen}
         onClose={() => setIsAssistantOpen(false)}
+        onNavigate={(pageId, vesselId) => {
+          if (vesselId) {
+            handleSelectVessel(vesselId);
+          } else {
+            setCurrentPage(pageId as any);
+          }
+        }}
         onNavigateToPayments={() => setCurrentPage('payments')}
         onNavigateToBerths={() => setCurrentPage('berths')}
         onSelectVessel={handleSelectVessel}
       />
     </div>
+  );
+}
+
+export function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

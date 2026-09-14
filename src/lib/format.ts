@@ -88,19 +88,3 @@ export function formatRelativeTime(targetIso: string, currentIso = new Date().to
   }
   return `in ${durationStr}`;
 }
-
-export function formatCoordinates(lat: number, lon: number): string {
-  if (lat === undefined || lon === undefined || isNaN(lat) || isNaN(lon)) {
-    return 'Position unavailable';
-  }
-  const latDir = lat >= 0 ? 'N' : 'S';
-  const lonDir = lon >= 0 ? 'E' : 'W';
-  const absLat = Math.abs(lat);
-  const absLon = Math.abs(lon);
-  const latDeg = Math.floor(absLat);
-  const latMin = ((absLat - latDeg) * 60).toFixed(1);
-  const lonDeg = Math.floor(absLon);
-  const lonMin = ((absLon - lonDeg) * 60).toFixed(1);
-
-  return `${latDeg.toString().padStart(2, '0')}°${latMin}' ${latDir}, ${lonDeg.toString().padStart(3, '0')}°${lonMin}' ${lonDir}`;
-}

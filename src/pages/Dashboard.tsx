@@ -89,7 +89,7 @@ export function Dashboard({
       <PageHeader
         eyebrow="PORT & VESSEL INTELLIGENCE"
         title="Operations Dashboard"
-        description="Real-time vessel cycle coordination for VIGOR Cement Works, tracking berth availability, pneumatic unloading, bunkering, and manufacturer financial eligibility."
+        description="Real-time vessel cycle coordination for VIGOR Cement Works, monitoring berth availability, pneumatic unloading, bunkering, and manufacturer financial eligibility."
       >
         <div className="flex items-center gap-2">
           <button

@@ -11,7 +11,7 @@ class FrontendOperationalState(Base):
     """Durable state for the full-cycle operations UI.
 
     Core port-call records remain normalized in their existing tables. This
-    document stores the wider planning modules (fuel, treasury, tracking and
+    document stores the wider planning modules (fuel, treasury, schedules and
     manufacturer queue) without losing fields owned by the frontend domain.
     """
 

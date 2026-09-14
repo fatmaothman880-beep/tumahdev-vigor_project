@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
+  Gauge,
   LayoutDashboard,
   Activity,
   Ship,
   Anchor,
   Route,
-  MapPinned,
   Factory,
   Fuel,
   CreditCard,
@@ -14,17 +14,21 @@ import {
   FileText,
   Settings,
   X,
+  Shield,
+  ChevronDown,
+  UserCheck,
 } from 'lucide-react';
 import { Alert } from '../types';
+import { useAuth, UserRole } from '../auth/AuthContext';
 
 export type NavPageId =
+  | 'dashboard-summary'
   | 'dashboard'
   | 'control-tower'
   | 'vessels'
   | 'vessel-detail'
   | 'berths'
   | 'voyages'
-  | 'tracking'
   | 'manufacturer-queue'
   | 'fuel'
   | 'payments'
@@ -58,12 +62,15 @@ export function Sidebar({
   onCloseMobile,
   alerts,
 }: SidebarProps) {
+  const { user, quickLoginAs } = useAuth();
+  const [showRoleMenu, setShowRoleMenu] = useState(false);
   const unreadAlerts = alerts.filter((a) => !a.acknowledged).length;
 
   const sections: NavSection[] = [
     {
       title: 'OVERVIEW',
       items: [
+        { id: 'dashboard-summary', label: 'Dashboard Summary', icon: <Gauge className="w-4 h-4" /> },
         { id: 'dashboard', label: 'Operations Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
         { id: 'control-tower', label: 'Control Tower', icon: <Activity className="w-4 h-4" /> },
       ],
@@ -74,7 +81,6 @@ export function Sidebar({
         { id: 'vessels', label: 'Vessels', icon: <Ship className="w-4 h-4" /> },
         { id: 'berths', label: 'VIGOR Berth', icon: <Anchor className="w-4 h-4" /> },
         { id: 'voyages', label: 'Voyages', icon: <Route className="w-4 h-4" /> },
-        { id: 'tracking', label: 'Live Tracking', icon: <MapPinned className="w-4 h-4" /> },
         { id: 'manufacturer-queue', label: 'Manufacturer Queue', icon: <Factory className="w-4 h-4" /> },
         { id: 'fuel', label: 'Fuel / Oil', icon: <Fuel className="w-4 h-4" /> },
       ],
@@ -193,6 +199,84 @@ export function Sidebar({
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Authenticated Staff Card & Quick Role Testing */}
+      <div className="p-3 border-t border-[#3F4A47]/40 bg-[#14181A]/40">
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <div
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-mono font-bold text-white shrink-0 ${
+                user?.role === 'Admin'
+                  ? 'bg-[#5B37B7]'
+                  : user?.role === 'Management'
+                  ? 'bg-[#0F62FE]'
+                  : user?.role === 'Operations'
+                  ? 'bg-[#0A7A3D]'
+                  : 'bg-[#5A6764]'
+              }`}
+            >
+              {user?.fullName ? user.fullName[0].toUpperCase() : 'T'}
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold text-white truncate">{user?.fullName || 'Turkys Staff'}</div>
+              <div className="text-[9px] font-mono text-[#C9C4B6]/60 truncate">{user?.email || 'Authorized Account'}</div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowRoleMenu(!showRoleMenu)}
+            title="Switch demo evaluation role"
+            className="p-1 text-[#C9C4B6]/70 hover:text-white hover:bg-[#3F4A47]/60 rounded transition cursor-pointer"
+          >
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Role Pill */}
+        <div className="flex items-center justify-between">
+          <span
+            className={`inline-flex items-center gap-1 text-[9px] font-mono font-bold px-2 py-0.5 rounded ${
+              user?.role === 'Admin'
+                ? 'bg-[#5B37B7]/20 text-[#C1A8F9] border border-[#5B37B7]/40'
+                : user?.role === 'Management'
+                ? 'bg-[#0F62FE]/20 text-[#8BB7FE] border border-[#0F62FE]/40'
+                : user?.role === 'Operations'
+                ? 'bg-[#0A7A3D]/20 text-[#67E29F] border border-[#0A7A3D]/40'
+                : 'bg-[#3F4A47]/40 text-[#C9C4B6] border border-[#3F4A47]'
+            }`}
+          >
+            <Shield className="w-2.5 h-2.5" />
+            {user?.role || 'Viewer'} Role
+          </span>
+          <span className="text-[9px] font-mono text-[#0C9349]">● ONLINE</span>
+        </div>
+
+        {/* Quick Role Switcher Dropdown for evaluators */}
+        {showRoleMenu && (
+          <div className="mt-2.5 pt-2 border-t border-[#3F4A47]/40 space-y-1">
+            <div className="text-[9px] font-mono text-[#C9C4B6]/50 uppercase tracking-wider mb-1">
+              Switch Test Role:
+            </div>
+            {(['Admin', 'Management', 'Operations', 'Viewer'] as UserRole[]).map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => {
+                  quickLoginAs(r);
+                  setShowRoleMenu(false);
+                }}
+                className={`w-full text-left px-2 py-1 rounded text-[10px] font-medium flex items-center justify-between transition cursor-pointer ${
+                  user?.role === r ? 'bg-[#0C9349] text-white font-bold' : 'text-[#C9C4B6] hover:bg-[#3F4A47]/40 hover:text-white'
+                }`}
+              >
+                <span>{r}</span>
+                {user?.role === r && <UserCheck className="w-3 h-3" />}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Footer Info */}

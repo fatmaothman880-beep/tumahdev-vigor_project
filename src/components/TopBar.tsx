@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useLiveClock } from '../hooks/useAppData';
-import { Bell, RefreshCw, Menu, Wifi, WifiOff, Database, Server, CheckCircle2, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Bell, RefreshCw, Menu, Wifi, WifiOff, Database, Server, CheckCircle2, AlertTriangle, ExternalLink, LogOut, Shield } from 'lucide-react';
 import { Alert } from '../types';
 import { ConnectionInfo, API_BASE_URL } from '../api/client';
+import { useAuth } from '../auth/AuthContext';
 
 interface TopBarProps {
   currentPageTitle: string;
@@ -27,6 +28,7 @@ export function TopBar({
   onNavigateToAdmin,
   onTestConnection,
 }: TopBarProps) {
+  const { user, logout } = useAuth();
   const { eatTime } = useLiveClock();
   const unreadAlerts = alerts.filter((a) => !a.acknowledged);
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -50,41 +52,33 @@ export function TopBar({
         return (
           <button
             onClick={() => setShowStatusModal(true)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-medium rounded-full bg-[#E7F4EB] text-[#0A7A3D] border border-[#0C9349]/30 hover:bg-[#D8EEDF] transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium rounded text-[#5A6764] hover:text-[#0A7A3D] hover:bg-[#E7F4EB] transition cursor-pointer"
             title="FastAPI & PostgreSQL connected"
           >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0C9349] opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0C9349]" />
-            </span>
-            <Database className="w-3 h-3" />
-            <span className="font-semibold tracking-wide">DATABASE CONNECTED</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0C9349]" />
+            <span>DB Connected</span>
           </button>
         );
       case 'LIVE API':
         return (
           <button
             onClick={() => setShowStatusModal(true)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-medium rounded-full bg-[#E4F1F2] text-[#0E7C86] border border-[#0E7C86]/30 hover:bg-[#D5EAEC] transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium rounded text-[#5A6764] hover:text-[#0E7C86] hover:bg-[#E4F1F2] transition cursor-pointer"
             title="FastAPI connected"
           >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0E7C86] opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0E7C86]" />
-            </span>
-            <Server className="w-3 h-3" />
-            <span className="font-semibold tracking-wide">LIVE API</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0E7C86]" />
+            <span>API Online</span>
           </button>
         );
       case 'API OFFLINE':
         return (
           <button
             onClick={() => setShowStatusModal(true)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-medium rounded-full bg-[#FCEBEA] text-[#AE3B2E] border border-[#AE3B2E]/30 hover:bg-[#F9DCDA] transition cursor-pointer animate-pulse"
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium rounded text-[#AE3B2E] bg-[#FDF2F0] hover:bg-[#FBEAE8] transition cursor-pointer"
             title="FastAPI backend offline. Click for diagnostics."
           >
             <WifiOff className="w-3 h-3 text-[#AE3B2E]" />
-            <span className="font-semibold tracking-wide">API OFFLINE</span>
+            <span>API Offline</span>
           </button>
         );
       case 'DEMO MODE':
@@ -92,10 +86,11 @@ export function TopBar({
         return (
           <button
             onClick={() => setShowStatusModal(true)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-mono uppercase tracking-wider rounded bg-[#F4EBDB] text-[#B5760F] border border-[#C99A5B]/40 hover:bg-[#EBDCC5] transition cursor-pointer whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium rounded text-[#7C8884] hover:bg-[#F4EBDB]/40 transition cursor-pointer whitespace-nowrap"
             title="Operating in client-side demo mode"
           >
-            DEMO MODE — MOCK DATA
+            <span className="w-1.5 h-1.5 rounded-full bg-[#B5760F]" />
+            <span>Demo Mode</span>
           </button>
         );
     }
@@ -116,27 +111,26 @@ export function TopBar({
             </button>
 
             <div>
-              <div className="text-[11px] font-medium text-[#3F4A47] tracking-wider uppercase flex items-center gap-1.5">
+              <div className="text-[10px] font-semibold text-[#5A6764] tracking-wider uppercase flex items-center gap-1.5">
                 <span>Smart Port Operations</span>
                 <span className="text-[#C9C4B6]">·</span>
-                <span className="text-[#0A7A3D] font-semibold">Vigor Cement Works</span>
+                <span className="text-[#0A7A3D] font-bold">Vigor Cement Works</span>
               </div>
-              <h1 className="text-base sm:text-lg font-bold text-[#14181A] leading-tight">
-                {currentPageTitle}
-              </h1>
+              {currentPageTitle !== 'Dashboard Summary' && (
+                <h1 className="text-sm font-bold text-[#14181A] leading-tight mt-0.5">
+                  {currentPageTitle}
+                </h1>
+              )}
             </div>
           </div>
 
           {/* Right: Live clock, status badges, alert trigger, reset demo & user avatar */}
-          <div className="flex items-center gap-2.5 sm:gap-4">
-            {/* Live Operations Indicator */}
-            <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 bg-[#E7F4EB] text-[#0A7A3D] rounded-full border border-[#0C9349]/30 text-xs font-mono font-medium">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0C9349] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0C9349]" />
-              </span>
-              <span className="font-semibold tracking-wide">LIVE OPERATIONS</span>
-              <span className="text-[#3F4A47] font-normal">| {eatTime} EAT</span>
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Live Operations Indicator (Subtle) */}
+            <div className="hidden lg:flex items-center gap-1.5 text-xs text-[#5A6764] font-medium px-2 py-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#0A7A3D]" />
+              <span className="text-[#14181A] font-semibold">Live</span>
+              <span className="text-[#7C8884]">· {eatTime} EAT</span>
             </div>
 
             {/* Backend Connectivity Status Badge */}
@@ -145,7 +139,7 @@ export function TopBar({
             {/* AI Operations Assistant Button */}
             <button
               onClick={onOpenAssistant}
-              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-[#E4F1F2] text-[#0E7C86] border border-[#0E7C86]/30 hover:bg-[#0E7C86] hover:text-white transition"
+              className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md text-[#0E7C86] hover:bg-[#F0F7F8] border border-[#0E7C86]/20 transition"
               title="Ask Vigor Operations Assistant"
             >
               <span className="font-bold">AI</span> Assistant
@@ -154,35 +148,82 @@ export function TopBar({
             {/* Reset Demo State Button */}
             <button
               onClick={onResetDemo}
-              className="p-1.5 rounded-lg text-[#3F4A47] hover:bg-[#F7F5F0] hover:text-[#14181A] transition border border-transparent hover:border-[#E1DED4]"
+              className="p-1 rounded-md text-[#7C8884] hover:bg-[#F7F5F0] hover:text-[#14181A] transition"
               title="Reset system to standard baseline demo scenario"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-3.5 h-3.5" />
             </button>
 
             {/* Notifications Bell */}
             <button
               onClick={onNavigateToAlerts}
-              className="relative p-1.5 rounded-lg text-[#3F4A47] hover:bg-[#F7F5F0] hover:text-[#14181A] transition"
+              className="relative p-1 rounded-md text-[#7C8884] hover:bg-[#F7F5F0] hover:text-[#14181A] transition"
               title="View Active Operational Alerts"
             >
-              <Bell className="w-4 h-4" />
+              <Bell className="w-3.5 h-3.5" />
               {unreadAlerts.length > 0 && (
-                <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-[#AE3B2E] text-white text-[10px] font-bold flex items-center justify-center">
+                <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-[#AE3B2E] text-white text-[9px] font-bold flex items-center justify-center">
                   {unreadAlerts.length}
                 </span>
               )}
             </button>
 
-            {/* User Avatar */}
+            {/* Authenticated Corporate User */}
             <div className="flex items-center gap-2 pl-2 border-l border-[#E1DED4]">
-              <div className="w-8 h-8 rounded-full bg-[#14181A] text-white flex items-center justify-center text-xs font-mono font-bold tracking-wider">
-                OM
+              <div
+                className={`w-7 h-7 rounded-full text-white flex items-center justify-center text-[10px] font-mono font-bold tracking-wider ${
+                  user?.role === 'Admin'
+                    ? 'bg-[#5B37B7]'
+                    : user?.role === 'Management'
+                    ? 'bg-[#0F62FE]'
+                    : user?.role === 'Operations'
+                    ? 'bg-[#0A7A3D]'
+                    : 'bg-[#5A6764]'
+                }`}
+                title={`${user?.fullName || 'Staff'} (${user?.role || 'Guest'})`}
+              >
+                {user?.fullName
+                  ? user.fullName
+                      .split(' ')
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join('')
+                      .toUpperCase()
+                  : 'TG'}
               </div>
               <div className="hidden xl:block text-left leading-tight">
-                <div className="text-xs font-bold text-[#14181A]">Operations Mgr</div>
-                <div className="text-[10px] text-[#3F4A47]">Zanzibar Port HQ</div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-[#14181A] truncate max-w-[120px]">
+                    {user?.fullName || 'Turkys Staff'}
+                  </span>
+                  <span
+                    className={`text-[9px] font-mono px-1.5 py-0.2 rounded font-semibold ${
+                      user?.role === 'Admin'
+                        ? 'bg-[#F2EDFD] text-[#5B37B7]'
+                        : user?.role === 'Management'
+                        ? 'bg-[#EBF2FF] text-[#0F62FE]'
+                        : user?.role === 'Operations'
+                        ? 'bg-[#E7F4EB] text-[#0A7A3D]'
+                        : 'bg-[#F7F5F0] text-[#5A6764]'
+                    }`}
+                  >
+                    {user?.role || 'Viewer'}
+                  </span>
+                </div>
+                <div className="text-[10px] text-[#5A6764] truncate max-w-[150px]">
+                  {user?.department || 'Turkys Group'}
+                </div>
               </div>
+
+              {/* Sign out button */}
+              <button
+                type="button"
+                onClick={logout}
+                title="Sign out of Turkys Group system"
+                className="p-1.5 text-[#5A6764] hover:text-[#AE3B2E] hover:bg-[#FCEBEA] rounded-md transition cursor-pointer ml-1"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
         </div>

@@ -17,3 +17,6 @@ artifacts/
 .vscode/
 .idea/
 Thumbs.db
+
+data/
+integrate*.mjs

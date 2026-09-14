@@ -5,7 +5,6 @@ import {
   FuelOperation,
   PaymentAccount,
   PaymentTransaction,
-  VesselPosition,
   OperationalReading,
   DelayEvent,
   ManufacturerQueueEntry,
@@ -26,11 +25,6 @@ export function getInitialDemoData() {
       active: true,
       capacityT: 10200,
       notes: 'Pneumatic self-discharging bulk cement carrier equipped with MacGregor fluidised bottom system.',
-      trackingConfiguration: {
-        source: 'SIMULATION',
-        deviceId: 'GPS-VG01-SAT',
-        refreshIntervalSeconds: 300,
-      },
       createdAt: '2025-01-10T08:00:00Z',
       updatedAt: now.toISOString(),
     },
@@ -43,11 +37,6 @@ export function getInitialDemoData() {
       active: true,
       capacityT: 10200,
       notes: 'Bulk cement carrier assigned to north rotation (Zanzibar - Tanga - Mombasa route).',
-      trackingConfiguration: {
-        source: 'SIMULATION',
-        deviceId: 'GPS-VG02-SAT',
-        refreshIntervalSeconds: 300,
-      },
       createdAt: '2025-01-15T08:00:00Z',
       updatedAt: now.toISOString(),
     },
@@ -60,11 +49,6 @@ export function getInitialDemoData() {
       active: true,
       capacityT: 9800,
       notes: 'Bulk cement carrier equipped with aeration cargo reclaimers.',
-      trackingConfiguration: {
-        source: 'SIMULATION',
-        deviceId: 'GPS-VG03-SAT',
-        refreshIntervalSeconds: 300,
-      },
       createdAt: '2025-02-01T08:00:00Z',
       updatedAt: now.toISOString(),
     },
@@ -507,61 +491,6 @@ export function getInitialDemoData() {
     },
   ];
 
-  // Live Tracking Positions (Zanzibar Channel & Tanga route)
-  const vesselPositions: VesselPosition[] = [
-    {
-      id: 'pos-01',
-      vesselId: 'v-01',
-      voyageId: 'voy-01',
-      latitude: -6.1558,
-      longitude: 39.1895, // Alongside Malindi Wharf B01, Zanzibar
-      speedKnots: 0.0,
-      heading: 215,
-      course: 'Moored starboard alongside Berth B01',
-      timestamp: new Date(nowMs - 8 * 60000).toISOString(), // 8 mins ago
-      source: 'SIMULATION',
-      accuracyM: 3.5,
-      dataQuality: 'CURRENT',
-      originName: 'Tanga Cement Works',
-      destinationName: 'VIGOR Berth B01 (Zanzibar)',
-      distanceRemainingNm: 0,
-    },
-    {
-      id: 'pos-02',
-      vesselId: 'v-02',
-      voyageId: 'voy-02',
-      latitude: -5.6124,
-      longitude: 39.1028, // Northbound in Pemba Channel toward Tanga
-      speedKnots: 10.8,
-      heading: 348,
-      course: 'North-Northwest (348°)',
-      timestamp: new Date(nowMs - 12 * 60000).toISOString(), // 12 mins ago
-      source: 'SIMULATION',
-      accuracyM: 5.0,
-      dataQuality: 'CURRENT',
-      originName: 'VIGOR Berth B01 (Zanzibar)',
-      destinationName: 'Tanga Cement Wharf',
-      distanceRemainingNm: 54.2,
-    },
-    {
-      id: 'pos-03',
-      vesselId: 'v-03',
-      voyageId: 'voy-03',
-      latitude: -5.9214,
-      longitude: 39.1458, // Southbound approaching Zanzibar northern channel
-      speedKnots: 11.2,
-      heading: 172,
-      course: 'South-Southeast (172°)',
-      timestamp: new Date(nowMs - 185 * 60000).toISOString(), // 3 hours ago -> STALE!
-      source: 'SIMULATION',
-      accuracyM: 8.0,
-      dataQuality: 'STALE',
-      originName: 'Tanga Cement Wharf',
-      destinationName: 'VIGOR Berth B01 (Zanzibar)',
-      distanceRemainingNm: 36.8,
-    },
-  ];
-
   // Manufacturer Queue (External vessels + VIGOR vessels)
   const manufacturerQueue: ManufacturerQueueEntry[] = [
     {
@@ -698,7 +627,6 @@ export function getInitialDemoData() {
   const systemSettings: SystemSettings = {
     postUnloadBerthBufferHours: 1.5,
     arrivalOverdueGraceMinutes: 30,
-    trackingStaleThresholdMinutes: 60,
     paymentWarningThresholdHours: 48,
     manufacturerEligibilityPercent: 100,
     defaultSailingSpeedKnots: 11.0,
@@ -714,7 +642,6 @@ export function getInitialDemoData() {
     fuelOperations,
     paymentAccounts,
     paymentTransactions,
-    vesselPositions,
     manufacturerQueue,
     operationalReadings,
     delayEvents,
