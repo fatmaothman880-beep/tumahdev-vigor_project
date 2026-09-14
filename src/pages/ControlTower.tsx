@@ -66,7 +66,7 @@ export function ControlTower({
           <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4] mb-3">
             <h3 className="text-sm font-bold uppercase tracking-wider text-[#14181A] flex items-center gap-2">
               <Anchor className="w-4 h-4 text-[#0C9349]" />
-              VIGOR Berth B01 Allocation
+              Mangapwani Berth Allocation
             </h3>
             <span className="text-[10px] font-mono font-bold bg-[#E7F4EB] text-[#0A7A3D] px-2 py-0.5 rounded">
               ACTIVE

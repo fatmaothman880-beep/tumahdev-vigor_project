@@ -154,7 +154,7 @@ export function Reports() {
             <div className="p-4 bg-[#FBF0DD]/70 rounded-lg border border-[#B5760F]/40 space-y-2">
               <div className="font-bold text-sm text-[#B5760F]">3. Critical Commercial Finance Gate: MV VIGOR 01</div>
               <p>
-                Tanga Cement advance invoice balance of <strong>TZS 200,000,000</strong> must be confirmed cleared before tomorrow 17:00 EAT. If wire confirmation is delayed, Tanga Cement will defer MV VIGOR 01's loading slot, cascading a delay to the next supply rotation.
+                Mtwara Cement Factory advance invoice balance of <strong>TZS 200,000,000</strong> must be confirmed cleared before tomorrow 17:00 EAT. If wire confirmation is delayed, Mtwara Cement Factory will defer MV VIGOR 01's loading slot, cascading a delay to the next supply rotation.
               </p>
             </div>
 

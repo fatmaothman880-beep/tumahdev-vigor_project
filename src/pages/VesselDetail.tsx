@@ -12,6 +12,7 @@ import {
 } from '../components/ui/StatusBadge';
 import { DualProgress, ProgressBar } from '../components/ui/DualProgress';
 import { VesselCycleTimeline } from '../components/ui/VesselCycleTimeline';
+import { OperationalChecklist } from '../components/ui/OperationalChecklist';
 import {
   formatCurrency,
   formatDateTime,
@@ -253,6 +254,12 @@ export function VesselDetail({
       {/* Full Vessel Cycle Timeline */}
       {voyage && <VesselCycleTimeline voyage={voyage} />}
 
+      <OperationalChecklist
+        vesselId={vessel.id}
+        visitId={voyage?.id}
+        readOnly={voyage?.status === 'COMPLETED'}
+      />
+
       {/* 2-Column Core Operational Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* SECTION 1 & 2: CURRENT OPERATION & CARGO */}
@@ -374,7 +381,7 @@ export function VesselDetail({
           <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4]">
             <h3 className="text-sm font-bold uppercase tracking-wider text-[#14181A] flex items-center gap-2">
               <Anchor className="w-4 h-4 text-[#0C9349]" />
-              VIGOR Berth B01 Allocation
+              Mangapwani Berth Allocation
             </h3>
             <button
               onClick={onNavigateToBerths}
@@ -581,7 +588,7 @@ export function VesselDetail({
             <div className="p-3.5 bg-[#F7F5F0] rounded-lg border border-[#E1DED4] space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-[#3F4A47]">Terminal:</span>
-                <span className="font-bold text-[#14181A]">Tanga Cement PLC (Mamba Wharf)</span>
+                <span className="font-bold text-[#14181A]">Mtwara Cement Factory</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-[#3F4A47]">Predicted Queue Position:</span>
@@ -782,7 +789,7 @@ export function VesselDetail({
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
         title="Record Manufacturer Payment Tranche"
-        subtitle="Individual wire transaction for Tanga Cement invoice #TC-INV-2026-0941."
+        subtitle="Individual wire transaction for Mtwara Cement Factory invoice #TC-INV-2026-0941."
       >
         <form onSubmit={handleAddPayment} className="space-y-4 text-xs">
           <div>
@@ -939,7 +946,7 @@ export function VesselDetail({
         isOpen={isConfirmSlotModalOpen}
         onClose={() => setIsConfirmSlotModalOpen(false)}
         title="Record Manufacturer Confirmed Slot"
-        subtitle="Formal berthing window communicated by Tanga Cement terminal."
+        subtitle="Formal berthing window communicated by Mtwara Cement Factory terminal."
       >
         <form onSubmit={handleConfirmSlot} className="space-y-4 text-xs">
           <div>

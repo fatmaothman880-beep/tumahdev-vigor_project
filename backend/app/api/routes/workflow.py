@@ -180,4 +180,4 @@ def overdue(db: Session = Depends(get_db)):
         .where(OperationalTask.status.notin_(["COMPLETED", "NOT_APPLICABLE"]), OperationalTask.due_at < now,
             VesselVisit.status.notin_([VisitStatus.CANCELLED, VisitStatus.DEPARTED]))
         .order_by(OperationalTask.due_at)).all()
-    return [{**task_view(t, now), "vessel_name": v.name} for t, visit, v in rows]
+    return [{**task_view(t, now), "vessel_id": str(v.id), "vessel_name": v.name} for t, visit, v in rows]

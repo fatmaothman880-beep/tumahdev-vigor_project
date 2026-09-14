@@ -65,7 +65,7 @@ function AppContent() {
       case 'vessel-detail':
         return 'Single-Vessel Control Centre';
       case 'berths':
-        return 'VIGOR Berth Operations';
+        return 'Mangapwani Berth Operations';
       case 'voyages':
         return 'Voyage Rotations';
       case 'manufacturer-queue':

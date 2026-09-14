@@ -202,7 +202,7 @@ export function ControlTowerTimeline({
                               voyage.outboundDepartureActual || voyage.outboundDepartureForecast,
                               voyage.manufacturerEtaForecast
                             )}
-                            title={`Outbound transit to Tanga. ETA ${formatDateTime(voyage.manufacturerEtaForecast)}`}
+                            title={`Outbound transit to Mtwara. ETA ${formatDateTime(voyage.manufacturerEtaForecast)}`}
                           >
                             SAIL TO MFR
                           </div>

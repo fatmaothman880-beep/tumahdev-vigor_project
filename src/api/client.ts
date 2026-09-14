@@ -182,6 +182,7 @@ export interface AppStore {
   fuelOperations: FuelOperation[];
   paymentAccounts: PaymentAccount[];
   paymentTransactions: PaymentTransaction[];
+  manufacturers?: { id: string; name: string; works: string }[];
   manufacturerQueue: ManufacturerQueueEntry[];
   operationalReadings: OperationalReading[];
   delayEvents: DelayEvent[];
@@ -198,6 +199,7 @@ export type PersistedOperationalState = Pick<
   | 'fuelOperations'
   | 'paymentAccounts'
   | 'paymentTransactions'
+  | 'manufacturers'
   | 'manufacturerQueue'
   | 'operationalReadings'
   | 'delayEvents'
@@ -288,6 +290,7 @@ class ApiClient {
   }
 
   private getPersistedOperationalState(): PersistedOperationalState {
+    this.normalizeSite();
     const {
       vessels,
       berths,
@@ -295,6 +298,7 @@ class ApiClient {
       fuelOperations,
       paymentAccounts,
       paymentTransactions,
+      manufacturers,
       manufacturerQueue,
       operationalReadings,
       delayEvents,
@@ -307,6 +311,7 @@ class ApiClient {
       fuelOperations,
       paymentAccounts,
       paymentTransactions,
+      manufacturers,
       manufacturerQueue,
       operationalReadings,
       delayEvents,
@@ -404,7 +409,45 @@ class ApiClient {
     };
   }
 
+  private normalizeSite(): void {
+    const rename = (value: string) => value
+      .replace(/Tanga Cement PLC \(Mamba Wharf\)|Tanga Cement Works|Tanga Cement PLC|Tanga Cement Wharf|Tanga Cement/g, 'Mtwara Cement Factory')
+      .replace(/VIGOR Berth B01(?: \(Zanzibar\))?/g, 'Mangapwani Berth');
+    for (const rows of [this.store.voyages, this.store.paymentAccounts, this.store.manufacturerQueue]) {
+      for (const row of rows) for (const key of Object.keys(row)) {
+        if (typeof row[key] === 'string') row[key] = rename(row[key]);
+      }
+    }
+    this.store.manufacturers ??= [];
+    if (!this.store.manufacturers.some(m => m.name === 'Mtwara Cement Factory')) {
+      this.store.manufacturers.unshift({ id: 'mtwara', name: 'Mtwara Cement Factory', works: 'Mtwara Cement Factory' });
+    }
+    this.store.berths = this.store.berths.filter(b => b.id === 'B01').map(b => ({ ...b, name: 'Mangapwani Berth', location: 'Mangapwani, Zanzibar' }));
+  }
+
+  public addManufacturer(name: string, works: string): string {
+    name = name.trim(); works = works.trim();
+    if (!name || !works) throw new Error('Enter both a manufacturer name and works.');
+    if (this.store.manufacturers?.some(m => m.name.toLowerCase() === name.toLowerCase() && m.works.toLowerCase() === works.toLowerCase())) {
+      throw new Error('This manufacturer and works already exist.');
+    }
+    const id = crypto.randomUUID();
+    this.store.manufacturers!.push({ id, name, works });
+    this.saveToStorage();
+    return id;
+  }
+
+  public addVoyage(voyage: Omit<Voyage, 'id' | 'createdAt' | 'updatedAt'>): Voyage {
+    const now = new Date().toISOString();
+    const created = { ...voyage, id: crypto.randomUUID(), createdAt: now, updatedAt: now };
+    this.store.voyages.unshift(created);
+    this.recalculateAll();
+    this.saveToStorage();
+    return created;
+  }
+
   public recalculateAll(): void {
+    this.normalizeSite();
     // 1. Update all payment accounts based on transactions
     this.store.paymentAccounts = this.store.paymentAccounts.map((acc) => {
       const totals = calculatePaymentAccountTotals(acc, this.store.paymentTransactions);
@@ -562,6 +605,7 @@ class ApiClient {
           'fuelOperations',
           'paymentAccounts',
           'paymentTransactions',
+          'manufacturers',
           'manufacturerQueue',
           'operationalReadings',
           'delayEvents',
@@ -579,10 +623,11 @@ class ApiClient {
           };
         }
         this.stateRevision = remoteState.revision;
-      } else {
-        // First integrated run: enrich the frontend baseline with normalized
-        // backend master data, then establish the durable state document.
-        if (vessels.status === 'fulfilled' && Array.isArray(vessels.value) && vessels.value.length > 0) {
+      }
+
+      // Always merge backend master data. A previously persisted state must
+      // not hide vessels or berths added later by site configuration.
+      if (vessels.status === 'fulfilled' && Array.isArray(vessels.value) && vessels.value.length > 0) {
           const existingVessels = this.store.vessels;
           const additions = vessels.value
             .map(adaptBackendVessel)
@@ -596,8 +641,8 @@ class ApiClient {
                 )
             );
           this.store.vessels = [...existingVessels, ...additions];
-        }
-        if (berths.status === 'fulfilled' && Array.isArray(berths.value) && berths.value.length > 0) {
+      }
+      if (berths.status === 'fulfilled' && Array.isArray(berths.value) && berths.value.length > 0) {
           const existingBerths = this.store.berths;
           const additions = berths.value
             .map(adaptBackendBerth)
@@ -610,7 +655,11 @@ class ApiClient {
                 )
             );
           this.store.berths = [...existingBerths, ...additions];
-        }
+      }
+
+      if (!remoteState?.state) {
+        // First integrated run: establish the durable state document after
+        // adding normalized backend master data.
         if (operationalState.status === 'fulfilled') {
           this.stateRevision = operationalState.value.revision;
           await this.persistOperationalState();

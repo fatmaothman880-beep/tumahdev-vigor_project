@@ -9,7 +9,9 @@
     "start": "node dist/server.cjs",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test": "tsx --test server/gateway.test.ts"
+    "test": "tsx --test server/gateway.test.ts",
+    "test:workflow": "node --import tsx tests/workflow-integration.test.ts",
+    "test:rotations": "node --import tsx tests/rotation-period.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

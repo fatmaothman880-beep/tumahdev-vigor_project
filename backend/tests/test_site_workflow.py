@@ -125,7 +125,9 @@ def test_overdue_complete_late_reopen_and_history(api):
     task = created.json()
     assert task["timeliness"] == "OVERDUE"
     assert task["delay_minutes"] >= 60
-    assert len(client.get("/api/v1/workflow/overdue").json()) == 1
+    overdue = client.get("/api/v1/workflow/overdue").json()
+    assert len(overdue) == 1
+    assert overdue[0]["vessel_id"]
     updated = client.put(f'{root}/{task["id"]}',json={**values,"status":"COMPLETED","expected_version":task["version"],"change_reason":"Pilot arranged"})
     assert updated.status_code == 200, updated.text
     completed = updated.json()
