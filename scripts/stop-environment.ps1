@@ -1,15 +1,14 @@
 [CmdletBinding()]
 param()
-
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
-Set-Location -LiteralPath $repoRoot
-
-if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    throw 'Docker CLI was not found. Install/start Docker Desktop and reopen the terminal.'
+$stateFile = Join-Path $repoRoot 'artifacts\local-processes.json'
+if (-not (Test-Path -LiteralPath $stateFile)) { Write-Host 'No application processes recorded by the local launcher.'; return }
+$entries = Get-Content -LiteralPath $stateFile -Raw | ConvertFrom-Json
+foreach ($entry in $entries) {
+    $process = Get-Process -Id $entry.id -ErrorAction SilentlyContinue
+    # Refuse to stop an unrelated process that has reused an old process ID.
+    if ($process -and $process.StartTime.ToUniversalTime().ToString('o') -eq $entry.started) { taskkill /PID $entry.id /T /F | Out-Null; if ($LASTEXITCODE -ne 0) { throw 'Unable to stop an application process tree.' } }
 }
-
-docker compose down
-if ($LASTEXITCODE -ne 0) {
-    throw 'Docker Compose could not stop the environment cleanly.'
-}
+Remove-Item -LiteralPath $stateFile
+Write-Host 'Application services stopped. The PostgreSQL service and data are unchanged.'

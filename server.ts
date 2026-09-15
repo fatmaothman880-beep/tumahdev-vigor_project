@@ -374,7 +374,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  app.listen(PORT, process.env.HOST || '127.0.0.1', () => {
     console.log(`VIGOR Smart Port Operations server running on port ${PORT}`);
   });
 }

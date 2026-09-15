@@ -1,58 +1,14 @@
-# Demo Deployment Runbook
+# Native deployment runbook
 
-Status: The frontend, backend and database are integrated in `full-integration`.
-Runtime acceptance still requires a host with Docker Desktop or Python/PostgreSQL.
+1. Install Node.js, Python, and PostgreSQL; install dependencies using README.md.
+2. Configure the ignored `.env` with the database URL, signing secret, and API settings. Alternatively run `scripts/local_database.py setup` for a separate project-local development database.
+3. Back up existing PostgreSQL data and `data/auth.json` before upgrades.
+4. Run `scripts/start-environment.ps1`. It applies migrations and launches both application services. Use `-Seed` only when demonstration records are wanted.
+5. Run `scripts/smoke-test.ps1`, backend tests, and the UAT checklist.
+6. Record the accepted commit and test evidence before deployment acceptance.
 
-## Release inputs
+The development launcher binds the application to loopback. For shared hosting, configure a service manager, HTTPS, and firewall settings appropriate to the host. Keep the operational FastAPI service and PostgreSQL private; browser requests must pass through the authenticated Node gateway. The included launcher is a local development helper, not a production service manager.
 
-- Record the exact Git commit to deploy.
-- Use an approved demo host with Docker Compose or equivalent managed services.
-- Supply secrets through the host environment; never upload `.env` to Git.
-- Replace all `.env.example` demo credentials before any shared deployment.
-- Restrict PostgreSQL port `5432` to the application network in staging.
-- Confirm the application has no PLC/SCADA write or control interface.
+Run `npm run build` then `npm start` to serve the compiled Node/frontend application. Run FastAPI separately. The two services need the same `.env` database configuration and a reachable PostgreSQL instance.
 
-## Deployment sequence
-
-1. Check out the accepted `full-integration` commit on the demo host.
-2. Configure environment values for database, backend URL, frontend URL, authentication and allowed origins.
-3. Run `scripts/start-environment.ps1`; Compose builds and starts all services.
-4. Confirm the backend startup applied migrations and seeded synthetic demo records.
-5. Run the API/frontend smoke check.
-6. Run strict integration tests against the deployed API.
-7. Record results and execute the UAT checklist before accepting the environment.
-
-Smoke check:
-
-```powershell
-$env:API_BASE_URL = 'https://api.demo.example/api/v1'
-$env:FRONTEND_URL = 'https://demo.example'
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\smoke-test.ps1
-```
-
-Strict integration test:
-
-```powershell
-python -m pytest -m integration --require-api
-```
-
-Do not describe an environment as deployed until the smoke check passes and its URL, commit and timestamp are recorded below.
-
-## Deployment record
-
-| Field | Value |
-| --- | --- |
-| Status | Integrated; runtime acceptance pending |
-| URL | Not assigned |
-| Commit | Not deployed |
-| Deployed at | Not executed |
-| Smoke-test result | Not executed |
-| Integration-test result | Not executed |
-| Blocker | The current workstation has no running Docker engine or usable Python runtime |
-
-## Rollback
-
-1. Stop new write activity in the demo environment.
-2. Restore the last accepted application commit and compatible database migration state.
-3. Restore the database backup if the failed change modified demo data incompatibly.
-4. Repeat smoke and integration tests before reopening the demo.
+`stop-environment.ps1` stops the recorded application processes but leaves PostgreSQL running. `backup-database.ps1` creates a native pg_dump archive. Restore-test backups into a separate database before relying on them.

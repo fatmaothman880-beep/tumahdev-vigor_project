@@ -20,3 +20,5 @@ Thumbs.db
 
 data/
 integrate*.mjs
+
+.local/

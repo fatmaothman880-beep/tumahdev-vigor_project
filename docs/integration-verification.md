@@ -1,3 +1,5 @@
+> Historical verification for the initial integration. For the current Docker-free setup and completed PostgreSQL checks, see [native runtime notes](native-runtime.md).
+
 # Integration verification
 
 Verified on 2026-09-14 in the separate `.integration-target` checkout.

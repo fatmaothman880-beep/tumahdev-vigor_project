@@ -20,11 +20,11 @@ The tracking page, API wrapper, navigation entry, position types, demo coordinat
 
 ## Accounts and deployment
 
-The `auth_data` volume holds locally managed user accounts and the latest 500 audit entries. Optional MySQL account integration remains available through the imported adapter; it is not the operational persistence layer. Back up this volume alongside PostgreSQL. Set a stable `AUTH_SECRET` if sessions should survive restarts.
+The ignored `data/auth.json` file holds locally managed user accounts and the latest 500 audit entries. Optional MySQL account integration remains available through the imported adapter; it is not the operational persistence layer. Back up this file alongside PostgreSQL. Set a stable `AUTH_SECRET` if sessions should survive restarts.
 
 Demo login accounts and the role switcher remain for evaluation. They must be replaced for a production rollout. Disabled accounts and changed roles are rechecked for each authenticated request. The imported default-password bypass has been removed.
 
-FastAPI is bound to loopback on the host and is intended to sit behind the gateway. The retained `nginx.conf` is an optional reverse-proxy example pointing at the Node gateway, not at FastAPI. Static-only hosting cannot run this complete stack.
+FastAPI is bound to loopback on the host and is intended to sit behind the gateway. The application now runs natively; see README.md for startup and backup commands. Static-only hosting cannot run this complete stack.
 
 ## Verification
 
