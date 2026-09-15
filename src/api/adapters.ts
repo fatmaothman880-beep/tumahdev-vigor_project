@@ -260,7 +260,7 @@ export function adaptBackendVessel(bv: BackendVessel): Vessel {
     imo: bv.imo_reference || undefined,
     reference: bv.imo_reference || `IMO-${bv.id.slice(0, 7)}`,
     active: true,
-    capacityT: toNumber(bv.capacity_t, 10000),
+    capacityT: toNumber(bv.capacity_t, 0),
     notes: bv.agent_name ? `Agent: ${bv.agent_name} (${bv.agent_phone || 'N/A'})` : undefined,
     createdAt: bv.created_at,
     updatedAt: bv.updated_at,

@@ -82,8 +82,8 @@ export function Berths({ onSelectVessel }: BerthsProps) {
     <div className="space-y-6 pb-12">
       <PageHeader
         eyebrow="PORT INFRASTRUCTURE"
-        title="VIGOR Berth Operations"
-        description="Pneumatic bulk cement discharge quay at Zanzibar Malindi terminal. Monitors single-berth bottleneck, dynamic vessel sequencing, and anchorage waiting forecasts."
+        title="Mangapwani Berth Operations"
+        description="Pneumatic bulk cement discharge quay at Mangapwani terminal. Monitors single-berth bottleneck, dynamic vessel sequencing, and anchorage waiting forecasts."
       >
         <button
           onClick={() => setIsAddModalOpen(true)}
@@ -226,7 +226,7 @@ export function Berths({ onSelectVessel }: BerthsProps) {
                   <div className="space-y-2">
                     <h4 className="text-sm font-bold text-[#14181A]">{nextVessel.vesselName}</h4>
                     <p className="text-xs text-[#3F4A47]">
-                      Returning from Tanga with {formatTonnage(nextVessel.actualCargoT || 9400)} cement.
+                      Returning from {nextVessel.manufacturerName || nextVessel.origin} with {formatTonnage(nextVessel.actualCargoT || 9400)} cement.
                     </p>
 
                     <div className="p-3 bg-white rounded-lg border border-[#E1DED4] space-y-1 text-xs">
@@ -276,7 +276,7 @@ export function Berths({ onSelectVessel }: BerthsProps) {
               </h3>
             </div>
             <p className="text-xs text-[#3F4A47] mt-0.5">
-              Management decision-support model demonstrating the quantitative ROI of bringing Berth B02 online.
+              Illustrative planning comparison for a future second berth. Scenario figures are assumptions, not measured results.
             </p>
           </div>
 

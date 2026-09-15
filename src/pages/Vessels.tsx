@@ -1,3 +1,4 @@
+import { useAuth } from '../auth/AuthContext';
 import React, { useState } from 'react';
 import { useAppData } from '../hooks/useAppData';
 import { PageHeader, KpiCard, Modal } from '../components/ui/KpiCard';
@@ -5,13 +6,19 @@ import { StatusBadge, OperationsHealthBadge } from '../components/ui/StatusBadge
 import { formatTonnage, formatDateTime } from '../lib/format';
 import { Ship, Plus, Search, ArrowRight, Anchor, Navigation } from 'lucide-react';
 import { Vessel } from '../types';
+import { AddVesselVisit } from '../components/ui/AddVesselVisit';
+import { SiteRegistry } from '../components/ui/SiteRegistry';
 
 interface VesselsProps {
   onSelectVessel: (vesselId: string) => void;
 }
 
 export function Vessels({ onSelectVessel }: VesselsProps) {
+  const { user } = useAuth();
+  const canEdit = user?.role === 'Admin' || user?.role === 'Operations';
   const { vessels, voyages, api } = useAppData();
+  const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
+  const [visitMessage, setVisitMessage] = useState('');
   const [search, setSearch] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -60,14 +67,20 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
         title="Vessels"
         description="VIGOR pneumatic bulk cement carriers assigned to continuous Zanzibar-mainland rotation cycles."
       >
+        <button disabled={!canEdit} onClick={() => { setVisitMessage(''); setIsVisitModalOpen(true); }} className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-[#0C9349] text-white flex items-center gap-1.5"><Plus className="w-4 h-4" />Add Vessel Visit</button>
         <button
+          disabled={!canEdit}
           onClick={() => setIsAddModalOpen(true)}
           className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-[#0C9349] hover:bg-[#0A7A3D] text-white flex items-center gap-1.5 transition shadow-xs"
         >
           <Plus className="w-4 h-4" />
-          Add Vessel Visit / Fleet Vessel
+          Register New Fleet Vessel
         </button>
       </PageHeader>
+
+      {visitMessage && <p role="status" className="p-3 rounded-lg bg-[#E7F4EB] text-sm text-[#0A7A3D]">{visitMessage}</p>}
+      {isVisitModalOpen && <AddVesselVisit onClose={() => setIsVisitModalOpen(false)} onSaved={() => { setIsVisitModalOpen(false); setVisitMessage('Planned vessel visit saved.'); void api.testConnection(false); }} />}
+      <SiteRegistry />
 
       {/* Fleet KPI overview */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -156,7 +169,7 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
                       <div className="text-[10px]">MMSI {vessel.mmsi || 'N/A'}</div>
                     </td>
                     <td className="py-3 px-4 font-mono font-semibold text-[#14181A]">
-                      {formatTonnage(vessel.capacityT)}
+                      {vessel.capacityT > 0 ? formatTonnage(vessel.capacityT) : 'Not verified'}
                     </td>
                     <td className="py-3 px-4 font-mono text-[#3F4A47]">
                       {voyage ? (

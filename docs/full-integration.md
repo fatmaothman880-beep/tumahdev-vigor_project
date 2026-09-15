@@ -12,7 +12,7 @@ Browser -> Node gateway on port 3000 -> FastAPI on port 8000 -> PostgreSQL.
 
 The Node gateway handles authentication, account administration, audit history, and the grounded assistant. All other `/api/v1` requests are forwarded to FastAPI after authentication and write-role checks. Operational errors, validation responses, and revision conflicts pass through unchanged. An unavailable backend produces HTTP 502 instead of storing operational changes in a second in-memory server.
 
-Normalized port-call records and the wider frontend planning snapshot retain the branch's existing two-model design. The snapshot is stored in `frontend_operational_state` and uses revision checks; it does not replace normalized readings or visit records. Backend-only site workflow routes remain available through the gateway; this integration does not invent new site-specific screens.
+Normalized port-call records and the wider frontend planning snapshot retain the branch's existing two-model design. The snapshot is stored in `frontend_operational_state` and uses revision checks; it does not replace normalized readings or visit records. Site workflow routes are now connected to the fleet visit form, operational checklists, site registry, and overdue-task panels. See combined-integration.md for the subsequent merge.
 
 ## Tracking removal
 

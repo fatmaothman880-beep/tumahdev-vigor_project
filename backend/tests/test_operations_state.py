@@ -74,3 +74,11 @@ def test_tracking_state_is_rejected():
     payload['vesselPositions'] = [{'latitude': -6.1, 'longitude': 39.2}]
     with pytest.raises(ValidationError):
         FrontendStateUpdate(state=payload, expected_revision=0)
+
+
+def test_manufacturer_directory_roundtrips():
+    db = FakeSession()
+    payload = state_payload()
+    payload["manufacturers"] = [{"id": "mtwara", "name": "Mtwara Cement Factory", "works": "Mtwara Cement Factory"}]
+    created = update_operational_state(FrontendStateUpdate(state=payload, expected_revision=0), db)
+    assert get_operational_state(db).state["manufacturers"] == payload["manufacturers"]

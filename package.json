@@ -11,7 +11,10 @@
     "lint": "tsc --noEmit",
     "test": "tsx --test server/gateway.test.ts",
     "local:start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-environment.ps1",
-    "local:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-environment.ps1"
+    "local:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-environment.ps1",
+    "test:workflow": "node --import tsx tests/workflow-integration.test.ts",
+    "test:rotations": "node --import tsx tests/rotation-period.test.ts",
+    "test:preservation": "node --import tsx tests/manufacturer-catalogue.test.ts && node --import tsx tests/state-preservation.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

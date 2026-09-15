@@ -1,3 +1,4 @@
+import { mergeManufacturerCatalogue } from '../lib/manufacturerCatalogue';
 /**
  * Central API Client for VIGOR Smart Port Operations
  * Connects frontend to FastAPI (http://localhost:8000/api/v1) + PostgreSQL
@@ -182,6 +183,7 @@ export interface AppStore {
   fuelOperations: FuelOperation[];
   paymentAccounts: PaymentAccount[];
   paymentTransactions: PaymentTransaction[];
+  manufacturers?: { id: string; name: string; works: string }[];
   manufacturerQueue: ManufacturerQueueEntry[];
   operationalReadings: OperationalReading[];
   delayEvents: DelayEvent[];
@@ -198,6 +200,7 @@ export type PersistedOperationalState = Pick<
   | 'fuelOperations'
   | 'paymentAccounts'
   | 'paymentTransactions'
+  | 'manufacturers'
   | 'manufacturerQueue'
   | 'operationalReadings'
   | 'delayEvents'
@@ -288,6 +291,7 @@ class ApiClient {
   }
 
   private getPersistedOperationalState(): PersistedOperationalState {
+    this.normalizeSite();
     const {
       vessels,
       berths,
@@ -295,6 +299,7 @@ class ApiClient {
       fuelOperations,
       paymentAccounts,
       paymentTransactions,
+      manufacturers,
       manufacturerQueue,
       operationalReadings,
       delayEvents,
@@ -307,6 +312,7 @@ class ApiClient {
       fuelOperations,
       paymentAccounts,
       paymentTransactions,
+      manufacturers,
       manufacturerQueue,
       operationalReadings,
       delayEvents,
@@ -404,7 +410,36 @@ class ApiClient {
     };
   }
 
+  private normalizeSite(): void {
+    // Extend the catalogue without renaming history or deleting configured berths.
+    this.store.manufacturers = mergeManufacturerCatalogue(
+      this.store.manufacturers, this.store.voyages, this.store.manufacturerQueue
+    );
+  }
+
+  public addManufacturer(name: string, works: string): string {
+    name = name.trim(); works = works.trim();
+    if (!name || !works) throw new Error('Enter both a manufacturer name and works.');
+    if (this.store.manufacturers?.some(m => m.name.toLowerCase() === name.toLowerCase() && m.works.toLowerCase() === works.toLowerCase())) {
+      throw new Error('This manufacturer and works already exist.');
+    }
+    const id = crypto.randomUUID();
+    this.store.manufacturers!.push({ id, name, works });
+    this.saveToStorage();
+    return id;
+  }
+
+  public addVoyage(voyage: Omit<Voyage, 'id' | 'createdAt' | 'updatedAt'>): Voyage {
+    const now = new Date().toISOString();
+    const created = { ...voyage, id: crypto.randomUUID(), createdAt: now, updatedAt: now };
+    this.store.voyages.unshift(created);
+    this.recalculateAll();
+    this.saveToStorage();
+    return created;
+  }
+
   public recalculateAll(): void {
+    this.normalizeSite();
     // 1. Update all payment accounts based on transactions
     this.store.paymentAccounts = this.store.paymentAccounts.map((acc) => {
       const totals = calculatePaymentAccountTotals(acc, this.store.paymentTransactions);
@@ -562,6 +597,7 @@ class ApiClient {
           'fuelOperations',
           'paymentAccounts',
           'paymentTransactions',
+          'manufacturers',
           'manufacturerQueue',
           'operationalReadings',
           'delayEvents',
@@ -579,10 +615,11 @@ class ApiClient {
           };
         }
         this.stateRevision = remoteState.revision;
-      } else {
-        // First integrated run: enrich the frontend baseline with normalized
-        // backend master data, then establish the durable state document.
-        if (vessels.status === 'fulfilled' && Array.isArray(vessels.value) && vessels.value.length > 0) {
+      }
+
+      // Always merge backend master data. A previously persisted state must
+      // not hide vessels or berths added later by site configuration.
+      if (vessels.status === 'fulfilled' && Array.isArray(vessels.value) && vessels.value.length > 0) {
           const existingVessels = this.store.vessels;
           const additions = vessels.value
             .map(adaptBackendVessel)
@@ -596,8 +633,8 @@ class ApiClient {
                 )
             );
           this.store.vessels = [...existingVessels, ...additions];
-        }
-        if (berths.status === 'fulfilled' && Array.isArray(berths.value) && berths.value.length > 0) {
+      }
+      if (berths.status === 'fulfilled' && Array.isArray(berths.value) && berths.value.length > 0) {
           const existingBerths = this.store.berths;
           const additions = berths.value
             .map(adaptBackendBerth)
@@ -610,7 +647,11 @@ class ApiClient {
                 )
             );
           this.store.berths = [...existingBerths, ...additions];
-        }
+      }
+
+      if (!remoteState?.state) {
+        // First integrated run: establish the durable state document after
+        // adding normalized backend master data.
         if (operationalState.status === 'fulfilled') {
           this.stateRevision = operationalState.value.revision;
           await this.persistOperationalState();

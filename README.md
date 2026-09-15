@@ -6,6 +6,8 @@ React dashboards, a Node login/AI gateway, and a FastAPI/PostgreSQL backend, run
 
 Executive and operations dashboards, fleet details, berth scheduling, voyage rotations, manufacturer queues, fuel, payments, alerts, reports, corporate login, user administration, and a grounded assistant. The backend retains PostgreSQL state persistence, revision checks, normalized visits/readings/delays, predictions, buffer monitoring, site checklists, and atomic visit planning. Live vessel tracking is removed.
 
+The combined version also includes operational checklists with history, overdue tasks, a site registry, database visit entry, editable manufacturers/works, and calendar-based rotation filters. Existing future-berth configuration and expansion scenarios remain available. See [combined integration notes](docs/combined-integration.md).
+
 ## First-time setup
 
 Install Node.js 22+, Python, and PostgreSQL. Open PowerShell at the repository root:
@@ -13,7 +15,7 @@ Install Node.js 22+, Python, and PostgreSQL. Open PowerShell at the repository r
 ```powershell
 npm ci
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pip install --default-timeout=120 --retries=10 -r requirements-dev.txt
 ```
 
 If `python` opens the Windows Store, use `py -3 -m venv .venv` or the full path of your installed Python executable.
@@ -106,6 +108,9 @@ The optional MySQL account adapter is retained; it does not replace PostgreSQL o
 npm run lint
 npm run build
 npm test
+npm run test:workflow
+npm run test:rotations
+npm run test:preservation
 $env:PYTHONPATH = 'backend'
 .\.venv\Scripts\python.exe -m pytest backend/tests -q
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-test.ps1

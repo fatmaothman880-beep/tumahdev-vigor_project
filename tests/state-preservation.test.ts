@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import { getInitialDemoData } from '../src/mock/mockData';
+const baseline = getInitialDemoData();
+baseline.berths.push({ ...baseline.berths[0], id: 'CUSTOM-BERTH', name: 'Operator configured quay' });
+baseline.voyages[0].manufacturerName = 'Tanga Cement PLC';
+baseline.paymentAccounts[0].counterpartyName = 'Existing supplier';
+const original = JSON.stringify(baseline);
+Object.defineProperty(globalThis, 'localStorage', { value: { getItem: (key: string) => key === 'vigor_smart_port_ops_v2' ? original : null, setItem() {} } });
+globalThis.fetch = async () => new Response(JSON.stringify({ status: 'offline' }), { headers: { 'Content-Type': 'application/json' } });
+const { api } = await import('../src/api/client');
+assert.ok(api.getSnapshot().berths.some(b => b.id === 'B02'));
+assert.ok(api.getSnapshot().berths.some(b => b.id === 'CUSTOM-BERTH' && b.name === 'Operator configured quay'));
+assert.equal(api.getSnapshot().voyages[0].manufacturerName, 'Tanga Cement PLC');
+assert.equal(api.getSnapshot().paymentAccounts[0].counterpartyName, 'Existing supplier');
+api.addBerth({ ...baseline.berths[0], id: 'NEW-PLAN', name: 'Future quay' });
+api.recalculateAll();
+assert.ok(api.getSnapshot().berths.some(b => b.id === 'NEW-PLAN'));
+console.log('PASS saved berths, future berth plans, and supplier history survive recalculation.');
