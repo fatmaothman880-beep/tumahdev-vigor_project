@@ -239,7 +239,7 @@ export function DashboardSummary({
                 </div>
                 <div className="text-xs font-medium text-[#AE3B2E] mt-0.5 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" />
-                  Inbound from Tanga
+                  Inbound from Mtwara
                 </div>
                 <div className="text-xs text-[#5A6764] mt-2.5">
                   ETA:

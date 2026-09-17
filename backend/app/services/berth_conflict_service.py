@@ -6,11 +6,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.models import (
-    Prediction,
+    VisitStatus,
     UpcomingCallStatus,
     UpcomingVesselCall,
     VesselVisit,
 )
+from app.services.prediction_service import calculate_visit_prediction
 from app.services.berth_planning import (
     BerthConflictResult,
     evaluate_berth_conflict,
@@ -53,21 +54,21 @@ def evaluate_next_berth_call(
     if upcoming_call is None:
         return None
 
-    latest_prediction = db.scalar(
-        select(Prediction)
-        .join(
-            VesselVisit,
-            Prediction.visit_id == VesselVisit.id,
+    current_visit = db.scalar(
+        select(VesselVisit)
+        .where(
+            VesselVisit.berth_id == berth_id,
+            VesselVisit.status.in_([
+                VisitStatus.ARRIVED, VisitStatus.BERTHED, VisitStatus.UNLOADING,
+                VisitStatus.DELAYED, VisitStatus.COMPLETED,
+            ]),
         )
-        .where(VesselVisit.berth_id == berth_id)
-        .order_by(Prediction.generated_at.desc())
+        .order_by(VesselVisit.created_at.desc())
         .limit(1)
     )
-
     expected_release = (
-        latest_prediction.expected_berth_release
-        if latest_prediction is not None
-        else None
+        calculate_visit_prediction(current_visit, current_time)["expected_berth_release"]
+        if current_visit is not None else None
     )
 
     conflict = evaluate_berth_conflict(

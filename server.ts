@@ -3,14 +3,7 @@ import { proxyOperations } from './server/operationsProxy';
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { GoogleGenAI } from '@google/genai';
-import {
-  performSemanticSearch,
-  buildGroundedOperationalSnapshot,
-  generateFactualAnalystResponse,
-  SYSTEM_ROUTES,
-  AssistantAnalysisResult,
-} from './server/semanticKnowledge';
+import { loadAssistantRecords, answerFromRecords } from './server/groundedAssistant';
 import {
   authenticate,
   findUserByEmail,
@@ -197,142 +190,23 @@ apiRouter.get('/activity-logs', requireRole(['Admin', 'Operations', 'Management'
   res.json(getActivityLogs());
 });
 
-// 10. AI Assistant Endpoint (NLP + Vector Retrieval + Grounded Gemini Model)
-let genAIClient: GoogleGenAI | null = null;
-function getGenAI(): GoogleGenAI | null {
-  if (!genAIClient && process.env.GEMINI_API_KEY) {
-    genAIClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  }
-  return genAIClient;
-}
-
+// The assistant reads server-side records. Client context is never a factual source.
 apiRouter.post('/ai/assistant', requireAuth, async (req: Request, res: Response) => {
-  const { prompt, context, conversationHistory } = req.body;
-  if (!prompt) {
-    res.status(400).json({ error: 'Prompt is required.' });
+  const prompt = req.body?.prompt;
+  if (typeof prompt !== 'string' || !prompt.trim() || prompt.length > 2000) {
+    res.status(400).json({ detail: 'Enter a question between 1 and 2000 characters.' });
     return;
   }
-
-  // 1. Semantic search & entity/intent extraction
-  const retrieved = performSemanticSearch(prompt, conversationHistory);
-
-  // 2. Build live grounded operational data
-  const groundedData = buildGroundedOperationalSnapshot(context);
-
-  // 3. Generate high-precision baseline factual analyst response
-  const baselineResponse = generateFactualAnalystResponse(prompt, retrieved, groundedData);
-  let finalResult: AssistantAnalysisResult = { ...baselineResponse };
-
-  // 4. If Gemini API is available, enhance with gemini-3.8-flash while strictly enforcing grounding rules
-  const ai = getGenAI();
-  if (ai) {
-    try {
-      const systemInstruction = `You are the senior VIGOR Port Operations Analyst for Vigor Cement Works / Turkys Group in Zanzibar.
-You explain vessel schedules, berth conflicts, production, dispatch, and fuel status using the latest operational data.
-
-STRICT OPERATIONAL RULES:
-1. The system NO LONGER has live vessel GPS, AIS, or real-time location tracking. The vessel module is based purely on schedules, voyage rotations, recorded arrivals/departures, and pneumatic discharge telemetry. NEVER claim to monitor real-time vessel movements, GPS, AIS, or live coordinates.
-2. Ground all answers strictly in the provided Live System Data. NEVER hallucinate or invent times, quantities, delays, or positions.
-3. Keep answers concise: 2 to 5 clear, conversational, explanatory sentences. Do NOT output raw database objects, JSON dumps, or technical field names. Explain what is happening first in plain language.
-4. Output your response strictly as valid JSON matching this schema:
-{
-  "answer": "string (2-5 conversational, explanatory sentences)",
-  "severity": "warning" | "alert" | "info" | "normal",
-  "statusBadge": "string e.g. '⚠ Berth conflict detected' or null",
-  "relatedEntity": "string e.g. 'MV VIGOR 03' or null",
-  "relatedRoute": "string e.g. 'berths' | 'control-tower' | 'fuel' | 'payments' | 'vessels' | 'vessel-detail' | 'manufacturer-queue' | 'alerts'",
-  "routeLabel": "string e.g. 'View Berth Schedule →'"
-}`;
-
-      const geminiPrompt = `${systemInstruction}
-
-LIVE SYSTEM DATA:
-${JSON.stringify(groundedData, null, 2)}
-
-RETRIEVED OPERATIONAL CONCEPT & RULES:
-Concept: ${retrieved.concept.conceptName}
-Category: ${retrieved.concept.category}
-Operational Rules: ${retrieved.concept.operationalRules.join('; ')}
-Target Route: ${retrieved.targetRoute}
-Default Route Label: ${retrieved.routeLabel}
-
-DETECTED ENTITIES & INTENT:
-Entities: ${JSON.stringify(retrieved.detectedEntities)}
-Intent: ${retrieved.intent}
-
-RECENT CONVERSATION HISTORY:
-${JSON.stringify(conversationHistory || [], null, 2)}
-
-USER QUESTION:
-"${prompt}"
-
-Produce JSON output only:`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: geminiPrompt }],
-          },
-        ],
-        config: {
-          responseMimeType: 'application/json',
-        },
-      });
-
-      if (response.text) {
-        try {
-          const parsed = JSON.parse(response.text);
-          if (parsed && typeof parsed.answer === 'string' && parsed.answer.trim().length > 10) {
-            finalResult = {
-              answer: parsed.answer.trim(),
-              severity: parsed.severity || baselineResponse.severity,
-              statusBadge: parsed.statusBadge || baselineResponse.statusBadge,
-              relatedEntity: parsed.relatedEntity || baselineResponse.relatedEntity,
-              relatedRoute: parsed.relatedRoute || baselineResponse.relatedRoute,
-              routeLabel: parsed.routeLabel || baselineResponse.routeLabel,
-              vesselId: baselineResponse.vesselId,
-            };
-          }
-        } catch (jsonErr) {
-          // Fallback to baseline response if JSON parse fails
-          console.warn('[Gemini Response JSON Parse Warning]:', jsonErr);
-        }
-      }
-    } catch (err: unknown) {
-      console.warn('[Gemini API Call Failed - Using Grounded Semantic Baseline]:', err);
-    }
+  const history = Array.isArray(req.body.conversationHistory)
+    ? req.body.conversationHistory.slice(-6).filter((item: any) =>
+        item && item.role === 'user' && typeof item.content === 'string' && item.content.length <= 2000)
+    : [];
+  try {
+    const records = await loadAssistantRecords();
+    res.json(await answerFromRecords(prompt.trim(), history, records));
+  } catch {
+    res.status(503).json({ detail: 'I cannot read the operational records right now. Please retry when the system connection is restored.' });
   }
-
-  // Ensure route is valid
-  const matchedRoute = SYSTEM_ROUTES.find((r) => r.id === finalResult.relatedRoute);
-  if (!matchedRoute) {
-    finalResult.relatedRoute = baselineResponse.relatedRoute;
-    finalResult.routeLabel = baselineResponse.routeLabel;
-  }
-
-  res.json({
-    answer: finalResult.answer,
-    severity: finalResult.severity,
-    statusBadge: finalResult.statusBadge,
-    relatedEntity: finalResult.relatedEntity,
-    relatedRoute: finalResult.relatedRoute,
-    routeLabel: finalResult.routeLabel,
-    vesselId: finalResult.vesselId,
-    actions: [
-      {
-        label: finalResult.routeLabel,
-        page: finalResult.relatedRoute,
-        vesselId: finalResult.vesselId,
-      },
-    ],
-    semanticMatch: {
-      concept: retrieved.concept.conceptName,
-      intent: retrieved.intent,
-      score: Math.round(retrieved.similarityScore * 100) / 100,
-    },
-  });
 });
 
 // Read-only health probes are public; every operational request is authenticated.

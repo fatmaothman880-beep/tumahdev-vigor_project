@@ -89,6 +89,8 @@ export function VesselDetail({
     voyage?.unloadingRateTph ? String(voyage.unloadingRateTph) : '605'
   );
   const [readingNotes, setReadingNotes] = useState('');
+  const [readingError, setReadingError] = useState('');
+  const [readingSaving, setReadingSaving] = useState(false);
 
   // Add Delay form
   const [delayCategory, setDelayCategory] = useState<any>('Equipment');
@@ -128,7 +130,7 @@ export function VesselDetail({
     : null;
 
   // Handlers
-  const handleAddReading = (e: React.FormEvent) => {
+  const handleAddReading = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!voyage) return;
 
@@ -136,21 +138,29 @@ export function VesselDetail({
     const rate = Number(readingRate);
     const total = voyage.actualCargoT || voyage.plannedCargoT || 9600;
 
-    api.addOperationalReading({
-      voyageId: voyage.id,
-      vesselId: vessel.id,
-      timestamp: new Date().toISOString(),
-      source: 'Manual',
-      unloadedTonnes: unl,
-      remainingTonnes: Math.max(0, total - unl),
-      observedRateTph: rate,
-      dataQuality: 'CURRENT',
-      notes: readingNotes.trim() || 'Manual sounding entry from terminal floor',
-      enteredBy: 'Operations Manager (OM)',
-    });
+    setReadingError('');
+    setReadingSaving(true);
+    try {
+      await api.addOperationalReading({
+        voyageId: voyage.id,
+        vesselId: vessel.id,
+        timestamp: new Date().toISOString(),
+        source: 'Manual',
+        unloadedTonnes: unl,
+        remainingTonnes: Math.max(0, total - unl),
+        observedRateTph: rate,
+        dataQuality: 'CURRENT',
+        notes: readingNotes.trim() || 'Manual sounding entry from terminal floor',
+        enteredBy: 'Operations Manager (OM)',
+      });
 
-    setIsReadingModalOpen(false);
-    setReadingNotes('');
+      setIsReadingModalOpen(false);
+      setReadingNotes('');
+    } catch (error) {
+      setReadingError(error instanceof Error ? error.message : 'Reading could not be saved.');
+    } finally {
+      setReadingSaving(false);
+    }
   };
 
   const handleAddDelay = (e: React.FormEvent) => {
@@ -729,6 +739,7 @@ export function VesselDetail({
         subtitle="New discharge readings immediately recalculate remaining tonnes and expected berth release."
       >
         <form onSubmit={handleAddReading} className="space-y-4 text-xs">
+          {readingError && <p role="alert" className="text-red-700">{readingError}</p>}
           <div>
             <label className="block font-semibold text-[#14181A] mb-1">
               Current Unloaded Tonnes (T) *
@@ -779,9 +790,10 @@ export function VesselDetail({
             </button>
             <button
               type="submit"
+              disabled={readingSaving}
               className="px-4 py-2 rounded-lg bg-[#0C9349] hover:bg-[#0A7A3D] text-white font-semibold shadow-xs"
             >
-              Save & Recalculate Forecast
+              {readingSaving ? 'Saving?' : 'Save & Recalculate Forecast'}
             </button>
           </div>
         </form>

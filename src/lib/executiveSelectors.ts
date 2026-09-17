@@ -572,7 +572,7 @@ export function getExecutiveVesselSnapshots(
       }
     } else if (vId === 'v-02' || idx === 1) {
       stageDisplay = 'TO MANUFACTURER';
-      locationDisplay = 'At Sea → Tanga Port';
+      locationDisplay = 'At Sea → Mtwara Port';
       mainTimeLabel = 'ETA';
       mainTimeValue = voyage?.manufacturerEtaForecast
         ? `Tomorrow ${formatTime(voyage.manufacturerEtaForecast)}`
@@ -805,7 +805,7 @@ export function getNextOperationalMilestones(
       id: 'm-pay-deadline',
       time: '17:00',
       asset: 'MV VIGOR 01',
-      action: 'Tanga Cement wire payment deadline',
+      action: 'Mtwara Cement wire payment deadline',
       sourceBadge: 'CONFIRMED',
       status: 'pending',
     });

@@ -15,6 +15,13 @@ test('authenticated gateway preserves backend semantics and rejects unauthorized
   const upstream = express();
   upstream.use(express.json());
   upstream.get('/api/v1/health', (_req, res) => res.json({ status: 'healthy' }));
+  upstream.get('/api/v1/vessels', (req, res) => {
+    if (Number(req.query.limit) > 100) return res.status(422).json({ detail: 'Maximum page size is 100' });
+    res.json([{ id: 'real-1', name: 'MV Actual' }]);
+  });
+  upstream.get('/api/v1/berths', (_req, res) => res.json([]));
+  upstream.get('/api/v1/integration/visits', (_req, res) => res.json([]));
+  upstream.get('/api/v1/integration/predictions', (_req, res) => res.json({}));
   upstream.get('/api/v1/operations/state', (_req, res) => res.json({ state: null, revision: 0 }));
   upstream.put('/api/v1/operations/state', (req, res) => {
     if (req.body.expected_revision !== 0) return res.status(409).json({ detail: 'stale revision' });
@@ -51,6 +58,10 @@ test('authenticated gateway preserves backend semantics and rejects unauthorized
     const assistant = await call('/ai/assistant', 'POST', { prompt: 'What can you tell me about berth planning?', context: {} }, token);
     assert.equal(assistant.status, 200);
     assert.ok((await assistant.json()).answer);
+    const fleet = await call('/ai/assistant', 'POST', { prompt: 'How many vessels do we have?', context: { vessel_count: 999 } }, token);
+    assert.match((await fleet.json()).answer, /1 vessel.*MV Actual/);
+    assert.equal((await call('/ai/assistant', 'POST', { prompt: 'How many vessels?' })).status, 401);
+    assert.equal((await call('/ai/assistant', 'POST', { prompt: {} }, token)).status, 400);
     const reg = await call('/auth/register', 'POST', { email: 'test@turkysgroup.co.tz', password: 'Different123!', fullName: 'Test User', department: 'QA' });
     assert.equal(reg.status, 201);
     const { user } = await reg.json();
@@ -62,6 +73,7 @@ test('authenticated gateway preserves backend semantics and rejects unauthorized
     assert.ok(JSON.parse(fs.readFileSync(process.env.AUTH_DATA_PATH!, 'utf8')).users.some((u: any) => u.email === user.email));
     await new Promise<void>(resolve => backend.close(() => resolve()));
     assert.equal((await call('/operations/state', 'GET', undefined, token)).status, 502);
+    assert.equal((await call('/ai/assistant', 'POST', { prompt: 'How many vessels?' }, token)).status, 503);
   } finally {
     gateway.closeAllConnections();
     backend.closeAllConnections();

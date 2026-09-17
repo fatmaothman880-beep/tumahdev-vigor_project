@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { mergeManufacturerCatalogue } from '../src/lib/manufacturerCatalogue';
 const existing = [{ id: 'mtwara', name: 'Custom works', works: 'Custom branch' }];
-const voyages = [{ manufacturerId: 'mfr-01', manufacturerName: 'Tanga Cement PLC' }];
+const voyages = [{ manufacturerId: 'mfr-01', manufacturerName: 'Mtwara Cement PLC' }];
 const queue = [{ manufacturerName: 'Mombasa supplier' }];
 const before = JSON.stringify({ existing, voyages, queue });
 const merged = mergeManufacturerCatalogue(existing, voyages, queue);
 assert.equal(JSON.stringify({ existing, voyages, queue }), before);
 assert.deepEqual(merged[0], existing[0]);
-assert.ok(merged.some(m => m.name === 'Tanga Cement PLC'));
+assert.ok(merged.some(m => m.name === 'Mtwara Cement PLC'));
 assert.ok(merged.some(m => m.name === 'Mtwara Cement Factory'));
 assert.ok(merged.some(m => m.name === 'Mombasa supplier'));
 assert.equal(new Set(merged.map(m => m.id)).size, merged.length);

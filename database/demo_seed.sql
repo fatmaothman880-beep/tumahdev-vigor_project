@@ -30,8 +30,8 @@ INSERT INTO `berths` (`id`, `name`, `location`, `type`, `length_m`, `max_draft_m
 -- 4. VESSELS
 INSERT INTO `vessels` (`id`, `name`, `imo_reference`, `mmsi`, `capacity_t`, `agent_name`, `agent_phone`, `active`, `notes`) VALUES
 ('v-01', 'MV VIGOR 01', '9482104', '677048200', 10200.00, 'Zanzibar Shipping Agency Ltd', '+255 777 412 890', 1, 'Self-discharging pneumatic bulk cement carrier equipped with high-pressure blowers.'),
-('v-02', 'MV VIGOR 02', '9531890', '677053100', 10200.00, 'Pemba Maritime Services', '+255 777 554 112', 1, 'Standard bulk carrier in regular shuttle rotation between Tanga factory and Zanzibar.'),
-('v-03', 'MV VIGOR 03', '9618422', '677096100', 9800.00, 'Tanga Logistics & Marine Ltd', '+255 777 908 334', 1, 'Dedicated bulk carrier equipped with dust-suppression pneumatic transfer manifold.');
+('v-02', 'MV VIGOR 02', '9531890', '677053100', 10200.00, 'Pemba Maritime Services', '+255 777 554 112', 1, 'Standard bulk carrier in regular shuttle rotation between Mtwara factory and Zanzibar.'),
+('v-03', 'MV VIGOR 03', '9618422', '677096100', 9800.00, 'Mtwara Logistics & Marine Ltd', '+255 777 908 334', 1, 'Dedicated bulk carrier equipped with dust-suppression pneumatic transfer manifold.');
 
 -- 5. ACTIVE VESSEL VISITS
 INSERT INTO `vessel_visits` (`id`, `vessel_id`, `berth_id`, `voyage_number`, `cargo_type`, `cargo_total_t`, `unloaded_t`, `unloading_rate_tph`, `planned_arrival`, `actual_arrival`, `unload_start`, `forecast_unload_end`, `expected_berth_release`, `post_unloading_minutes`, `status`, `berth_conflict`, `conflict_notes`, `created_by`) VALUES

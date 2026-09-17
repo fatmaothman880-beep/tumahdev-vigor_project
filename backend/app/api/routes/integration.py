@@ -17,11 +17,7 @@ from app.models.models import Berth, Vessel, VesselVisit, VisitStatus
 from app.models.workflow import SiteConfiguration
 from app.schemas.visit import VesselVisitResponse
 from app.schemas.vessel import VesselResponse
-from app.services.calculations import (
-    calculate_remaining_cargo, calculate_progress_percentage,
-    calculate_effective_rate, calculate_estimated_finish, calculate_berth_release,
-)
-from app.services.prediction_service import determine_data_quality
+from app.services.prediction_service import calculate_visit_prediction
 
 router = APIRouter(prefix="/integration", tags=["Frontend Integration"])
 
@@ -167,29 +163,4 @@ def live_predictions(db: Session = Depends(get_db)):
     """Compute without inserting prediction rows on every dashboard refresh."""
     now = datetime.now(timezone.utc)
     visits = db.scalars(select(VesselVisit).options(selectinload(VesselVisit.readings))).all()
-    result = {}
-    for v in visits:
-        readings = sorted(v.readings, key=lambda r: r.recorded_at)
-        latest = readings[-1] if readings else None
-        unloaded = latest.unloaded_t if latest else Decimal(0)
-        remaining = calculate_remaining_cargo(v.cargo_total_t, unloaded)
-        rate = calculate_effective_rate(readings)
-        quality = determine_data_quality(readings, now)
-        # Anchor projections to measurement time. A ticking UI must not move
-        # the estimate forward while no new cargo has been measured.
-        finish = calculate_estimated_finish(latest.recorded_at, remaining, rate) if latest else None
-        if quality.value != "VALID" or (latest and latest.unloading_status.value == "STOPPED"):
-            finish = None
-        if v.status in (VisitStatus.CANCELLED, VisitStatus.DEPARTED, VisitStatus.DELAYED):
-            finish = None
-        if v.status == VisitStatus.COMPLETED:
-            finish = v.unload_end
-        result[str(v.id)] = {
-            "remaining_t": remaining, "unloaded_t": unloaded,
-            "progress_pct": calculate_progress_percentage(v.cargo_total_t, unloaded),
-            "effective_rate_tph": rate,
-            "estimated_unload_finish": finish,
-            "expected_berth_release": calculate_berth_release(finish, v.post_unloading_minutes),
-            "data_quality": quality.value,
-        }
-    return result
+    return {str(visit.id): calculate_visit_prediction(visit, now) for visit in visits}

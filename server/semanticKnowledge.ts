@@ -37,7 +37,7 @@ export interface EntityDetectionResult {
   vesselId?: 'v-01' | 'v-02' | 'v-03';
   vesselName?: string;
   berthId?: 'b-01';
-  manufacturer?: 'Tanga Cement' | 'Twiga Cement';
+  manufacturer?: 'Mtwara Cement' | 'Twiga Cement';
   resource?: 'fuel' | 'production' | 'dispatch' | 'silo' | 'buffer' | 'payment';
   rawMatchedText?: string;
 }
@@ -134,10 +134,10 @@ export interface GroundedOperationalData {
     eco_steaming_savings_t: number;
   };
   finance: {
-    tanga_invoice_tzs: number;
-    tanga_cleared_tzs: number;
-    tanga_cleared_pct: number;
-    tanga_balance_due_tzs: number;
+    mtwara_invoice_tzs: number;
+    mtwara_cleared_tzs: number;
+    mtwara_cleared_pct: number;
+    mtwara_balance_due_tzs: number;
     gate_unlocked: boolean;
   };
   alerts: {
@@ -225,8 +225,8 @@ export const SYSTEM_ROUTES: SemanticRoute[] = [
     id: 'manufacturer-queue',
     title: 'Manufacturer Queue',
     category: 'OPERATIONS',
-    description: 'Manufacturer loading slot queue and dispatch priority for Tanga Cement and Twiga Cement.',
-    keywords: ['manufacturer queue', 'loading slot', 'factory queue', 'tanga slot', 'twiga slot'],
+    description: 'Manufacturer loading slot queue and dispatch priority for Mtwara Cement and Twiga Cement.',
+    keywords: ['manufacturer queue', 'loading slot', 'factory queue', 'mtwara slot', 'twiga slot'],
     defaultLabel: 'View Manufacturer Queue →',
   },
   {
@@ -451,10 +451,10 @@ export const SEMANTIC_KNOWLEDGE_BASE: SemanticConcept[] = [
     conceptName: 'Manufacturer Commercial Payment Gate',
     category: 'FINANCE',
     description:
-      'Commercial financial gate requiring 100% advance wire payment clearance before mainland cement factories (Tanga Cement, Twiga Cement) confirm loading slots.',
+      'Commercial financial gate requiring 100% advance wire payment clearance before mainland cement factories (Mtwara Cement, Twiga Cement) confirm loading slots.',
     synonyms: [
       'payment gate',
-      'tanga payment',
+      'mtwara payment',
       'twiga payment',
       'wire payment',
       'advance invoice',
@@ -463,11 +463,11 @@ export const SEMANTIC_KNOWLEDGE_BASE: SemanticConcept[] = [
       'remaining balance',
       'wire receipt',
       'what happens if we wire',
-      'tanga cement balance',
+      'mtwara cement balance',
     ],
     operationalRules: [
       'Manufacturer commercial rule requires 100% invoice settlement before slot allocation.',
-      'Tanga Cement invoice: TZS 500,000,000.',
+      'Mtwara Cement invoice: TZS 500,000,000.',
       'Cleared via RTGS: TZS 300,000,000 (60%).',
       'Balance outstanding: TZS 200,000,000.',
       'Recording wire confirmation immediately unlocks slot eligibility for MV VIGOR 01.',
@@ -524,7 +524,7 @@ export const SEMANTIC_KNOWLEDGE_BASE: SemanticConcept[] = [
       'Cargo: 8,500 MT bulk cement.',
       'Discharged: ~6,120 MT (72% complete) at 605 MT/h.',
       'Expected berth departure: 04:09 EAT (includes 1.5h line purge buffer).',
-      'Next destination: Tanga Cement loading terminal.',
+      'Next destination: Mtwara Cement loading terminal.',
     ],
     targetRouteId: 'vessel-detail',
     routeLabel: 'View MV VIGOR 01 Details →',
@@ -551,7 +551,7 @@ export const SEMANTIC_KNOWLEDGE_BASE: SemanticConcept[] = [
       'can vigor 03 berth',
     ],
     operationalRules: [
-      'Returning laden with 9,400 MT bulk cement from Tanga.',
+      'Returning laden with 9,400 MT bulk cement from Mtwara.',
       'ETA Zanzibar waters: 01:31 EAT.',
       'Berth B01 occupied by MV VIGOR 01 until 04:09 EAT.',
       'Estimated anchorage wait: 2 hours and 38 minutes (2.7h).',
@@ -567,7 +567,7 @@ export const SEMANTIC_KNOWLEDGE_BASE: SemanticConcept[] = [
     conceptName: 'MV VIGOR 02 Operations',
     category: 'VESSEL',
     description:
-      'Status and schedule of MV VIGOR 02, in ballast transit to Tanga Cement.',
+      'Status and schedule of MV VIGOR 02, in ballast transit to Mtwara Cement.',
     synonyms: [
       'vigor 02',
       'mv vigor 02',
@@ -578,15 +578,15 @@ export const SEMANTIC_KNOWLEDGE_BASE: SemanticConcept[] = [
       'vigor 02 status',
     ],
     operationalRules: [
-      'In transit to Tanga Cement via Pemba Channel.',
+      'In transit to Mtwara Cement via Pemba Channel.',
       'Cruising at 10.8 knots in ballast.',
-      'ETA Tanga: Tomorrow morning.',
+      'ETA Mtwara: Tomorrow morning.',
       'Confirmed loading queue slot: Yes (100% advance wire cleared).',
     ],
     targetRouteId: 'vessel-detail',
     routeLabel: 'View MV VIGOR 02 Details →',
     defaultSeverity: 'normal',
-    defaultStatusBadge: '● In transit to Tanga',
+    defaultStatusBadge: '● In transit to Mtwara',
   },
 ];
 
@@ -723,8 +723,8 @@ export function detectEntities(query: string, conversationHistory?: { role: stri
   }
 
   // Manufacturer entity
-  if (lower.includes('tanga')) {
-    res.manufacturer = 'Tanga Cement';
+  if (lower.includes('mtwara')) {
+    res.manufacturer = 'Mtwara Cement';
   } else if (lower.includes('twiga')) {
     res.manufacturer = 'Twiga Cement';
   }
@@ -897,7 +897,7 @@ export function buildGroundedOperationalSnapshot(customState?: any): GroundedOpe
       id: 'v-02',
       name: 'MV VIGOR 02',
       status: 'Northbound in Pemba Channel',
-      destination: 'Tanga Cement Terminal',
+      destination: 'Mtwara Cement Terminal',
       speed_kts: 10.8,
       cargo_capacity_t: 10500,
       eta_destination: 'Tomorrow 08:00',
@@ -905,8 +905,8 @@ export function buildGroundedOperationalSnapshot(customState?: any): GroundedOpe
     vessel_v03: {
       id: 'v-03',
       name: 'MV VIGOR 03',
-      status: 'Inbound laden transit from Tanga',
-      origin: 'Tanga Cement',
+      status: 'Inbound laden transit from Mtwara',
+      origin: 'Mtwara Cement',
       destination: 'Zanzibar Port (Berth B01)',
       cargo_laden_t: 9400,
       return_eta_forecast: '01:31',
@@ -948,10 +948,10 @@ export function buildGroundedOperationalSnapshot(customState?: any): GroundedOpe
       eco_steaming_savings_t: 1.8,
     },
     finance: {
-      tanga_invoice_tzs: 500000000,
-      tanga_cleared_tzs: 300000000,
-      tanga_cleared_pct: 60,
-      tanga_balance_due_tzs: 200000000,
+      mtwara_invoice_tzs: 500000000,
+      mtwara_cleared_tzs: 300000000,
+      mtwara_cleared_pct: 60,
+      mtwara_balance_due_tzs: 200000000,
       gate_unlocked: false,
     },
     alerts: {
@@ -1093,14 +1093,14 @@ export function generateFactualAnalystResponse(
     };
   }
 
-  // 8. Tanga payment gate
+  // 8. Mtwara payment gate
   if (concept.id === 'manufacturer_payment_gate' || lower.includes('payment') || lower.includes('wire') || lower.includes('invoice')) {
-    const answer = `Tanga Cement invoice clearance is currently at ${data.finance.tanga_cleared_pct}% (TZS ${data.finance.tanga_cleared_tzs.toLocaleString()}), leaving a balance of TZS ${data.finance.tanga_balance_due_tzs.toLocaleString()}. Once the remaining wire is recorded, the 100% advance threshold will be met, unlocking confirmed loading slot allocation.`;
+    const answer = `Mtwara Cement invoice clearance is currently at ${data.finance.mtwara_cleared_pct}% (TZS ${data.finance.mtwara_cleared_tzs.toLocaleString()}), leaving a balance of TZS ${data.finance.mtwara_balance_due_tzs.toLocaleString()}. Once the remaining wire is recorded, the 100% advance threshold will be met, unlocking confirmed loading slot allocation.`;
     return {
       answer,
       severity: 'warning',
       statusBadge: '⚠ TZS 200M payment pending',
-      relatedEntity: 'Tanga Cement Gate',
+      relatedEntity: 'Mtwara Cement Gate',
       relatedRoute: 'payments',
       routeLabel: 'View Finance & Payments →',
     };

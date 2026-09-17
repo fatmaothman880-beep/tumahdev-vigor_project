@@ -173,13 +173,16 @@ export function ControlTowerTimeline({
                     {voyage && (
                       <>
                         {/* 1. Unload block if V1 */}
-                        {voyage.currentStage === 'UNLOADING' && (
+                        {voyage.currentStage === 'UNLOADING' && !voyage.forecastUnloadEnd && (
+                          <span className="relative px-2 text-xs">Unloading forecast unavailable</span>
+                        )}
+                        {voyage.currentStage === 'UNLOADING' && voyage.forecastUnloadEnd && (
                           <div
                             className="absolute top-1.5 bottom-1.5 bg-[#0C9349] text-white rounded text-[10px] font-mono font-semibold px-2 flex items-center overflow-hidden whitespace-nowrap shadow-xs hover:brightness-110 cursor-pointer"
                             style={getBlockStyle(voyage.actualUnloadStart || voyage.plannedUnloadStart, voyage.forecastUnloadEnd)}
                             title={`Unloading bulk cement: Forecast finish ${formatDateTime(voyage.forecastUnloadEnd)}`}
                           >
-                            UNLOAD 72% ({formatTime(voyage.forecastUnloadEnd)})
+                            UNLOAD ({formatTime(voyage.forecastUnloadEnd)})
                           </div>
                         )}
 

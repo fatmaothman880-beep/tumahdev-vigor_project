@@ -1,8 +1,7 @@
+import { apiFetch } from '../api/client';
 import React, { useState, useRef, useEffect } from 'react';
-import { useAppData } from '../hooks/useAppData';
 import { Modal } from './ui/Modal';
 import { Send, ArrowRight, Bot, AlertTriangle, CheckCircle, Info, Sparkles } from 'lucide-react';
-import { formatTime, formatHoursAndMinutes } from '../lib/format';
 
 interface AiAssistantModalProps {
   isOpen: boolean;
@@ -33,7 +32,6 @@ export function AiAssistantModal({
   onNavigateToBerths,
   onSelectVessel,
 }: AiAssistantModalProps) {
-  const { vessels, voyages } = useAppData();
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   const [input, setInput] = useState('');
@@ -41,16 +39,16 @@ export function AiAssistantModal({
   const [messages, setMessages] = useState<AssistantMessage[]>([
     {
       sender: 'ASSISTANT',
-      text: "Hello. I'm the VIGOR Operations Assistant. I can help explain vessel schedules, berth conflicts, production, dispatch, fuel status and other operational information using the latest data available in this system. What would you like to know?",
+      text: "Hello. Ask me about your vessels, their recorded status, unloading forecasts, berths, delays, fuel or payments. I?ll use the system records and link you to the details.",
     },
   ]);
 
   // 4 suggested prompt chips (Requirement 10)
   const quickPrompts = [
-    'What needs attention right now?',
-    'Why is MV VIGOR 03 delayed?',
-    'Are we meeting today’s production target?',
-    'What’s the current berth situation?',
+    'How many vessels do we have?',
+    'Where is MV VIGOR 01 at the moment?',
+    'When will MV VIGOR 01 finish unloading?',
+    'What is the current berth situation?',
   ];
 
   // Auto-scroll to bottom of chat
@@ -72,13 +70,13 @@ export function AiAssistantModal({
     } else if (routeId === 'payments' && onNavigateToPayments) {
       onNavigateToPayments();
     } else if (onSelectVessel && (routeId === 'vessel-detail' || routeId === 'vessels')) {
-      onSelectVessel(vesselId || 'v-01');
+      if (vesselId) onSelectVessel(vesselId);
     }
   };
 
   const handleSend = async (textToSend?: string) => {
     const q = (textToSend || input).trim();
-    if (!q) return;
+    if (!q || isThinking) return;
 
     const userMsg: AssistantMessage = { sender: 'USER', text: q };
     setMessages((prev) => [...prev, userMsg]);
@@ -92,153 +90,28 @@ export function AiAssistantModal({
     }));
 
     try {
-      const res = await fetch('/api/v1/ai/assistant', {
+      const data = await apiFetch<{
+        answer: string; statusBadge?: string;
+        actions: { label: string; page: string; vesselId?: string }[];
+      }>('/ai/assistant', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: q,
-          conversationHistory,
-          context: {
-            vessel_count: vessels.length,
-            voyage_count: voyages.length,
-          },
-        }),
+        body: JSON.stringify({ prompt: q, conversationHistory }),
       });
-
-      if (res.ok) {
-        const data = await res.json();
-        const primaryRoute = data.relatedRoute || 'dashboard';
-        const primaryLabel = data.routeLabel || 'View Operations →';
-        const targetVesselId = data.vesselId;
-
-        const actions: { label: string; onClick: () => void; primary?: boolean }[] = [
-          {
-            label: primaryLabel,
-            primary: true,
-            onClick: () => triggerNavigation(primaryRoute, targetVesselId),
-          },
-        ];
-
-        // Optional secondary vessel link if question specifically involves a vessel and route isn't already vessel-detail
-        if (targetVesselId && primaryRoute !== 'vessel-detail') {
-          const vesselObj = vessels.find((v) => v.id === targetVesselId);
-          actions.push({
-            label: `Inspect ${vesselObj?.name || 'Vessel'} Details →`,
-            primary: false,
-            onClick: () => triggerNavigation('vessel-detail', targetVesselId),
-          });
-        }
-
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: 'ASSISTANT',
-            text: data.answer,
-            severity: data.severity,
-            statusBadge: data.statusBadge,
-            relatedEntity: data.relatedEntity,
-            relatedRoute: primaryRoute,
-            routeLabel: primaryLabel,
-            vesselId: targetVesselId,
-            actions,
-          },
-        ]);
-        setIsThinking(false);
-        return;
-      }
-    } catch (err) {
-      console.warn('[AI Assistant fetch failed, falling back to local factual intelligence]:', err);
+      setMessages(prev => [...prev, {
+        sender: 'ASSISTANT', text: data.answer, statusBadge: data.statusBadge,
+        actions: (data.actions ?? []).map((action, index) => ({
+          label: action.label, primary: index === 0,
+          onClick: () => triggerNavigation(action.page, action.vesselId),
+        })),
+      }]);
+    } catch (error) {
+      setMessages(prev => [...prev, {
+        sender: 'ASSISTANT', severity: 'warning',
+        text: error instanceof Error ? error.message : 'The assistant could not read the system records. Please retry.',
+      }]);
+    } finally {
+      setIsThinking(false);
     }
-
-    // Client-side offline factual fallback
-    const lower = q.toLowerCase();
-    let reply = '';
-    let statusBadge: string | null = null;
-    let severity: 'warning' | 'alert' | 'info' | 'normal' = 'info';
-    let targetRoute = 'dashboard';
-    let targetLabel = 'View Operations →';
-    let targetVessel: string | undefined = undefined;
-
-    if (lower.includes('vigor 03') || lower.includes('delayed') || lower.includes('wait') || lower.includes('berth conflict')) {
-      reply =
-        'MV VIGOR 03 is expected at 01:31, while MV VIGOR 01 is not expected to clear Berth B01 until 04:09. This creates an estimated berth overlap of about 2 hours and 38 minutes, so VIGOR 03 may need to wait before berthing.';
-      statusBadge = '⚠ Berth conflict detected';
-      severity = 'warning';
-      targetRoute = 'berths';
-      targetLabel = 'View Berth Schedule →';
-      targetVessel = 'v-03';
-    } else if (lower.includes('target') || lower.includes('production') || lower.includes('behind')) {
-      reply =
-        "Today's production is 2,450 T against a 3,000 T target, meaning production is currently 18% below target. Based on the current operating data, approximately 550 T remains to reach today's target.";
-      statusBadge = '⚠ Production 18% below target';
-      severity = 'warning';
-      targetRoute = 'control-tower';
-      targetLabel = 'View Operations →';
-    } else if (lower.includes('fuel') || lower.includes('bunker') || lower.includes('mgo')) {
-      reply =
-        'The current fuel reserve is approximately 28%, which is below the preferred operating buffer and is currently flagged for attention.';
-      statusBadge = '⚠ Low fuel reserve (28%)';
-      severity = 'warning';
-      targetRoute = 'fuel';
-      targetLabel = 'View Fuel / Oil →';
-    } else if (lower.includes('attention') || lower.includes('urgent') || lower.includes('issues')) {
-      reply =
-        'There are currently three priority items requiring attention: the 2h 38m berth conflict between MV VIGOR 01 and MV VIGOR 03 at Berth B01, the terminal fuel reserve standing at a low 28%, and cement production running 18% behind the daily target.';
-      statusBadge = '⚠ 3 Priority issues active';
-      severity = 'alert';
-      targetRoute = 'alerts';
-      targetLabel = 'View Operational Alerts →';
-    } else if (lower.includes('when') && (lower.includes('vigor 01') || lower.includes('leave') || lower.includes('depart'))) {
-      reply =
-        'MV VIGOR 01 is expected to clear Berth B01 at 04:09, following completion of its remaining cement discharge and the mandatory 1.5-hour pneumatic line purge and castoff buffer.';
-      statusBadge = '● Berth clearance expected at 04:09';
-      severity = 'normal';
-      targetRoute = 'berths';
-      targetLabel = 'View Berth Schedule →';
-      targetVessel = 'v-01';
-    } else if (lower.includes('dispatch') || lower.includes('truck')) {
-      reply =
-        "Today's dispatch volume stands at 1,850 tonnes processed through the weighbridge across 42 trucks, operating within normal logistics queue parameters.";
-      statusBadge = '● Dispatch normal';
-      severity = 'normal';
-      targetRoute = 'control-tower';
-      targetLabel = 'View Dispatch Status →';
-    } else if (lower.includes('payment') || lower.includes('wire') || lower.includes('tanga')) {
-      reply =
-        'Tanga Cement invoice clearance is currently at 60% (TZS 300,000,000), leaving a balance of TZS 200,000,000. Settling the balance unlocks confirmed loading slot allocation.';
-      statusBadge = '⚠ TZS 200M balance pending';
-      severity = 'warning';
-      targetRoute = 'payments';
-      targetLabel = 'View Finance & Payments →';
-    } else {
-      reply =
-        'Berth B01 is actively occupied by MV VIGOR 01 with clearance scheduled at 04:09, while MV VIGOR 03 is inbound from Tanga. Fleet operations are coordinated based on voyage rotations and pneumatic discharge telemetry.';
-      statusBadge = '● System operational';
-      severity = 'normal';
-      targetRoute = 'dashboard-summary';
-      targetLabel = 'View Dashboard Summary →';
-    }
-
-    setMessages((prev) => [
-      ...prev,
-      {
-        sender: 'ASSISTANT',
-        text: reply,
-        severity,
-        statusBadge,
-        relatedRoute: targetRoute,
-        routeLabel: targetLabel,
-        vesselId: targetVessel,
-        actions: [
-          {
-            label: targetLabel,
-            primary: true,
-            onClick: () => triggerNavigation(targetRoute, targetVessel),
-          },
-        ],
-      },
-    ]);
-    setIsThinking(false);
   };
 
   return (
@@ -246,7 +119,7 @@ export function AiAssistantModal({
       isOpen={isOpen}
       onClose={onClose}
       title="VIGOR Port Operations Assistant"
-      subtitle="Grounded decision intelligence for Zanzibar cement fleet & terminal logistics"
+      subtitle="Answers from saved system records, with links to the details"
     >
       <div className="space-y-4 text-xs font-sans">
         {/* Chat History Canvas */}
@@ -331,7 +204,7 @@ export function AiAssistantModal({
           {isThinking && (
             <div className="flex items-center gap-2 text-xs text-[#5A6764] pl-2 pt-1">
               <Sparkles className="w-3.5 h-3.5 text-[#0C9349] animate-spin" />
-              <span>Analyzing port operational telemetry...</span>
+              <span>Reading system records...</span>
             </div>
           )}
         </div>
@@ -346,6 +219,7 @@ export function AiAssistantModal({
               <button
                 key={idx}
                 onClick={() => handleSend(p)}
+                disabled={isThinking}
                 className="text-[11px] px-3 py-1.5 rounded-lg bg-white border border-[#DCD8CD] hover:border-[#0C9349] hover:text-[#0C9349] hover:bg-[#F9FCFA] text-[#333D3A] font-medium transition shadow-2xs cursor-pointer"
               >
                 {p}
@@ -359,6 +233,7 @@ export function AiAssistantModal({
           <input
             type="text"
             placeholder="Ask naturally (e.g., Why is VIGOR 03 waiting? How much fuel do we have?)"
+            maxLength={2000}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}

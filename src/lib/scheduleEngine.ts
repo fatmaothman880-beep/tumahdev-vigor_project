@@ -2,78 +2,12 @@ import {
   Voyage,
   FuelOperation,
   PaymentAccount,
-  OperationalReading,
   DelayEvent,
   SystemSettings,
   CurrentBlocker,
   OperationsHealth,
   OperationalRisk,
 } from '../types';
-
-export interface UnloadingForecast {
-  remainingTonnes: number;
-  remainingHours: number;
-  cargoProgressPercent: number;
-  scheduleProgressPercent: number;
-  forecastUnloadEnd: string;
-  expectedBerthRelease: string;
-  isAvailable: boolean;
-  unavailabilityReason?: string;
-}
-
-export function calculateUnloadingForecast(
-  voyage: Voyage,
-  latestReading?: OperationalReading,
-  postUnloadBufferHours = 1.5
-): UnloadingForecast {
-  const cargoTotal = voyage.actualCargoT || voyage.plannedCargoT || 9600;
-  const unloaded = latestReading?.unloadedTonnes ?? voyage.unloadedTonnes;
-  const rateTph = latestReading?.observedRateTph ?? voyage.unloadingRateTph;
-
-  const remainingTonnes = Math.max(0, cargoTotal - unloaded);
-  const cargoProgressPercent =
-    cargoTotal > 0 ? Math.min(100, Math.round((unloaded / cargoTotal) * 100)) : 0;
-
-  // Schedule progress
-  const plannedStart = new Date(voyage.plannedUnloadStart).getTime();
-  const plannedEnd = new Date(voyage.plannedUnloadEnd).getTime();
-  const now = new Date().getTime();
-  const plannedDuration = Math.max(1, plannedEnd - plannedStart);
-  const elapsed = Math.max(0, now - plannedStart);
-  const scheduleProgressPercent = Math.min(
-    100,
-    Math.max(0, Math.round((elapsed / plannedDuration) * 100))
-  );
-
-  if (!rateTph || rateTph <= 0) {
-    return {
-      remainingTonnes,
-      remainingHours: 0,
-      cargoProgressPercent,
-      scheduleProgressPercent,
-      forecastUnloadEnd: voyage.forecastUnloadEnd || voyage.plannedUnloadEnd,
-      expectedBerthRelease: voyage.expectedBerthRelease,
-      isAvailable: false,
-      unavailabilityReason: 'Valid unloading rate required for forecast calculation.',
-    };
-  }
-
-  const remainingHours = remainingTonnes / rateTph;
-  const forecastEndMs = now + remainingHours * 3600 * 1000;
-  const forecastUnloadEnd = new Date(forecastEndMs).toISOString();
-  const berthReleaseMs = forecastEndMs + postUnloadBufferHours * 3600 * 1000;
-  const expectedBerthRelease = new Date(berthReleaseMs).toISOString();
-
-  return {
-    remainingTonnes,
-    remainingHours,
-    cargoProgressPercent,
-    scheduleProgressPercent,
-    forecastUnloadEnd,
-    expectedBerthRelease,
-    isAvailable: true,
-  };
-}
 
 export function recalculateVoyageDependencies(
   voyage: Voyage,
@@ -85,20 +19,10 @@ export function recalculateVoyageDependencies(
   settings?: Partial<SystemSettings>
 ): Voyage {
   const updated: Voyage = { ...voyage };
-  const now = new Date();
-  const buffer = settings?.postUnloadBerthBufferHours ?? 1.5;
-
-  // 1. Unloading forecast
-  if (updated.currentStage === 'UNLOADING' || updated.currentStage === 'BERTHED_AT_VIGOR') {
-    const forecast = calculateUnloadingForecast(updated, undefined, buffer);
-    if (forecast.isAvailable) {
-      updated.forecastUnloadEnd = forecast.forecastUnloadEnd;
-      updated.expectedBerthRelease = forecast.expectedBerthRelease;
-    }
-  }
+  // Unloading estimates are supplied by the backend and must survive recalculation.
 
   // 2. Fuel schedule dependency
-  if (updated.fuelRequired && fuelOp) {
+  if (updated.fuelRequired && fuelOp && (updated.actualUnloadEnd || updated.forecastUnloadEnd)) {
     const unloadFinished = updated.actualUnloadEnd || updated.forecastUnloadEnd;
     const earliestFuelStart = new Date(
       new Date(unloadFinished).getTime() + 0.5 * 3600000
@@ -121,7 +45,7 @@ export function recalculateVoyageDependencies(
   // 3. Outbound sailing & Manufacturer ETA
   if (updated.currentStage === 'SAILING_TO_MANUFACTURER') {
     // If sailing, manufacturer ETA is driven by distance & speed
-    // Default Zanzibar to Tanga route is ~115 NM at 11 knots = ~10.5 hours
+    // Sailing estimates require the configured route distance and vessel speed.
   }
 
   // 4. Check Payment Eligibility Gate for Manufacturer

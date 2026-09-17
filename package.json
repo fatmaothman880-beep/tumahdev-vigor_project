@@ -12,6 +12,8 @@
     "test": "tsx --test server/gateway.test.ts",
     "local:start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-environment.ps1",
     "local:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-environment.ps1",
+    "test:assistant": "tsx --test server/groundedAssistant.test.ts",
+    "test:forecast": "node --import tsx tests/forecast-authority.test.ts",
     "test:workflow": "node --import tsx tests/workflow-integration.test.ts",
     "test:rotations": "node --import tsx tests/rotation-period.test.ts",
     "test:preservation": "node --import tsx tests/manufacturer-catalogue.test.ts && node --import tsx tests/state-preservation.test.ts"

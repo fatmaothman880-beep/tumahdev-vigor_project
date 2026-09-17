@@ -36,7 +36,7 @@ export function getInitialDemoData() {
       reference: 'VG-V02',
       active: true,
       capacityT: 10200,
-      notes: 'Bulk cement carrier assigned to north rotation (Zanzibar - Tanga - Mombasa route).',
+      notes: 'Bulk cement carrier assigned to north rotation (Zanzibar - Mtwara - Mombasa route).',
       createdAt: '2025-01-15T08:00:00Z',
       updatedAt: now.toISOString(),
     },

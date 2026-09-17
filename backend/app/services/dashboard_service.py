@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+from types import SimpleNamespace
+from app.services.prediction_service import calculate_visit_prediction
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from uuid import UUID
@@ -8,7 +10,6 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.models import (
     OperationalReading,
-    Prediction,
     VesselVisit,
     VisitStatus,
 )
@@ -119,12 +120,7 @@ def get_active_dashboard(
         .limit(1)
     )
 
-    latest_prediction = db.scalar(
-        select(Prediction)
-        .where(Prediction.visit_id == visit.id)
-        .order_by(Prediction.generated_at.desc())
-        .limit(1)
-    )
+    latest_prediction = SimpleNamespace(**calculate_visit_prediction(visit))
 
     unloaded_t = (
         latest_reading.unloaded_t

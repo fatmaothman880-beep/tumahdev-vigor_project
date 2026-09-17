@@ -56,24 +56,9 @@ def determine_data_quality(
     return DataQuality.VALID
 
 
-def generate_prediction(
-    db: Session,
-    visit_id: UUID,
-    generated_at: datetime | None = None,
-) -> Prediction:
-    """Generate and save a prediction for one vessel visit."""
-
+def calculate_visit_prediction(visit: VesselVisit, generated_at: datetime | None = None) -> dict:
+    """One read-only forecast used by saved predictions and live screens."""
     generated_at = generated_at or datetime.now(timezone.utc)
-
-    visit = db.scalar(
-        select(VesselVisit)
-        .options(selectinload(VesselVisit.readings))
-        .where(VesselVisit.id == visit_id)
-    )
-
-    if visit is None:
-        raise ValueError(f"Vessel visit {visit_id} was not found.")
-
     readings = sorted(
         visit.readings,
         key=lambda reading: reading.recorded_at,
@@ -102,11 +87,6 @@ def generate_prediction(
         effective_rate_tph,
     )
 
-    expected_release = calculate_berth_release(
-        estimated_finish,
-        visit.post_unloading_minutes,
-    )
-
     data_quality = determine_data_quality(
         readings,
         generated_at,
@@ -120,16 +100,43 @@ def generate_prediction(
         estimated_finish = visit.unload_end
     expected_release = calculate_berth_release(estimated_finish, visit.post_unloading_minutes)
 
+    return {
+        "remaining_t": remaining_t,
+        "unloaded_t": latest_unloaded_t,
+        "progress_pct": progress_pct,
+        "effective_rate_tph": effective_rate_tph,
+        "estimated_unload_finish": estimated_finish,
+        "expected_berth_release": expected_release,
+        "data_quality": data_quality,
+    }
+
+
+def generate_prediction(
+    db: Session,
+    visit_id: UUID,
+    generated_at: datetime | None = None,
+) -> Prediction:
+    """Generate and save a prediction for one vessel visit."""
+
+    generated_at = generated_at or datetime.now(timezone.utc)
+
+    visit = db.scalar(
+        select(VesselVisit)
+        .options(selectinload(VesselVisit.readings))
+        .where(VesselVisit.id == visit_id)
+    )
+
+    if visit is None:
+        raise ValueError(f"Vessel visit {visit_id} was not found.")
+
+    values = calculate_visit_prediction(visit, generated_at)
+    values.pop("unloaded_t")
+
     prediction = Prediction(
         visit_id=visit.id,
         generated_at=generated_at,
-        remaining_t=remaining_t,
-        progress_pct=progress_pct,
-        effective_rate_tph=effective_rate_tph,
-        estimated_unload_finish=estimated_finish,
-        expected_berth_release=expected_release,
         method="ELAPSED_CUMULATIVE",
-        data_quality=data_quality,
+        **values,
     )
 
     db.add(prediction)
