@@ -10,18 +10,70 @@ Integrated React dashboard, Node authentication/AI gateway, and FastAPI/PostgreS
 - Grounded operations assistant with a local factual response and optional server-side Gemini enhancement.
 - Live vessel tracking is removed: no tracking page, coordinate feed, position editor, tracking alerts, or position state. Voyage schedules and recorded operational readings remain.
 
-## Start with Docker
+## Start on Ubuntu
 
-Install and start Docker Desktop, then run:
+Requires Node.js 22+, Python, and a running PostgreSQL database. The web application
+is served by Node/Express/Vite on **http://localhost:3000**. FastAPI on port 8000
+provides the operations API and developer documentation, not the browser UI.
 
-```powershell
-Copy-Item .env.example .env
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-environment.ps1
+One-time setup from the repository root (preserve an existing `.env`):
+
+```bash
+cd ~/tumahdev-vigor_project
+npm ci
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+[ -f .env ] || cp .env.example .env
 ```
 
-Open http://localhost:3000. The browser uses the Node gateway on this port for both authentication and operational API requests. PostgreSQL and FastAPI ports are bound to loopback for local maintenance; do not expose FastAPI directly as the public application API because authentication is enforced by the gateway.
+Set `DATABASE_URL` in `.env` to your existing PostgreSQL database, with a
+URL-encoded password. Keep these gateway settings:
 
-Startup applies all Alembic migrations, including removal of old position data, and runs the existing seed. Back up existing databases before upgrading. PostgreSQL data lives in `postgres_data`; local accounts and audit history live in `auth_data`. Keep both volumes when stopping the stack.
+```dotenv
+VITE_API_URL=/api/v1
+VITE_USE_MOCK_API=false
+HOST=127.0.0.1
+PORT=3000
+OPERATIONS_API_URL=http://127.0.0.1:8000/api/v1
+AUTH_DATA_PATH=./data/auth.json
+BACKEND_PORT=8000
+API_PREFIX=/api/v1
+```
+
+Back up an existing database before upgrading, then apply migrations:
+
+```bash
+source .venv/bin/activate
+alembic -c backend/alembic.ini upgrade head
+```
+
+For a new demonstration database only, optionally add the seed with
+`PYTHONPATH=backend python -m app.database.seed`. Existing records do not need
+reseeding. Back up PostgreSQL and `data/auth.json`, which holds accounts and audit history.
+
+Check `ss -ltnp | grep -E ':3000|:8000'` before starting; reuse the correct existing
+processes instead of starting duplicates.
+
+Terminal 1 — backend:
+
+```bash
+cd ~/tumahdev-vigor_project
+source .venv/bin/activate
+PYTHONPATH=backend python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+Terminal 2 — Node gateway/frontend:
+
+```bash
+cd ~/tumahdev-vigor_project
+npm run dev
+```
+
+Open **http://localhost:3000**. The browser sends authentication and operational
+requests through the Node gateway. FastAPI must remain behind the gateway because
+the gateway enforces authentication and authorization. `.env.docker` is not loaded
+by these native startup commands; configure `.env` instead.
 
 For the seeded local demonstration, use `admin@turkysgroup.co.tz`, `ceo@turkysgroup.co.tz`, `ops.dispatcher@turkysgroup.co.tz`, or `auditor@turkysgroup.co.tz` with password `Turkys@2025`. New registrations require administrator activation. Admin has full access, including user approvals, roles, and system settings. Vessel Operation may update operational records. Management has read-only dashboards, analytics, reports, and audit access; Viewer has read-only operational dashboards and reports. The quick role buttons sign in to these demonstration accounts.
 
@@ -29,31 +81,37 @@ Existing local accounts and cached sessions using the old Operations role are ma
 
 Set `AUTH_SECRET` to a generated secret to keep sessions valid across restarts. When omitted, a random process secret invalidates sessions on restart. These seeded credentials and quick login are for demonstration; replace them before a production rollout.
 
-## Run separately
+## Other native environments
 
-Requires Node.js 22+, Python, and PostgreSQL. Copy `.env.example` to `.env` and configure `DATABASE_URL` for your database.
-
-```powershell
-npm ci
-python -m pip install -r requirements-dev.txt
-Set-Location backend
-alembic upgrade head
-python -m app.database.seed
-uvicorn app.main:app --reload --port 8000
-```
-
-In a second terminal at the repository root, run `npm run dev`. Keep `VITE_API_URL=/api/v1` and `OPERATIONS_API_URL=http://127.0.0.1:8000/api/v1`. The gateway serves the browser on port 3000. `GEMINI_API_KEY` is optional and stays on the server. Without it the assistant uses its factual local response.
+The optional Windows helper is `npm run local:start`; it invokes the PowerShell
+native startup script, not Docker. See [native runtime notes](docs/native-runtime.md).
+`GEMINI_API_KEY` is optional and stays on the server. Without it the assistant uses
+its factual local response.
 
 `AUTH_DATA_PATH=./data/auth.json` persists accounts and audit history locally. The optional cPanel MySQL account adapter and SQL files are retained in `server/database.ts` and `database/`; PostgreSQL remains the operational database. See [integration notes](docs/full-integration.md) for limitations and verification.
 
 ## Verify
 
-```powershell
+```bash
+source .venv/bin/activate
 npm run lint
 npm run build
 npm test
-$env:PYTHONPATH = 'backend'
-python -m pytest backend/tests
+PYTHONPATH=backend python -m pytest backend/tests
 ```
 
 Some backend tests require a running PostgreSQL instance. Set `TEST_DATABASE_URL` to a dedicated test database for isolated schema tests. The existing `tests/integration` suite calls a running FastAPI service. API documentation is at http://localhost:8000/docs for local development.
+
+Health checks:
+
+```bash
+curl http://localhost:3000/health
+curl http://localhost:3000/api/v1/health/database
+curl http://127.0.0.1:8000/api/v1/health
+```
+
+A successful HTML response alone does not verify React. Confirm the corporate
+Login page renders, then sign in and confirm the live dashboard loads.
+If the page is blank, inspect the browser console and run `npm run lint` and
+`npm run build`: missing module exports can stop React before Login mounts even
+when every health endpoint is healthy.

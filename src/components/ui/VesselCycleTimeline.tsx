@@ -156,18 +156,18 @@ export function VesselCycleTimeline({ voyage }: VesselCycleTimelineProps) {
   ];
 
   return (
-    <div className="bg-white border border-[#E1DED4] rounded-xl p-5">
-      <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4] mb-4">
+    <div className="bg-surface border border-line rounded-xl p-5">
+      <div className="flex items-center justify-between pb-3 border-b border-line mb-4">
         <div>
-          <h3 className="text-sm font-bold uppercase tracking-wider text-[#14181A] flex items-center gap-2">
-            <Clock className="w-4 h-4 text-[#0A7A3D]" />
+          <h3 className="text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+            <Clock className="w-4 h-4 text-positive" />
             Full Vessel Cycle Dependency Timeline
           </h3>
-          <p className="text-xs text-[#3F4A47] mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             Sequential supply chain milestones from VIGOR discharge through manufacturer loading and return.
           </p>
         </div>
-        <span className="text-xs font-mono text-[#3F4A47] bg-[#F7F5F0] px-2 py-1 rounded border border-[#E1DED4]">
+        <span className="text-xs font-mono text-muted bg-canvas px-2 py-1 rounded border border-line">
           Voyage: <strong>{voyage.voyageNumber}</strong>
         </span>
       </div>
@@ -178,24 +178,24 @@ export function VesselCycleTimeline({ voyage }: VesselCycleTimelineProps) {
             const isLast = idx === steps.length - 1;
 
             const borderColors = {
-              COMPLETED: 'border-[#0C9349]',
-              CURRENT: 'border-[#0E7C86] ring-2 ring-[#0E7C86]/20 bg-[#E4F1F2]/20',
-              UPCOMING: 'border-[#E1DED4] opacity-75',
-              AT_RISK: 'border-[#B5760F] ring-2 ring-[#B5760F]/30 bg-[#FBF0DD]/30',
-              BLOCKED: 'border-[#AE3B2E] ring-2 ring-[#AE3B2E]/30 bg-[#F8E7E3]/30',
+              COMPLETED: 'border-positive',
+              CURRENT: 'border-info ring-2 ring-info/20 bg-info-soft/20',
+              UPCOMING: 'border-line opacity-75',
+              AT_RISK: 'border-warning ring-2 ring-warning/30 bg-warning-soft/30',
+              BLOCKED: 'border-danger ring-2 ring-danger/30 bg-danger-soft/30',
             }[step.status];
 
             const badgeBg = {
-              COMPLETED: 'bg-[#0C9349] text-white',
-              CURRENT: 'bg-[#0E7C86] text-white',
-              UPCOMING: 'bg-[#E1DED4] text-[#3F4A47]',
-              AT_RISK: 'bg-[#B5760F] text-white',
-              BLOCKED: 'bg-[#AE3B2E] text-white',
+              COMPLETED: 'bg-brand text-white',
+              CURRENT: 'bg-info-strong text-white',
+              UPCOMING: 'bg-raised text-muted',
+              AT_RISK: 'bg-warning-strong text-white',
+              BLOCKED: 'bg-critical text-white',
             }[step.status];
 
             return (
               <React.Fragment key={step.id}>
-                <div className={`flex-1 p-3 rounded-lg border ${borderColors} bg-white flex flex-col justify-between min-h-[140px]`}>
+                <div className={`flex-1 p-3 rounded-lg border ${borderColors} bg-surface flex flex-col justify-between min-h-[140px]`}>
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${badgeBg}`}>
@@ -203,16 +203,16 @@ export function VesselCycleTimeline({ voyage }: VesselCycleTimelineProps) {
                       </span>
                       <ScheduleSourceBadge source={step.source} />
                     </div>
-                    <h4 className="text-xs font-bold text-[#14181A] line-clamp-1">{step.name}</h4>
-                    <p className="text-[10px] text-[#3F4A47] line-clamp-1">{step.sub}</p>
+                    <h4 className="text-xs font-bold text-foreground line-clamp-1">{step.name}</h4>
+                    <p className="text-[10px] text-muted line-clamp-1">{step.sub}</p>
                   </div>
 
-                  <div className="pt-2 border-t border-[#E1DED4] mt-2 text-[11px]">
-                    <div className="font-mono text-[10px] text-[#14181A] font-medium leading-tight">
+                  <div className="pt-2 border-t border-line mt-2 text-[11px]">
+                    <div className="font-mono text-[10px] text-foreground font-medium leading-tight">
                       {step.timeLabel}
                     </div>
                     {step.detail && (
-                      <div className="text-[10px] font-semibold text-[#0A7A3D] mt-0.5 truncate">
+                      <div className="text-[10px] font-semibold text-positive mt-0.5 truncate">
                         {step.detail}
                       </div>
                     )}
@@ -220,7 +220,7 @@ export function VesselCycleTimeline({ voyage }: VesselCycleTimelineProps) {
                 </div>
 
                 {!isLast && (
-                  <div className="flex items-center justify-center pt-12 text-[#C9C4B6]">
+                  <div className="flex items-center justify-center pt-12 text-muted">
                     <ArrowRight className="w-3.5 h-3.5" />
                   </div>
                 )}

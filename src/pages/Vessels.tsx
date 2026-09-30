@@ -23,6 +23,7 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
   const [savedVisit, setSavedVisit] = useState<VisitListItem | null>(null);
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
   const [visitMessage, setVisitMessage] = useState('');
+  const [view, setView] = useState<'visits' | 'fleet' | 'registry'>('visits');
   const [search, setSearch] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -58,6 +59,7 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
     });
 
     setIsAddModalOpen(false);
+    setView('fleet');
     setNewName('');
     setNewImo('');
     setNewMmsi('');
@@ -71,23 +73,27 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
         title="Vessels"
         description="VIGOR pneumatic bulk cement carriers assigned to continuous Zanzibar-mainland rotation cycles."
       >
-        {canEdit && <button onClick={() => { setVisitMessage(''); setIsVisitModalOpen(true); }} className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-[#0C9349] text-white flex items-center gap-1.5"><Plus className="w-4 h-4" />Add Vessel Visit</button>}
+        {canEdit && <button onClick={() => { setVisitMessage(''); setIsVisitModalOpen(true); }} className="button-primary"><Plus className="w-4 h-4" />Add Vessel Visit</button>}
         {canEdit && <button
           onClick={() => setIsAddModalOpen(true)}
-          className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-[#0C9349] hover:bg-[#0A7A3D] text-white flex items-center gap-1.5 transition shadow-xs"
+          className="button-secondary"
         >
           <Plus className="w-4 h-4" />
           Register New Fleet Vessel
         </button>}
       </PageHeader>
 
-      {visitMessage && <p role="status" className="p-3 rounded-lg bg-[#E7F4EB] text-sm text-[#0A7A3D]">{visitMessage}</p>}
-      {canEdit && isVisitModalOpen && <AddVesselVisit onClose={() => setIsVisitModalOpen(false)} onSaved={(saved) => { setSavedVisit(saved); setIsVisitModalOpen(false); setVisitMessage(`Planned visit for ${saved.vessel.name} saved successfully. It is listed below.`); }} />}
-      <VesselVisitList savedVisit={savedVisit} />
-      <SiteRegistry />
+      {visitMessage && <p role="status" className="p-3 rounded-lg bg-positive-soft text-sm text-positive">{visitMessage}</p>}
+      {canEdit && isVisitModalOpen && <AddVesselVisit onClose={() => setIsVisitModalOpen(false)} onSaved={(saved) => { setSavedVisit(saved); setView('visits'); setIsVisitModalOpen(false); setVisitMessage(`Planned visit for ${saved.vessel.name} saved successfully. It is listed below.`); }} />}
+      <div className="flex gap-2 border-b border-line pb-3" role="group" aria-label="Vessel views">
+        {(['visits', 'fleet', 'registry'] as const).map(value => <button key={value} aria-pressed={view === value} onClick={() => setView(value)} className={view === value ? 'button-secondary text-info' : 'button-ghost'}>{value === 'visits' ? 'Port visits' : value === 'fleet' ? 'Fleet directory' : 'Site registry'}</button>)}
+      </div>
+      {view === 'visits' && <VesselVisitList savedVisit={savedVisit} />}
+      {view === 'registry' && <SiteRegistry />}
+      {view === 'fleet' && <>
 
       {/* Fleet KPI overview */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <KpiCard
           label="Total Fleet Vessels"
           value={vessels.length}
@@ -108,37 +114,32 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
           subtext="Voyages in rotation"
           icon={<Navigation className="w-5 h-5" />}
         />
-        <KpiCard
-          label="Fleet Readiness"
-          value="100%"
-          subtext="No vessels in maintenance"
-          variant="success"
-        />
       </div>
 
       {/* Search Bar */}
-      <div className="flex items-center justify-between gap-4 bg-white p-3 rounded-xl border border-[#E1DED4]">
+      <div className="flex items-center justify-between gap-4 bg-surface p-3 rounded-xl border border-line">
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#3F4A47]" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <input
             type="text"
+            aria-label="Search fleet vessels"
             placeholder="Search vessels by name, IMO, or reference ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349] font-medium"
+            className="w-full pl-9 pr-3 py-1.5 text-xs bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive font-medium"
           />
         </div>
-        <span className="text-xs text-[#3F4A47] font-mono">
+        <span className="text-xs text-muted font-mono">
           Showing {filteredVessels.length} of {vessels.length}
         </span>
       </div>
 
       {/* Vessels Table / Grid */}
-      <div className="bg-white border border-[#E1DED4] rounded-xl overflow-hidden shadow-xs">
+      <div className="bg-surface border border-line rounded-xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-[#E1DED4] bg-[#F7F5F0] text-[#3F4A47] font-semibold uppercase tracking-wider text-[11px]">
+              <tr className="border-b border-line bg-canvas text-muted font-semibold uppercase tracking-wider text-[11px]">
                 <th className="py-3 px-4">Vessel & Reference</th>
                 <th className="py-3 px-4">IMO / MMSI</th>
                 <th className="py-3 px-4">Capacity</th>
@@ -149,7 +150,7 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E1DED4]">
+            <tbody className="divide-y divide-line">
               {filteredVessels.map((vessel) => {
                 const voyage = voyages.find((v) => v.vesselId === vessel.id && v.status === 'ACTIVE');
 
@@ -157,28 +158,28 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
                   <tr
                     key={vessel.id}
                     onClick={() => onSelectVessel(vessel.id)}
-                    className="hover:bg-[#F7F5F0]/80 transition cursor-pointer"
+                    className="hover:bg-canvas/80 transition cursor-pointer"
                   >
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <Ship className="w-4 h-4 text-[#0C9349]" />
+                        <Ship className="w-4 h-4 text-positive" />
                         <div>
-                          <div className="font-bold text-[#14181A]">{vessel.name}</div>
-                          <div className="text-[10px] font-mono text-[#3F4A47]">{vessel.reference}</div>
+                          <div className="font-bold text-foreground">{vessel.name}</div>
+                          <div className="text-[10px] font-mono text-muted">{vessel.reference}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-4 font-mono text-[#3F4A47]">
+                    <td className="py-3 px-4 font-mono text-muted">
                       <div>IMO {vessel.imo || 'N/A'}</div>
                       <div className="text-[10px]">MMSI {vessel.mmsi || 'N/A'}</div>
                     </td>
-                    <td className="py-3 px-4 font-mono font-semibold text-[#14181A]">
+                    <td className="py-3 px-4 font-mono font-semibold text-foreground">
                       {vessel.capacityT > 0 ? formatTonnage(vessel.capacityT) : 'Not verified'}
                     </td>
-                    <td className="py-3 px-4 font-mono text-[#3F4A47]">
+                    <td className="py-3 px-4 font-mono text-muted">
                       {voyage ? (
                         <div>
-                          <span className="font-bold text-[#14181A]">{voyage.voyageNumber}</span>
+                          <span className="font-bold text-foreground">{voyage.voyageNumber}</span>
                           <div className="text-[10px] truncate max-w-[140px]">
                             {voyage.origin} → {voyage.destination}
                           </div>
@@ -193,13 +194,13 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
                     <td className="py-3 px-4">
                       {voyage ? <OperationsHealthBadge health={voyage.health} /> : '-'}
                     </td>
-                    <td className="py-3 px-4 font-mono text-[#3F4A47]">
+                    <td className="py-3 px-4 font-mono text-muted">
                       {voyage ? (
                         <div>
-                          <span className="font-bold text-[#14181A]">
+                          <span className="font-bold text-foreground">
                             {voyage.assignedBerthId || 'Berth B01'}
                           </span>
-                          <div className="text-[10px] text-[#0E7C86]">
+                          <div className="text-[10px] text-info">
                             ETA: {formatDateTime(voyage.returnEtaForecast)}
                           </div>
                         </div>
@@ -208,9 +209,7 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
                       )}
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <span className="inline-flex items-center gap-1 text-[#0A7A3D] font-semibold hover:underline">
-                        Details <ArrowRight className="w-3.5 h-3.5" />
-                      </span>
+                      <button className="button-ghost" onClick={event => { event.stopPropagation(); onSelectVessel(vessel.id); }} aria-label={`View ${vessel.name}`}>Details <ArrowRight className="w-3.5 h-3.5" /></button>
                     </td>
                   </tr>
                 );
@@ -219,6 +218,8 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
           </table>
         </div>
       </div>
+
+      </>}
 
       {/* Add Vessel Modal */}
       <Modal
@@ -229,85 +230,85 @@ export function Vessels({ onSelectVessel }: VesselsProps) {
       >
         <form onSubmit={handleAddVessel} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-[#14181A] mb-1">Vessel Name *</label>
+            <label className="block font-semibold text-foreground mb-1">Vessel Name *</label>
             <input
               type="text"
               required
               placeholder="e.g. MV VIGOR 04"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349]"
+              className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">Fleet Reference ID</label>
+              <label className="block font-semibold text-foreground mb-1">Fleet Reference ID</label>
               <input
                 type="text"
                 placeholder="VG-V04"
                 value={newRef}
                 onChange={(e) => setNewRef(e.target.value)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349] font-mono"
+                className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive font-mono"
               />
             </div>
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">Capacity (Tonnes)</label>
+              <label className="block font-semibold text-foreground mb-1">Capacity (Tonnes)</label>
               <input
                 type="number"
                 placeholder="10000"
                 value={newCapacity}
                 onChange={(e) => setNewCapacity(e.target.value)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349] font-mono"
+                className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive font-mono"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">IMO Number</label>
+              <label className="block font-semibold text-foreground mb-1">IMO Number</label>
               <input
                 type="text"
                 placeholder="e.g. 9621045"
                 value={newImo}
                 onChange={(e) => setNewImo(e.target.value)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349] font-mono"
+                className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive font-mono"
               />
             </div>
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">MMSI</label>
+              <label className="block font-semibold text-foreground mb-1">MMSI</label>
               <input
                 type="text"
                 placeholder="e.g. 677041205"
                 value={newMmsi}
                 onChange={(e) => setNewMmsi(e.target.value)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349] font-mono"
+                className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive font-mono"
               />
             </div>
           </div>
 
           <div>
-            <label className="block font-semibold text-[#14181A] mb-1">Operational Notes</label>
+            <label className="block font-semibold text-foreground mb-1">Operational Notes</label>
             <textarea
               rows={3}
               placeholder="Technical specs, pneumatic discharge equipment, compressor manifold details..."
               value={newNotes}
               onChange={(e) => setNewNotes(e.target.value)}
-              className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349]"
+              className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive"
             />
           </div>
 
-          <div className="pt-3 border-t border-[#E1DED4] flex justify-end gap-2">
+          <div className="pt-3 border-t border-line flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setIsAddModalOpen(false)}
-              className="px-4 py-2 rounded-lg bg-white border border-[#E1DED4] text-[#3F4A47] font-semibold hover:bg-[#F7F5F0]"
+              className="px-4 py-2 rounded-lg bg-surface border border-line text-muted font-semibold hover:bg-canvas"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-[#0C9349] hover:bg-[#0A7A3D] text-white font-semibold shadow-xs"
+              className="px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-white font-semibold shadow-xs"
             >
               Save Vessel
             </button>

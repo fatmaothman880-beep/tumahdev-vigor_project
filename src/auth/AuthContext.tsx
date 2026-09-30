@@ -67,27 +67,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const savedToken = localStorage.getItem(STORAGE_KEY_TOKEN) || sessionStorage.getItem(STORAGE_KEY_TOKEN);
-      const savedUser = localStorage.getItem(STORAGE_KEY_USER) || sessionStorage.getItem(STORAGE_KEY_USER);
+    let active = true;
+    const restoreSession = async () => {
+      try {
+        const savedToken = localStorage.getItem(STORAGE_KEY_TOKEN) || sessionStorage.getItem(STORAGE_KEY_TOKEN);
+        const savedUser = localStorage.getItem(STORAGE_KEY_USER) || sessionStorage.getItem(STORAGE_KEY_USER);
+        if (!savedToken || !savedUser) return;
 
-      if (savedToken && savedUser) {
-        setToken(savedToken);
         const cachedUser = JSON.parse(savedUser);
-        cachedUser.role = normalizeUserRole(cachedUser.role);
-        setUser(cachedUser);
-        localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(cachedUser));
-      } else {
-        // By default, start unauthenticated or initialize with quick demo access if preferred
-        // We set to null so the user lands on the corporate login screen, with 1-click demo access ready
+        if (!cachedUser || typeof cachedUser !== 'object') throw new Error('Invalid cached session');
+        // Process restarts, disabled accounts and role changes invalidate cached claims.
+        const response = await fetch('/api/v1/auth/me', {
+          headers: { Authorization: `Bearer ${savedToken}` },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!response.ok) throw new Error('Session is no longer valid');
+        const { user: verified } = await response.json();
+        if (!verified?.uid || !verified?.email) throw new Error('Invalid session response');
+        if (!active) return;
+        const currentUser: AuthUser = {
+          ...cachedUser,
+          id: verified.uid,
+          email: verified.email,
+          fullName: verified.name,
+          role: normalizeUserRole(verified.role),
+          status: 'Active',
+        };
+        localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(currentUser));
+        setUser(currentUser);
+        setToken(savedToken);
+      } catch (error) {
+        if (!active) return;
         setToken(null);
         setUser(null);
+        for (const storageName of ['localStorage', 'sessionStorage'] as const) {
+          try {
+            window[storageName].removeItem(STORAGE_KEY_TOKEN);
+            window[storageName].removeItem(STORAGE_KEY_USER);
+          } catch { /* Storage can be unavailable in restricted browser contexts. */ }
+        }
+      } finally {
+        if (active) setIsLoading(false);
       }
-    } catch (e) {
-      console.warn('Failed to load cached auth session:', e);
-    } finally {
-      setIsLoading(false);
-    }
+    };
+    void restoreSession();
+    return () => { active = false; };
   }, []);
 
   const login = async (email: string, pass: string): Promise<boolean> => {

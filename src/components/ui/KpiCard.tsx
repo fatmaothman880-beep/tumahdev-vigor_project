@@ -19,45 +19,39 @@ export function KpiCard({
   badge,
   onClick,
 }: KpiCardProps) {
-  const borderStyles = {
-    default: 'border-[#E1DED4]',
-    success: 'border-[#0C9349]/40',
-    warning: 'border-[#B5760F]/40',
-    danger: 'border-[#AE3B2E]/40',
-    teal: 'border-[#0E7C86]/40',
-    sand: 'border-[#C99A5B]/40',
-  }[variant];
-
   const valueStyles = {
-    default: 'text-[#14181A]',
-    success: 'text-[#0A7A3D]',
-    warning: 'text-[#B5760F]',
-    danger: 'text-[#AE3B2E]',
-    teal: 'text-[#0E7C86]',
-    sand: 'text-[#C99A5B]',
+    default: 'text-foreground',
+    success: 'text-positive',
+    warning: 'text-warning',
+    danger: 'text-danger',
+    teal: 'text-info',
+    sand: 'text-warning',
   }[variant];
 
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-xl border ${borderStyles} p-4 transition-all duration-200 ${
-        onClick ? 'cursor-pointer hover:border-[#3F4A47] hover:shadow-xs' : ''
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onClick(); } } : undefined}
+      className={`bg-surface rounded-xl border border-line p-5 transition-colors duration-150 ${
+        onClick ? 'cursor-pointer hover:border-line hover:shadow-xs' : ''
       }`}
     >
       <div className="flex items-center justify-between gap-2 mb-2">
-        <span className="text-[11px] font-semibold tracking-wider uppercase text-[#3F4A47] truncate">
+        <span className="text-[11px] font-semibold tracking-wide text-muted truncate">
           {label}
         </span>
         <div className="flex items-center gap-1.5 shrink-0">
           {badge}
-          {icon && <span className="text-[#3F4A47]">{icon}</span>}
+          {icon && <span className="text-muted">{icon}</span>}
         </div>
       </div>
-      <div className={`text-2xl sm:text-3xl font-mono font-bold tracking-tight ${valueStyles}`}>
+      <div className={`text-2xl sm:text-3xl font-semibold tabular-nums tracking-tight ${valueStyles}`}>
         {value}
       </div>
       {subtext && (
-        <p className="mt-1 text-xs text-[#3F4A47] font-medium truncate">
+        <p className="mt-1 text-xs text-muted leading-relaxed">
           {subtext}
         </p>
       )}
@@ -74,18 +68,18 @@ export interface PageHeaderProps {
 
 export function PageHeader({ eyebrow, title, description, children }: PageHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E1DED4] mb-6">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 mb-6">
       <div>
         {eyebrow && (
-          <span className="block text-[11px] font-semibold uppercase tracking-wider text-[#0A7A3D] mb-1">
+          <span className="block text-[11px] font-semibold uppercase tracking-wider text-positive mb-1">
             {eyebrow}
           </span>
         )}
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#14181A]">
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
           {title}
         </h1>
         {description && (
-          <p className="mt-1 text-sm text-[#3F4A47] max-w-3xl leading-relaxed">
+          <p className="mt-1 text-sm text-muted max-w-2xl leading-relaxed">
             {description}
           </p>
         )}
@@ -103,13 +97,13 @@ export interface SectionHeaderProps {
 
 export function SectionHeader({ title, description, action }: SectionHeaderProps) {
   return (
-    <div className="flex items-center justify-between gap-4 mb-3 pb-2 border-b border-[#E1DED4]">
+    <div className="flex items-center justify-between gap-4 mb-3 pb-2 border-b border-line">
       <div>
-        <h2 className="text-base font-bold text-[#14181A] uppercase tracking-wide">
+        <h2 className="text-sm font-semibold text-foreground">
           {title}
         </h2>
         {description && (
-          <p className="text-xs text-[#3F4A47]">{description}</p>
+          <p className="text-xs text-muted">{description}</p>
         )}
       </div>
       {action && <div>{action}</div>}
@@ -117,34 +111,5 @@ export function SectionHeader({ title, description, action }: SectionHeaderProps
   );
 }
 
-export interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-}
-
-export function Modal({ isOpen, onClose, title, subtitle, children }: ModalProps) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-      <div className="bg-white border border-[#C9C4B6] rounded-xl w-full max-w-xl max-h-[90vh] flex flex-col shadow-xl animate-in fade-in zoom-in-95 duration-150">
-        <div className="flex items-start justify-between p-5 border-b border-[#E1DED4]">
-          <div>
-            <h3 className="text-lg font-bold text-[#14181A]">{title}</h3>
-            {subtitle && <p className="text-xs text-[#3F4A47] mt-0.5">{subtitle}</p>}
-          </div>
-          <button
-            onClick={onClose}
-            className="text-[#3F4A47] hover:text-[#14181A] p-1 rounded-md hover:bg-[#F7F5F0] transition"
-          >
-            ✕
-          </button>
-        </div>
-        <div className="p-5 overflow-y-auto flex-1">{children}</div>
-      </div>
-    </div>
-  );
-}
+export { Modal } from './Modal';
+export type { ModalProps } from './Modal';

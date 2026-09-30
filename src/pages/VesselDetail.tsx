@@ -1,3 +1,4 @@
+import { canEditOperations } from '../../shared/roles';
 import { useAuth } from '../auth/AuthContext';
 import React, { useState } from 'react';
 import { useAppData } from '../hooks/useAppData';
@@ -52,7 +53,7 @@ export function VesselDetail({
   onNavigateToBerths,
 }: VesselDetailProps) {
   const { user } = useAuth();
-  const canEdit = user?.role === 'Admin' || user?.role === 'Operations';
+  const canEdit = canEditOperations(user?.role);
   const {
     vessels,
     voyages,
@@ -112,11 +113,11 @@ export function VesselDetail({
 
   if (!vessel) {
     return (
-      <div className="p-8 text-center bg-white rounded-xl border border-[#E1DED4]">
-        <h3 className="text-lg font-bold text-[#14181A]">Vessel not found</h3>
+      <div className="p-8 text-center bg-surface rounded-xl border border-line">
+        <h3 className="text-lg font-bold text-foreground">Vessel not found</h3>
         <button
           onClick={onBack}
-          className="mt-4 px-4 py-2 text-xs font-semibold bg-[#0C9349] text-white rounded-lg"
+          className="mt-4 px-4 py-2 text-xs font-semibold bg-brand text-white rounded-lg"
         >
           Return to Vessels
         </button>
@@ -221,26 +222,26 @@ export function VesselDetail({
   return (
     <div className="space-y-6 pb-16">
       {/* Top Bar with Navigation and Key Badges */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E1DED4]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-line">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="p-2 rounded-lg bg-white border border-[#C9C4B6] hover:bg-[#F7F5F0] text-[#14181A] transition"
+            className="p-2 rounded-lg bg-surface border border-line hover:bg-canvas text-foreground transition"
             title="Back to fleet"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#14181A] flex items-center gap-2">
-                <Ship className="w-6 h-6 text-[#0C9349]" />
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+                <Ship className="w-6 h-6 text-positive" />
                 {vessel.name}
               </h1>
-              <span className="text-xs font-mono text-[#3F4A47] bg-[#E1DED4]/60 px-2 py-0.5 rounded font-semibold">
+              <span className="text-xs font-mono text-muted bg-raised/60 px-2 py-0.5 rounded font-semibold">
                 {vessel.reference}
               </span>
             </div>
-            <div className="text-xs text-[#3F4A47] font-mono mt-0.5">
+            <div className="text-xs text-muted font-mono mt-0.5">
               Active Voyage: <strong>{voyage?.voyageNumber || 'None'}</strong> · IMO {vessel.imo || 'N/A'} · MMSI {vessel.mmsi || 'N/A'}
             </div>
           </div>
@@ -276,16 +277,16 @@ export function VesselDetail({
       {/* 2-Column Core Operational Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* SECTION 1 & 2: CURRENT OPERATION & CARGO */}
-        <div className="bg-white border border-[#E1DED4] rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4]">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#14181A] flex items-center gap-2">
-              <Anchor className="w-4 h-4 text-[#0C9349]" />
+        <div className="bg-surface border border-line rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-line">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+              <Anchor className="w-4 h-4 text-positive" />
               Current Operation & Cargo Unloading
             </h3>
             {voyage?.currentStage === 'UNLOADING' && (
               <button
                 onClick={() => setIsReadingModalOpen(true)}
-                className="px-2.5 py-1 text-xs font-semibold rounded bg-[#0C9349] hover:bg-[#0A7A3D] text-white flex items-center gap-1 transition shadow-xs"
+                className="px-2.5 py-1 text-xs font-semibold rounded bg-brand hover:bg-brand-hover text-white flex items-center gap-1 transition shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add Sounding Reading
@@ -309,39 +310,39 @@ export function VesselDetail({
 
               {/* Unloading Forecast Metrics */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                <div className="p-2.5 bg-[#F7F5F0] rounded-lg border border-[#E1DED4]">
-                  <span className="text-[#3F4A47] text-[10px] uppercase font-bold block">Current Discharge Rate</span>
-                  <span className="text-base font-mono font-bold text-[#14181A]">
+                <div className="p-2.5 bg-canvas rounded-lg border border-line">
+                  <span className="text-muted text-[10px] uppercase font-bold block">Current Discharge Rate</span>
+                  <span className="text-base font-mono font-bold text-foreground">
                     {formatRate(voyage.unloadingRateTph)}
                   </span>
-                  <span className="text-[10px] text-[#3F4A47] block mt-0.5">Dual compressor line 2</span>
+                  <span className="text-[10px] text-muted block mt-0.5">Dual compressor line 2</span>
                 </div>
-                <div className="p-2.5 bg-[#F7F5F0] rounded-lg border border-[#E1DED4]">
-                  <span className="text-[#3F4A47] text-[10px] uppercase font-bold block">Forecast Unload Finish</span>
-                  <span className="text-base font-mono font-bold text-[#0A7A3D]">
+                <div className="p-2.5 bg-canvas rounded-lg border border-line">
+                  <span className="text-muted text-[10px] uppercase font-bold block">Forecast Unload Finish</span>
+                  <span className="text-base font-mono font-bold text-positive">
                     {formatTime(voyage.forecastUnloadEnd)}
                   </span>
-                  <span className="text-[10px] text-[#3F4A47] block mt-0.5">
+                  <span className="text-[10px] text-muted block mt-0.5">
                     Planned: {formatTime(voyage.plannedUnloadEnd)}
                   </span>
                 </div>
-                <div className="p-2.5 bg-[#F7F5F0] rounded-lg border border-[#E1DED4]">
-                  <span className="text-[#3F4A47] text-[10px] uppercase font-bold block">Berth Release Window</span>
-                  <span className="text-base font-mono font-bold text-[#0E7C86]">
+                <div className="p-2.5 bg-canvas rounded-lg border border-line">
+                  <span className="text-muted text-[10px] uppercase font-bold block">Berth Release Window</span>
+                  <span className="text-base font-mono font-bold text-info">
                     {formatTime(voyage.expectedBerthRelease)}
                   </span>
-                  <span className="text-[10px] text-[#3F4A47] block mt-0.5">+1.5h line purge buffer</span>
+                  <span className="text-[10px] text-muted block mt-0.5">+1.5h line purge buffer</span>
                 </div>
               </div>
 
               {/* Operational Readings Log */}
               <div>
-                <h4 className="text-xs font-bold text-[#14181A] uppercase tracking-wider mb-2">
+                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-2">
                   Recent Operational Soundings & Readings ({vesselReadings.length})
                 </h4>
-                <div className="border border-[#E1DED4] rounded-lg overflow-hidden">
+                <div className="border border-line rounded-lg overflow-hidden">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-[#F7F5F0] text-[#3F4A47] border-b border-[#E1DED4]">
+                    <thead className="bg-canvas text-muted border-b border-line">
                       <tr>
                         <th className="py-2 px-3">Time</th>
                         <th className="py-2 px-3">Unloaded</th>
@@ -350,18 +351,18 @@ export function VesselDetail({
                         <th className="py-2 px-3">Notes</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#E1DED4]">
+                    <tbody className="divide-y divide-line">
                       {vesselReadings.map((r) => (
-                        <tr key={r.id} className="hover:bg-[#F7F5F0]/50 font-mono text-[11px]">
-                          <td className="py-2 px-3 text-[#14181A]">{formatTime(r.timestamp)}</td>
-                          <td className="py-2 px-3 font-semibold text-[#0A7A3D]">
+                        <tr key={r.id} className="hover:bg-canvas/50 font-mono text-[11px]">
+                          <td className="py-2 px-3 text-foreground">{formatTime(r.timestamp)}</td>
+                          <td className="py-2 px-3 font-semibold text-positive">
                             {r.unloadedTonnes.toLocaleString()} T
                           </td>
                           <td className="py-2 px-3">{r.observedRateTph} t/h</td>
                           <td className="py-2 px-3">
                             <DataQualityBadge quality={r.dataQuality} />
                           </td>
-                          <td className="py-2 px-3 font-sans text-xs text-[#3F4A47] truncate max-w-[150px]">
+                          <td className="py-2 px-3 font-sans text-xs text-muted truncate max-w-[150px]">
                             {r.notes || '-'}
                           </td>
                         </tr>
@@ -372,33 +373,33 @@ export function VesselDetail({
               </div>
             </>
           ) : (
-            <div className="p-4 bg-[#F7F5F0] rounded-lg border border-[#E1DED4] space-y-2 text-xs">
+            <div className="p-4 bg-canvas rounded-lg border border-line space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-[#3F4A47]">Current Activity:</span>
-                <span className="font-semibold text-[#14181A]">{voyage?.currentStage}</span>
+                <span className="text-muted">Current Activity:</span>
+                <span className="font-semibold text-foreground">{voyage?.currentStage}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#3F4A47]">Cargo Type:</span>
-                <span className="font-mono text-[#14181A]">{voyage?.cargoType || 'Bulk Portland Cement'}</span>
+                <span className="text-muted">Cargo Type:</span>
+                <span className="font-mono text-foreground">{voyage?.cargoType || 'Bulk Portland Cement'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#3F4A47]">Planned Tonnage:</span>
-                <span className="font-mono font-bold text-[#14181A]">{formatTonnage(voyage?.actualCargoT || 9400)}</span>
+                <span className="text-muted">Planned Tonnage:</span>
+                <span className="font-mono font-bold text-foreground">{formatTonnage(voyage?.actualCargoT || 9400)}</span>
               </div>
             </div>
           )}
         </div>
 
         {/* SECTION 3: VIGOR BERTH STATUS & SEQUENCING */}
-        <div className="bg-white border border-[#E1DED4] rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4]">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#14181A] flex items-center gap-2">
-              <Anchor className="w-4 h-4 text-[#0C9349]" />
+        <div className="bg-surface border border-line rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-line">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+              <Anchor className="w-4 h-4 text-positive" />
               Mangapwani Berth Allocation
             </h3>
             <button
               onClick={onNavigateToBerths}
-              className="text-xs font-semibold text-[#0A7A3D] hover:underline"
+              className="text-xs font-semibold text-positive hover:underline"
             >
               Berth Management →
             </button>
@@ -406,31 +407,31 @@ export function VesselDetail({
 
           <div className="space-y-3 text-xs">
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-[#F7F5F0] rounded-lg border border-[#E1DED4]">
-                <span className="text-[10px] text-[#3F4A47] uppercase font-bold block">Assigned Berth</span>
-                <span className="text-base font-bold text-[#14181A]">Berth B01</span>
-                <span className="text-[10px] text-[#3F4A47] block mt-0.5">Bulk Cement Dedicated (180m)</span>
+              <div className="p-3 bg-canvas rounded-lg border border-line">
+                <span className="text-[10px] text-muted uppercase font-bold block">Assigned Berth</span>
+                <span className="text-base font-bold text-foreground">Berth B01</span>
+                <span className="text-[10px] text-muted block mt-0.5">Bulk Cement Dedicated (180m)</span>
               </div>
-              <div className="p-3 bg-[#F7F5F0] rounded-lg border border-[#E1DED4]">
-                <span className="text-[10px] text-[#3F4A47] uppercase font-bold block">Expected Release</span>
-                <span className="text-base font-mono font-bold text-[#0A7A3D]">
+              <div className="p-3 bg-canvas rounded-lg border border-line">
+                <span className="text-[10px] text-muted uppercase font-bold block">Expected Release</span>
+                <span className="text-base font-mono font-bold text-positive">
                   {formatTime(voyage?.expectedBerthRelease)}
                 </span>
-                <span className="text-[10px] text-[#3F4A47] block mt-0.5">Buffer: 1.5 hours</span>
+                <span className="text-[10px] text-muted block mt-0.5">Buffer: 1.5 hours</span>
               </div>
             </div>
 
             {/* Berth Conflict Notification if returning */}
             {voyage?.berthConflict && (
-              <div className="p-3.5 bg-[#F8E7E3] border border-[#AE3B2E]/40 rounded-lg text-xs space-y-1">
-                <div className="flex items-center gap-1.5 text-[#AE3B2E] font-bold">
+              <div className="p-3.5 bg-danger-soft border border-danger/40 rounded-lg text-xs space-y-1">
+                <div className="flex items-center gap-1.5 text-danger font-bold">
                   <AlertTriangle className="w-4 h-4" />
                   BERTH CONFLICT DETECTED
                 </div>
-                <p className="text-[#14181A] leading-relaxed">
+                <p className="text-foreground leading-relaxed">
                   {voyage.conflictNotes || 'Return ETA precedes B01 release.'}
                 </p>
-                <div className="pt-2 flex justify-between font-mono text-xs font-bold text-[#AE3B2E]">
+                <div className="pt-2 flex justify-between font-mono text-xs font-bold text-danger">
                   <span>Predicted Anchorage Wait:</span>
                   <span>{formatHoursAndMinutes(voyage.predictedAnchorageWaitHours)}</span>
                 </div>
@@ -440,14 +441,14 @@ export function VesselDetail({
         </div>
 
         {/* SECTION 4: FUEL / OIL */}
-        <div className="bg-white border border-[#E1DED4] rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4]">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#14181A] flex items-center gap-2">
-              <Fuel className="w-4 h-4 text-[#C99A5B]" />
+        <div className="bg-surface border border-line rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-line">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+              <Fuel className="w-4 h-4 text-warning" />
               Fuel & Bunkering Status
             </h3>
             {fuel && (
-              <span className="text-xs font-mono font-bold bg-[#E7F4EB] text-[#0A7A3D] px-2 py-0.5 rounded">
+              <span className="text-xs font-mono font-bold bg-positive-soft text-positive px-2 py-0.5 rounded">
                 {fuel.status}
               </span>
             )}
@@ -456,50 +457,50 @@ export function VesselDetail({
           {fuel ? (
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-[#F7F5F0] rounded-lg border border-[#E1DED4]">
-                  <span className="text-[10px] text-[#3F4A47] uppercase font-bold block">Fuel Product & Qty</span>
-                  <span className="text-sm font-bold text-[#14181A] mt-0.5">{fuel.quantity}T {fuel.fuelType}</span>
-                  <span className="text-[10px] text-[#3F4A47] block mt-0.5">{fuel.supplierName}</span>
+                <div className="p-3 bg-canvas rounded-lg border border-line">
+                  <span className="text-[10px] text-muted uppercase font-bold block">Fuel Product & Qty</span>
+                  <span className="text-sm font-bold text-foreground mt-0.5">{fuel.quantity}T {fuel.fuelType}</span>
+                  <span className="text-[10px] text-muted block mt-0.5">{fuel.supplierName}</span>
                 </div>
-                <div className="p-3 bg-[#F7F5F0] rounded-lg border border-[#E1DED4]">
-                  <span className="text-[10px] text-[#3F4A47] uppercase font-bold block">Estimated Cost</span>
-                  <span className="text-sm font-mono font-bold text-[#14181A] mt-0.5">
+                <div className="p-3 bg-canvas rounded-lg border border-line">
+                  <span className="text-[10px] text-muted uppercase font-bold block">Estimated Cost</span>
+                  <span className="text-sm font-mono font-bold text-foreground mt-0.5">
                     {formatCurrency(fuel.estimatedCost)}
                   </span>
-                  <span className="text-[10px] text-[#0A7A3D] block mt-0.5">Invoice: {fuel.invoiceNumber}</span>
+                  <span className="text-[10px] text-positive block mt-0.5">Invoice: {fuel.invoiceNumber}</span>
                 </div>
               </div>
 
-              <div className="p-3 bg-[#F7F5F0] rounded-lg border border-[#E1DED4] space-y-1">
+              <div className="p-3 bg-canvas rounded-lg border border-line space-y-1">
                 <div className="flex justify-between font-mono">
-                  <span className="text-[#3F4A47]">Bunkering Window:</span>
-                  <span className="font-semibold text-[#14181A]">
+                  <span className="text-muted">Bunkering Window:</span>
+                  <span className="font-semibold text-foreground">
                     {formatTime(fuel.scheduledStart)} – {formatTime(fuel.scheduledEnd)}
                   </span>
                 </div>
-                <div className="text-[11px] text-[#3F4A47]">
+                <div className="text-[11px] text-muted">
                   Delivery mode: Alongside Berth B01 via barge prior to departure clearance.
                 </div>
               </div>
             </div>
           ) : (
-            <div className="p-4 bg-[#F7F5F0] rounded-lg text-xs text-[#3F4A47]">
+            <div className="p-4 bg-canvas rounded-lg text-xs text-muted">
               No bunkering operations required for this voyage cycle. Vessel fuel reserves sufficient.
             </div>
           )}
         </div>
 
         {/* SECTION 5: MANUFACTURER PAYMENT & QUEUE ELIGIBILITY */}
-        <div className="bg-white border border-[#E1DED4] rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4]">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#14181A] flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-[#C99A5B]" />
+        <div className="bg-surface border border-line rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-line">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-warning" />
               Manufacturer Payment & Eligibility Gate
             </h3>
             {mfrPayment && !mfrPayment.isEligible && (
               <button
                 onClick={() => setIsPaymentModalOpen(true)}
-                className="px-2.5 py-1 text-xs font-semibold rounded bg-[#14181A] hover:bg-[#3F4A47] text-white flex items-center gap-1 transition shadow-xs"
+                className="px-2.5 py-1 text-xs font-semibold rounded bg-shell hover:bg-raised text-white flex items-center gap-1 transition shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Record Payment Tranche
@@ -509,31 +510,31 @@ export function VesselDetail({
 
           {mfrPayment && pmtTotals ? (
             <div className="space-y-3 text-xs">
-              <div className="p-3.5 bg-[#F7F5F0] rounded-lg border border-[#E1DED4] space-y-2">
+              <div className="p-3.5 bg-canvas rounded-lg border border-line space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-[#3F4A47]">Counterparty:</span>
-                  <span className="font-bold text-[#14181A]">{mfrPayment.counterpartyName}</span>
+                  <span className="text-muted">Counterparty:</span>
+                  <span className="font-bold text-foreground">{mfrPayment.counterpartyName}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[#3F4A47]">Invoice Amount:</span>
-                  <span className="font-mono font-semibold text-[#14181A]">
+                  <span className="text-muted">Invoice Amount:</span>
+                  <span className="font-mono font-semibold text-foreground">
                     {formatCurrency(mfrPayment.requiredAmount)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[#3F4A47]">Amount Paid:</span>
-                  <span className="font-mono font-semibold text-[#0A7A3D]">
+                  <span className="text-muted">Amount Paid:</span>
+                  <span className="font-mono font-semibold text-positive">
                     {formatCurrency(pmtTotals.totalPaid)} ({pmtTotals.progressPercent}%)
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[#3F4A47]">Remaining Balance:</span>
-                  <span className="font-mono font-bold text-[#AE3B2E]">
+                  <span className="text-muted">Remaining Balance:</span>
+                  <span className="font-mono font-bold text-danger">
                     {formatCurrency(pmtTotals.remaining)}
                   </span>
                 </div>
 
-                <div className="pt-2 border-t border-[#E1DED4]">
+                <div className="pt-2 border-t border-line">
                   <ProgressBar
                     label="Payment Progress"
                     value={pmtTotals.progressPercent}
@@ -542,7 +543,7 @@ export function VesselDetail({
                 </div>
 
                 <div className="flex justify-between items-center pt-2 text-xs">
-                  <span className="text-[#3F4A47]">Deadline Countdown:</span>
+                  <span className="text-muted">Deadline Countdown:</span>
                   <PaymentCountdownBadge
                     state={pmtTotals.countdownState}
                     hoursRemaining={pmtTotals.hoursRemaining}
@@ -554,43 +555,43 @@ export function VesselDetail({
               <div
                 className={`p-3 rounded-lg border flex items-center justify-between ${
                   pmtTotals.isEligible
-                    ? 'bg-[#E7F4EB] border-[#0C9349]/40 text-[#0A7A3D]'
-                    : 'bg-[#F8E7E3] border-[#AE3B2E]/40 text-[#AE3B2E]'
+                    ? 'bg-positive-soft border-positive/40 text-positive'
+                    : 'bg-danger-soft border-danger/40 text-danger'
                 }`}
               >
                 <div>
                   <div className="font-bold text-xs uppercase tracking-wide">
                     {pmtTotals.isEligible ? 'Scheduling Eligible' : 'Eligibility Withheld'}
                   </div>
-                  <div className="text-[11px] text-[#14181A] mt-0.5">
+                  <div className="text-[11px] text-foreground mt-0.5">
                     {pmtTotals.isEligible
                       ? '100% threshold achieved. Vessel eligible for official queue assignment.'
                       : 'Requires full invoice clearance prior to manufacturer loading slot lock.'}
                   </div>
                 </div>
-                <span className="text-xs font-mono font-bold px-2 py-1 bg-white rounded border">
+                <span className="text-xs font-mono font-bold px-2 py-1 bg-surface rounded border">
                   {pmtTotals.isEligible ? 'ELIGIBLE' : 'NOT ELIGIBLE'}
                 </span>
               </div>
             </div>
           ) : (
-            <div className="p-4 bg-[#F7F5F0] rounded-lg text-xs text-[#3F4A47]">
+            <div className="p-4 bg-canvas rounded-lg text-xs text-muted">
               No manufacturer invoices linked to this rotation.
             </div>
           )}
         </div>
 
         {/* SECTION 6: MANUFACTURER QUEUE & LOADING */}
-        <div className="bg-white border border-[#E1DED4] rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4]">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#14181A] flex items-center gap-2">
-              <Factory className="w-4 h-4 text-[#B5760F]" />
+        <div className="bg-surface border border-line rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-line">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+              <Factory className="w-4 h-4 text-warning" />
               Manufacturer Queue & Loading Slot
             </h3>
             {mfrQueue && (
               <button
                 onClick={() => setIsConfirmSlotModalOpen(true)}
-                className="px-2.5 py-1 text-xs font-semibold rounded bg-[#14181A] hover:bg-[#3F4A47] text-white flex items-center gap-1 transition shadow-xs"
+                className="px-2.5 py-1 text-xs font-semibold rounded bg-shell hover:bg-raised text-white flex items-center gap-1 transition shadow-xs"
               >
                 Record Confirmation
               </button>
@@ -598,26 +599,26 @@ export function VesselDetail({
           </div>
 
           <div className="space-y-3 text-xs">
-            <div className="p-3.5 bg-[#F7F5F0] rounded-lg border border-[#E1DED4] space-y-2">
+            <div className="p-3.5 bg-canvas rounded-lg border border-line space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-[#3F4A47]">Terminal:</span>
-                <span className="font-bold text-[#14181A]">{mfrQueue?.manufacturerName || voyage?.manufacturerName || 'Not assigned'}</span>
+                <span className="text-muted">Terminal:</span>
+                <span className="font-bold text-foreground">{mfrQueue?.manufacturerName || voyage?.manufacturerName || 'Not assigned'}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[#3F4A47]">Predicted Queue Position:</span>
-                <span className="font-mono font-bold text-[#14181A]">
+                <span className="text-muted">Predicted Queue Position:</span>
+                <span className="font-mono font-bold text-foreground">
                   #{mfrQueue?.predictedQueuePosition || '4'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[#3F4A47]">Predicted Loading Slot:</span>
-                <span className="font-mono font-semibold text-[#14181A]">
+                <span className="text-muted">Predicted Loading Slot:</span>
+                <span className="font-mono font-semibold text-foreground">
                   {formatDateTime(voyage?.manufacturerSlotForecast)}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[#3F4A47]">Manufacturer Confirmed Slot:</span>
-                <span className="font-mono font-bold text-[#0A7A3D]">
+                <span className="text-muted">Manufacturer Confirmed Slot:</span>
+                <span className="font-mono font-bold text-positive">
                   {voyage?.manufacturerSlotConfirmed
                     ? formatDateTime(voyage.manufacturerSlotConfirmed)
                     : 'Pending Confirmation'}
@@ -628,10 +629,10 @@ export function VesselDetail({
         </div>
 
         {/* SECTION 7: VOYAGE SCHEDULE & ROTATION */}
-        <div className="bg-white border border-[#E1DED4] rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4]">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#14181A] flex items-center gap-2">
-              <Route className="w-4 h-4 text-[#0E7C86]" />
+        <div className="bg-surface border border-line rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-line">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+              <Route className="w-4 h-4 text-info" />
               Voyage Schedule & Rotation
             </h3>
             {voyage && <ScheduleSourceBadge source={voyage.scheduleSource} />}
@@ -639,33 +640,33 @@ export function VesselDetail({
 
           {voyage ? (
             <div className="space-y-3 text-xs">
-              <div className="p-3 bg-[#F7F5F0] rounded-lg border border-[#E1DED4] space-y-2">
+              <div className="p-3 bg-canvas rounded-lg border border-line space-y-2">
                 <div className="flex justify-between font-mono">
-                  <span className="text-[#3F4A47]">Rotation Route:</span>
-                  <span className="font-bold text-[#14181A]">
+                  <span className="text-muted">Rotation Route:</span>
+                  <span className="font-bold text-foreground">
                     {voyage.origin} → {voyage.destination}
                   </span>
                 </div>
                 <div className="flex justify-between font-mono">
-                  <span className="text-[#3F4A47]">Return ETA Forecast:</span>
-                  <span className="font-bold text-[#14181A]">
+                  <span className="text-muted">Return ETA Forecast:</span>
+                  <span className="font-bold text-foreground">
                     {formatDateTime(voyage.returnEtaForecast)}
                   </span>
                 </div>
                 <div className="flex justify-between font-mono">
-                  <span className="text-[#3F4A47]">Expected Berth Release:</span>
-                  <span className="font-bold text-[#0E7C86]">
+                  <span className="text-muted">Expected Berth Release:</span>
+                  <span className="font-bold text-info">
                     {formatDateTime(voyage.expectedBerthRelease)}
                   </span>
                 </div>
-                <div className="flex justify-between font-mono text-[11px] pt-1 border-t border-[#E1DED4]">
-                  <span className="text-[#3F4A47]">Cycle Stage:</span>
-                  <span className="text-[#14181A] font-semibold">{voyage.currentStage}</span>
+                <div className="flex justify-between font-mono text-[11px] pt-1 border-t border-line">
+                  <span className="text-muted">Cycle Stage:</span>
+                  <span className="text-foreground font-semibold">{voyage.currentStage}</span>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="p-4 bg-[#F7F5F0] rounded-lg text-xs text-[#3F4A47]">
+            <div className="p-4 bg-canvas rounded-lg text-xs text-muted">
               No active voyage cycle recorded for this vessel.
             </div>
           )}
@@ -673,20 +674,20 @@ export function VesselDetail({
       </div>
 
       {/* SECTION 8: OPERATIONAL DELAYS & EVENTS */}
-      <div className="bg-white border border-[#E1DED4] rounded-xl p-5">
-        <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4] mb-4">
+      <div className="bg-surface border border-line rounded-xl p-5">
+        <div className="flex items-center justify-between pb-3 border-b border-line mb-4">
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#14181A] flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-[#AE3B2E]" />
+            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-danger" />
               Confirmed Operational Delays & Incidents ({vesselDelays.length})
             </h3>
-            <p className="text-xs text-[#3F4A47]">
+            <p className="text-xs text-muted">
               Human-confirmed delay logs that feed directly into downstream schedule recalculations.
             </p>
           </div>
           <button
             onClick={() => setIsDelayModalOpen(true)}
-            className="px-3 py-1.5 text-xs font-semibold rounded bg-[#AE3B2E] hover:bg-[#8E2F24] text-white flex items-center gap-1.5 transition shadow-xs"
+            className="px-3 py-1.5 text-xs font-semibold rounded bg-critical hover:bg-critical text-white flex items-center gap-1.5 transition shadow-xs"
           >
             <Plus className="w-3.5 h-3.5" />
             Record Delay Event
@@ -694,9 +695,9 @@ export function VesselDetail({
         </div>
 
         {vesselDelays.length > 0 ? (
-          <div className="border border-[#E1DED4] rounded-lg overflow-hidden">
+          <div className="border border-line rounded-lg overflow-hidden">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#F7F5F0] text-[#3F4A47] border-b border-[#E1DED4]">
+              <thead className="bg-canvas text-muted border-b border-line">
                 <tr>
                   <th className="py-2.5 px-3">Start Time</th>
                   <th className="py-2.5 px-3">Category</th>
@@ -706,16 +707,16 @@ export function VesselDetail({
                   <th className="py-2.5 px-3">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E1DED4]">
+              <tbody className="divide-y divide-line">
                 {vesselDelays.map((d) => (
-                  <tr key={d.id} className="hover:bg-[#F7F5F0]/50 text-[11px]">
-                    <td className="py-2.5 px-3 font-mono text-[#14181A]">{formatDateTime(d.start)}</td>
-                    <td className="py-2.5 px-3 font-bold text-[#AE3B2E]">{d.category}</td>
-                    <td className="py-2.5 px-3 font-medium text-[#14181A]">{d.area}</td>
-                    <td className="py-2.5 px-3 font-mono font-semibold text-[#14181A]">{d.impactHours}h</td>
-                    <td className="py-2.5 px-3 text-[#3F4A47] max-w-xs">{d.description}</td>
+                  <tr key={d.id} className="hover:bg-canvas/50 text-[11px]">
+                    <td className="py-2.5 px-3 font-mono text-foreground">{formatDateTime(d.start)}</td>
+                    <td className="py-2.5 px-3 font-bold text-danger">{d.category}</td>
+                    <td className="py-2.5 px-3 font-medium text-foreground">{d.area}</td>
+                    <td className="py-2.5 px-3 font-mono font-semibold text-foreground">{d.impactHours}h</td>
+                    <td className="py-2.5 px-3 text-muted max-w-xs">{d.description}</td>
                     <td className="py-2.5 px-3">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${d.resolved ? 'bg-[#E7F4EB] text-[#0A7A3D]' : 'bg-[#F8E7E3] text-[#AE3B2E]'}`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${d.resolved ? 'bg-positive-soft text-positive' : 'bg-danger-soft text-danger'}`}>
                         {d.resolved ? 'RESOLVED' : 'ACTIVE'}
                       </span>
                     </td>
@@ -725,7 +726,7 @@ export function VesselDetail({
             </table>
           </div>
         ) : (
-          <div className="p-4 bg-[#F7F5F0] rounded-lg text-xs text-[#3F4A47] text-center">
+          <div className="p-4 bg-canvas rounded-lg text-xs text-muted text-center">
             No active or historical delay events logged for this voyage cycle.
           </div>
         )}
@@ -741,7 +742,7 @@ export function VesselDetail({
         <form onSubmit={handleAddReading} className="space-y-4 text-xs">
           {readingError && <p role="alert" className="text-red-700">{readingError}</p>}
           <div>
-            <label className="block font-semibold text-[#14181A] mb-1">
+            <label className="block font-semibold text-foreground mb-1">
               Current Unloaded Tonnes (T) *
             </label>
             <input
@@ -749,15 +750,15 @@ export function VesselDetail({
               required
               value={readingUnloaded}
               onChange={(e) => setReadingUnloaded(e.target.value)}
-              className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349] font-mono"
+              className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive font-mono"
             />
-            <p className="text-[11px] text-[#3F4A47] mt-1">
+            <p className="text-[11px] text-muted mt-1">
               Total cargo: {(voyage?.actualCargoT || 9600).toLocaleString()} T
             </p>
           </div>
 
           <div>
-            <label className="block font-semibold text-[#14181A] mb-1">
+            <label className="block font-semibold text-foreground mb-1">
               Observed Unloading Rate (tonnes/hour) *
             </label>
             <input
@@ -765,33 +766,33 @@ export function VesselDetail({
               required
               value={readingRate}
               onChange={(e) => setReadingRate(e.target.value)}
-              className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349] font-mono"
+              className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive font-mono"
             />
           </div>
 
           <div>
-            <label className="block font-semibold text-[#14181A] mb-1">Observation Notes</label>
+            <label className="block font-semibold text-foreground mb-1">Observation Notes</label>
             <textarea
               rows={2}
               placeholder="e.g. Silo line 2 active, compressor pressure 2.4 bar..."
               value={readingNotes}
               onChange={(e) => setReadingNotes(e.target.value)}
-              className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349]"
+              className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive"
             />
           </div>
 
-          <div className="pt-3 border-t border-[#E1DED4] flex justify-end gap-2">
+          <div className="pt-3 border-t border-line flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setIsReadingModalOpen(false)}
-              className="px-4 py-2 rounded-lg bg-white border border-[#E1DED4] text-[#3F4A47] font-semibold"
+              className="px-4 py-2 rounded-lg bg-surface border border-line text-muted font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={readingSaving}
-              className="px-4 py-2 rounded-lg bg-[#0C9349] hover:bg-[#0A7A3D] text-white font-semibold shadow-xs"
+              className="px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-white font-semibold shadow-xs"
             >
               {readingSaving ? 'Saving?' : 'Save & Recalculate Forecast'}
             </button>
@@ -808,7 +809,7 @@ export function VesselDetail({
       >
         <form onSubmit={handleAddPayment} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-[#14181A] mb-1">
+            <label className="block font-semibold text-foreground mb-1">
               Tranche Amount (TZS) *
             </label>
             <input
@@ -817,20 +818,20 @@ export function VesselDetail({
               step="1000000"
               value={paymentAmount}
               onChange={(e) => setPaymentAmount(e.target.value)}
-              className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349] font-mono font-bold"
+              className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive font-mono font-bold"
             />
-            <p className="text-[11px] text-[#3F4A47] mt-1">
+            <p className="text-[11px] text-muted mt-1">
               Current remaining balance: {formatCurrency(pmtTotals?.remaining || 200000000)}
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">Payment Method</label>
+              <label className="block font-semibold text-foreground mb-1">Payment Method</label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349]"
+                className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive"
               >
                 <option>Bank Wire (CRDB Bank)</option>
                 <option>Bank Wire (NMB Bank)</option>
@@ -839,38 +840,38 @@ export function VesselDetail({
               </select>
             </div>
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">Reference / Swift Ref</label>
+              <label className="block font-semibold text-foreground mb-1">Reference / Swift Ref</label>
               <input
                 type="text"
                 value={paymentRef}
                 onChange={(e) => setPaymentRef(e.target.value)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349] font-mono"
+                className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive font-mono"
               />
             </div>
           </div>
 
           <div>
-            <label className="block font-semibold text-[#14181A] mb-1">Notes</label>
+            <label className="block font-semibold text-foreground mb-1">Notes</label>
             <input
               type="text"
               placeholder="e.g. Cleared via treasury desk..."
               value={paymentNotes}
               onChange={(e) => setPaymentNotes(e.target.value)}
-              className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349]"
+              className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive"
             />
           </div>
 
-          <div className="pt-3 border-t border-[#E1DED4] flex justify-end gap-2">
+          <div className="pt-3 border-t border-line flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setIsPaymentModalOpen(false)}
-              className="px-4 py-2 rounded-lg bg-white border border-[#E1DED4] text-[#3F4A47] font-semibold"
+              className="px-4 py-2 rounded-lg bg-surface border border-line text-muted font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-[#0C9349] hover:bg-[#0A7A3D] text-white font-semibold shadow-xs"
+              className="px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-white font-semibold shadow-xs"
             >
               Submit Wire & Unlock Eligibility
             </button>
@@ -888,11 +889,11 @@ export function VesselDetail({
         <form onSubmit={handleAddDelay} className="space-y-4 text-xs">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">Category *</label>
+              <label className="block font-semibold text-foreground mb-1">Category *</label>
               <select
                 value={delayCategory}
                 onChange={(e) => setDelayCategory(e.target.value)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349]"
+                className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive"
               >
                 <option>Equipment</option>
                 <option>Weather</option>
@@ -905,50 +906,50 @@ export function VesselDetail({
               </select>
             </div>
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">Impact (Hours) *</label>
+              <label className="block font-semibold text-foreground mb-1">Impact (Hours) *</label>
               <input
                 type="number"
                 step="0.5"
                 value={delayImpact}
                 onChange={(e) => setDelayImpact(e.target.value)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349] font-mono"
+                className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive font-mono"
               />
             </div>
           </div>
 
           <div>
-            <label className="block font-semibold text-[#14181A] mb-1">Location / Equipment Area</label>
+            <label className="block font-semibold text-foreground mb-1">Location / Equipment Area</label>
             <input
               type="text"
               value={delayArea}
               onChange={(e) => setDelayArea(e.target.value)}
-              className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349]"
+              className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive"
             />
           </div>
 
           <div>
-            <label className="block font-semibold text-[#14181A] mb-1">Description *</label>
+            <label className="block font-semibold text-foreground mb-1">Description *</label>
             <textarea
               rows={3}
               required
               placeholder="Describe the operational cause and immediate remediation..."
               value={delayDesc}
               onChange={(e) => setDelayDesc(e.target.value)}
-              className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349]"
+              className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive"
             />
           </div>
 
-          <div className="pt-3 border-t border-[#E1DED4] flex justify-end gap-2">
+          <div className="pt-3 border-t border-line flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setIsDelayModalOpen(false)}
-              className="px-4 py-2 rounded-lg bg-white border border-[#E1DED4] text-[#3F4A47] font-semibold"
+              className="px-4 py-2 rounded-lg bg-surface border border-line text-muted font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-[#AE3B2E] hover:bg-[#8E2F24] text-white font-semibold shadow-xs"
+              className="px-4 py-2 rounded-lg bg-critical hover:bg-critical text-white font-semibold shadow-xs"
             >
               Confirm Delay Event
             </button>
@@ -965,7 +966,7 @@ export function VesselDetail({
       >
         <form onSubmit={handleConfirmSlot} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-[#14181A] mb-1">
+            <label className="block font-semibold text-foreground mb-1">
               Confirmed Loading Slot Start *
             </label>
             <input
@@ -973,33 +974,33 @@ export function VesselDetail({
               required
               value={confirmedSlotTime}
               onChange={(e) => setConfirmedSlotTime(e.target.value)}
-              className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349] font-mono"
+              className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive font-mono"
             />
           </div>
 
           <div>
-            <label className="block font-semibold text-[#14181A] mb-1">
+            <label className="block font-semibold text-foreground mb-1">
               Confirmed Queue Position
             </label>
             <input
               type="number"
               value={confirmedPos}
               onChange={(e) => setConfirmedPos(e.target.value)}
-              className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0C9349] font-mono"
+              className="w-full p-2 bg-canvas border border-line rounded-lg focus:outline-none focus:border-positive font-mono"
             />
           </div>
 
-          <div className="pt-3 border-t border-[#E1DED4] flex justify-end gap-2">
+          <div className="pt-3 border-t border-line flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setIsConfirmSlotModalOpen(false)}
-              className="px-4 py-2 rounded-lg bg-white border border-[#E1DED4] text-[#3F4A47] font-semibold"
+              className="px-4 py-2 rounded-lg bg-surface border border-line text-muted font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-[#0C9349] hover:bg-[#0A7A3D] text-white font-semibold shadow-xs"
+              className="px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-white font-semibold shadow-xs"
             >
               Save Confirmation
             </button>

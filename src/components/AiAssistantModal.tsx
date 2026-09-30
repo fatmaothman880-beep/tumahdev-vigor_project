@@ -125,7 +125,7 @@ export function AiAssistantModal({
         {/* Chat History Canvas */}
         <div
           ref={chatScrollRef}
-          className="h-[370px] overflow-y-auto space-y-3.5 p-4 bg-[#F8F7F4] rounded-xl border border-[#E8E5DC] scroll-smooth"
+          className="h-[370px] overflow-y-auto space-y-3.5 p-4 bg-surface rounded-xl border border-line scroll-smooth"
         >
           {messages.map((m, idx) => (
             <div
@@ -135,8 +135,8 @@ export function AiAssistantModal({
               }`}
             >
               {m.sender === 'ASSISTANT' && (
-                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#5A6764] mb-1 pl-1">
-                  <Bot className="w-3.5 h-3.5 text-[#0C9349]" />
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted mb-1 pl-1">
+                  <Bot className="w-3.5 h-3.5 text-positive" />
                   <span>VIGOR Operations Analyst</span>
                 </div>
               )}
@@ -144,12 +144,12 @@ export function AiAssistantModal({
               <div
                 className={`max-w-[88%] p-3.5 rounded-xl leading-relaxed text-xs ${
                   m.sender === 'USER'
-                    ? 'bg-[#14181A] text-white rounded-br-2xs shadow-2xs font-medium'
-                    : 'bg-white border border-[#E4E1D8] text-[#14181A] rounded-bl-2xs shadow-2xs'
+                    ? 'bg-shell text-white rounded-br-2xs shadow-2xs font-medium'
+                    : 'bg-surface border border-line text-foreground rounded-bl-2xs shadow-2xs'
                 }`}
               >
                 {/* Natural-Language Explanation Paragraphs */}
-                <div className="text-[13px] leading-relaxed text-[#1D2523] whitespace-pre-line">
+                <div className="text-[13px] leading-relaxed text-foreground whitespace-pre-line">
                   {m.text}
                 </div>
 
@@ -159,10 +159,10 @@ export function AiAssistantModal({
                     <span
                       className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide ${
                         m.severity === 'alert'
-                          ? 'bg-[#FDF2F0] text-[#AE3B2E] border border-[#F2C2BB]'
+                          ? 'bg-danger-soft text-danger border border-danger/25'
                           : m.severity === 'warning'
-                          ? 'bg-[#FEF7EC] text-[#B5760F] border border-[#F4DCBA]'
-                          : 'bg-[#E7F4EB] text-[#0A7A3D] border border-[#BBE3C7]'
+                          ? 'bg-warning-soft text-warning border border-line'
+                          : 'bg-positive-soft text-positive border border-positive/25'
                       }`}
                     >
                       {m.severity === 'alert' ? (
@@ -179,15 +179,15 @@ export function AiAssistantModal({
 
                 {/* Clickable Deep-Link Action Button(s) (Requirement 15 & 16) */}
                 {m.actions && m.actions.length > 0 && (
-                  <div className="mt-3 pt-2.5 border-t border-[#F0ECE1] flex flex-wrap items-center gap-2">
+                  <div className="mt-3 pt-2.5 border-t border-line flex flex-wrap items-center gap-2">
                     {m.actions.map((act, aIdx) => (
                       <button
                         key={aIdx}
                         onClick={act.onClick}
                         className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer ${
                           act.primary
-                            ? 'bg-[#0C9349] hover:bg-[#0A7A3D] text-white'
-                            : 'bg-[#F2EFE8] hover:bg-[#E8E4DA] text-[#242E2B] border border-[#DDD8CB]'
+                            ? 'bg-brand hover:bg-brand-hover text-white'
+                            : 'bg-raised hover:bg-raised text-foreground border border-line'
                         }`}
                       >
                         <span>{act.label}</span>
@@ -202,8 +202,8 @@ export function AiAssistantModal({
 
           {/* Thinking Indicator */}
           {isThinking && (
-            <div className="flex items-center gap-2 text-xs text-[#5A6764] pl-2 pt-1">
-              <Sparkles className="w-3.5 h-3.5 text-[#0C9349] animate-spin" />
+            <div className="flex items-center gap-2 text-xs text-muted pl-2 pt-1">
+              <Sparkles className="w-3.5 h-3.5 text-positive animate-spin" />
               <span>Reading system records...</span>
             </div>
           )}
@@ -211,7 +211,7 @@ export function AiAssistantModal({
 
         {/* Suggested Quick Prompt Chips (Requirement 10) */}
         <div className="space-y-1.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-[#7C8884]">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
             Suggested Inquiries
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -220,7 +220,7 @@ export function AiAssistantModal({
                 key={idx}
                 onClick={() => handleSend(p)}
                 disabled={isThinking}
-                className="text-[11px] px-3 py-1.5 rounded-lg bg-white border border-[#DCD8CD] hover:border-[#0C9349] hover:text-[#0C9349] hover:bg-[#F9FCFA] text-[#333D3A] font-medium transition shadow-2xs cursor-pointer"
+                className="text-[11px] px-3 py-1.5 rounded-lg bg-surface border border-line hover:border-positive hover:text-positive hover:bg-raised text-foreground font-medium transition shadow-2xs cursor-pointer"
               >
                 {p}
               </button>
@@ -229,7 +229,7 @@ export function AiAssistantModal({
         </div>
 
         {/* Input Bar */}
-        <div className="flex items-center gap-2 pt-2 border-t border-[#E8E5DC]">
+        <div className="flex items-center gap-2 pt-2 border-t border-line">
           <input
             type="text"
             placeholder="Ask naturally (e.g., Why is VIGOR 03 waiting? How much fuel do we have?)"
@@ -237,12 +237,12 @@ export function AiAssistantModal({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            className="flex-1 px-3.5 py-2.5 bg-white border border-[#DCD8CD] rounded-lg focus:outline-none focus:border-[#0C9349] focus:ring-1 focus:ring-[#0C9349] text-xs font-medium placeholder:text-[#9EA8A5] text-[#14181A] shadow-2xs"
+            className="flex-1 px-3.5 py-2.5 bg-surface border border-line rounded-lg focus:outline-none focus:border-positive focus:ring-1 focus:ring-positive text-xs font-medium placeholder:text-muted text-foreground shadow-2xs"
           />
           <button
             onClick={() => handleSend()}
             disabled={!input.trim() || isThinking}
-            className="px-3.5 py-2.5 rounded-lg bg-[#0C9349] hover:bg-[#0A7A3D] disabled:opacity-40 disabled:cursor-not-allowed text-white transition shadow-2xs cursor-pointer flex items-center justify-center"
+            className="px-3.5 py-2.5 rounded-lg bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white transition shadow-2xs cursor-pointer flex items-center justify-center"
           >
             <Send className="w-4 h-4" />
           </button>

@@ -38,8 +38,8 @@ function AppContent() {
   // Loading indicator while reading storage token
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F7F5F0] flex flex-col items-center justify-center text-[#14181A] font-mono text-xs gap-3">
-        <div className="w-8 h-8 rounded-full border-2 border-[#0A7A3D] border-t-transparent animate-spin" />
+      <div className="min-h-screen bg-canvas flex flex-col items-center justify-center text-foreground font-mono text-xs gap-3">
+        <div className="w-8 h-8 rounded-full border-2 border-positive border-t-transparent animate-spin" />
         <div>Verifying VIGOR Corporate Session...</div>
       </div>
     );
@@ -92,7 +92,8 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F5F0] flex flex-col md:flex-row text-[#14181A] antialiased">
+    <div className="min-h-screen bg-canvas flex flex-col md:flex-row text-foreground antialiased">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 button-primary">Skip to content</a>
       {/* Sidebar Navigation */}
       <Sidebar
         currentPage={currentPage}
@@ -117,20 +118,8 @@ function AppContent() {
           onTestConnection={() => api.testConnection(true)}
         />
 
-        {(user?.role === 'Management' || user?.role === 'Viewer') && (
-          <div className="px-6 py-2 bg-[#E7F4EB] text-xs text-[#0A7A3D]">
-            {user.role}: read-only access to dashboards, operational data, and reports.
-          </div>
-        )}
-
         {/* Page Content Viewport */}
-        <main
-          className={
-            currentPage === 'dashboard-summary'
-              ? 'flex-1 px-6 py-4 sm:px-8 sm:py-5 w-full max-w-[1560px] mx-auto flex flex-col justify-start min-h-0'
-              : 'flex-1 p-4 sm:p-6 lg:p-8 max-w-[1400px] w-full mx-auto'
-          }
-        >
+        <main id="main-content" className="app-content">
           {currentPage === 'dashboard-summary' && (
             <DashboardSummary
               onSelectVessel={handleSelectVessel}

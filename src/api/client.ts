@@ -1,3 +1,6 @@
+import { normalizeSiteTerminology } from '../lib/siteTerminology';
+import { applyBackendForecast, type BackendForecast } from '../lib/backendForecast';
+import { mergeManufacturerCatalogue } from '../lib/manufacturerCatalogue';
 import { normalizeUserRole } from '../../shared/roles';
 /**
  * Central API Client for VIGOR Smart Port Operations
@@ -20,7 +23,7 @@ import {
   WhatIfScenario,
 } from '../types';
 import { getInitialDemoData } from '../mock/mockData';
-import { recalculateVoyageDependencies, calculateUnloadingForecast } from '../lib/scheduleEngine';
+import { recalculateVoyageDependencies } from '../lib/scheduleEngine';
 import { generateSystemAlerts } from '../lib/alerts';
 import { calculatePaymentAccountTotals } from '../lib/paymentEngine';
 import {
@@ -233,6 +236,7 @@ class ApiClient {
 
   constructor() {
     this.store = this.loadFromStorage();
+    if (!USE_MOCK_API) this.store.voyages.forEach(v => applyBackendForecast(v));
     this.recalculateAll();
 
     // Initialize backend connection testing & polling
@@ -262,7 +266,7 @@ class ApiClient {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved);
+        const parsed = normalizeSiteTerminology(JSON.parse(saved));
         delete parsed.vesselPositions;
         if (parsed.vessels && parsed.voyages && parsed.berths) {
           return {
@@ -432,19 +436,11 @@ class ApiClient {
   }
 
   private normalizeSite(): void {
-    const rename = (value: string) => value
-      .replace(/Tanga Cement PLC \(Mamba Wharf\)|Tanga Cement Works|Tanga Cement PLC|Tanga Cement Wharf|Tanga Cement/g, 'Mtwara Cement Factory')
-      .replace(/VIGOR Berth B01(?: \(Zanzibar\))?/g, 'Mangapwani Berth');
-    for (const rows of [this.store.voyages, this.store.paymentAccounts, this.store.manufacturerQueue]) {
-      for (const row of rows) for (const key of Object.keys(row)) {
-        if (typeof row[key] === 'string') row[key] = rename(row[key]);
-      }
-    }
-    this.store.manufacturers ??= [];
-    if (!this.store.manufacturers.some(m => m.name === 'Mtwara Cement Factory')) {
-      this.store.manufacturers.unshift({ id: 'mtwara', name: 'Mtwara Cement Factory', works: 'Mtwara Cement Factory' });
-    }
-    this.store.berths = this.store.berths.filter(b => b.id === 'B01').map(b => ({ ...b, name: 'Mangapwani Berth', location: 'Mangapwani, Zanzibar' }));
+    this.store = normalizeSiteTerminology(this.store);
+    // Extend the catalogue without renaming history or deleting configured berths.
+    this.store.manufacturers = mergeManufacturerCatalogue(
+      this.store.manufacturers, this.store.voyages, this.store.manufacturerQueue
+    );
   }
 
   public addManufacturer(name: string, works: string): string {
@@ -464,6 +460,7 @@ class ApiClient {
     this.requireWriteAccess();
     const now = new Date().toISOString();
     const created = { ...voyage, id: crypto.randomUUID(), createdAt: now, updatedAt: now };
+    if (!USE_MOCK_API) applyBackendForecast(created);
     this.store.voyages.unshift(created);
     this.recalculateAll();
     this.saveToStorage();
@@ -601,8 +598,16 @@ class ApiClient {
       backendActiveDashboard: this.store.connectionInfo.backendActiveDashboard,
     };
 
-    if (isApiHealthy) {
+    let hasSession = false;
+    try {
+      hasSession = Boolean(localStorage.getItem('vigor_auth_token') || sessionStorage.getItem('vigor_auth_token'));
+    } catch { /* Login must render even when browser storage is unavailable. */ }
+    if (isApiHealthy && hasSession) {
       await this.syncFromBackend();
+    } else {
+      this.store.voyages.forEach(v => applyBackendForecast(v));
+      this.store.connectionInfo.backendActiveDashboard = null;
+      this.recalculateAll();
     }
 
     this.saveToStorage(false);
@@ -611,17 +616,18 @@ class ApiClient {
 
   public async syncFromBackend(): Promise<void> {
     try {
-      const [operationalState, vessels, berths, dashboard] = await Promise.allSettled([
+      const [operationalState, vessels, berths, dashboard, forecasts] = await Promise.allSettled([
         apiFetch<BackendOperationalStateEnvelope>('/operations/state'),
         apiFetch<any[]>('/vessels?limit=50'),
         apiFetch<any[]>('/berths?limit=50'),
         apiFetch<any>('/dashboard/active'),
+        apiFetch<Record<string, BackendForecast>>('/integration/predictions'),
       ]);
 
       const remoteState =
         operationalState.status === 'fulfilled' ? operationalState.value : null;
       if (remoteState?.state) {
-        const state = remoteState.state;
+        const state = normalizeSiteTerminology(remoteState.state);
         const arrayKeys: Array<keyof PersistedOperationalState> = [
           'vessels',
           'berths',
@@ -694,30 +700,13 @@ class ApiClient {
         }
       }
 
-      if (dashboard.status === 'fulfilled' && dashboard.value) {
-        this.store.connectionInfo.backendActiveDashboard = dashboard.value;
-
-        // Synchronize the normalized active visit into its matching full-cycle
-        // voyage. Keep the original demo fallback for a newly initialized site.
-        const activeDash = dashboard.value;
-        const activeVoyage =
-          this.store.voyages.find((v) => v.id === activeDash.visit_id) ||
-          this.store.voyages.find((v) => v.id === 'voy-01');
-        if (activeVoyage && activeDash.unloaded_t !== undefined) {
-          activeVoyage.unloadedTonnes = Number(activeDash.unloaded_t) || activeVoyage.unloadedTonnes;
-          if (activeDash.unloading_rate_tph) {
-            activeVoyage.unloadingRateTph = Number(activeDash.unloading_rate_tph);
-          }
-          if (activeDash.estimated_unload_finish) {
-            activeVoyage.forecastUnloadEnd = activeDash.estimated_unload_finish;
-          }
-          if (activeDash.expected_berth_release) {
-            activeVoyage.expectedBerthRelease = activeDash.expected_berth_release;
-          }
-          if (activeDash.berth_conflict !== undefined) {
-            activeVoyage.berthConflict = activeDash.berth_conflict;
-          }
-        }
+      this.store.connectionInfo.backendActiveDashboard =
+        dashboard.status === 'fulfilled' ? dashboard.value : null;
+      // Only an exact database visit ID can receive that visit's forecast.
+      // In particular, never attach an unrelated active visit to demo voy-01.
+      for (const voyage of this.store.voyages) {
+        applyBackendForecast(voyage,
+          forecasts.status === 'fulfilled' ? forecasts.value[voyage.id] : undefined);
       }
 
       this.recalculateAll();
@@ -898,63 +887,31 @@ class ApiClient {
     reading: Omit<OperationalReading, 'id'>
   ): Promise<OperationalReading> {
     this.requireWriteAccess();
+    // Save first: a rejected reading must not change cargo totals or forecasts.
+    const response = USE_MOCK_API ? null : await apiFetch<any>(
+      `/visits/${encodeURIComponent(reading.voyageId)}/readings`, {
+        method: 'POST',
+        body: JSON.stringify({
+          recorded_at: reading.timestamp,
+          source: 'MANUAL',
+          unloaded_t: reading.unloadedTonnes,
+          observed_rate_tph: reading.observedRateTph,
+          unloading_status: 'ACTIVE',
+          notes: reading.notes,
+        }),
+      });
     const newReading: OperationalReading = {
       ...reading,
-      id: `rd-${Date.now().toString().slice(-6)}`,
+      id: response?.reading.id ?? crypto.randomUUID(),
     };
     this.store.operationalReadings.unshift(newReading);
-
-    // Update the voyage cargo & rates directly
-    const voyage = this.store.voyages.find((v) => v.id === reading.voyageId);
+    const voyage = this.store.voyages.find(v => v.id === reading.voyageId);
     if (voyage) {
       voyage.unloadedTonnes = reading.unloadedTonnes;
-      voyage.unloadingRateTph = reading.observedRateTph;
-
-      const forecast = calculateUnloadingForecast(
-        voyage,
-        newReading,
-        this.store.systemSettings.postUnloadBerthBufferHours
-      );
-      if (forecast.isAvailable) {
-        voyage.forecastUnloadEnd = forecast.forecastUnloadEnd;
-        voyage.expectedBerthRelease = forecast.expectedBerthRelease;
-      }
+      applyBackendForecast(voyage, response?.prediction ?? undefined);
     }
-
     this.recalculateAll();
     this.saveToStorage();
-
-    // If connected to FastAPI, post the reading to the backend
-    if (!USE_MOCK_API && this.store.connectionInfo.apiHealth === 'healthy') {
-      try {
-        const visitId = reading.voyageId;
-        const res = await apiFetch<any>(`/visits/${visitId}/readings`, {
-          method: 'POST',
-          body: JSON.stringify({
-            recorded_at: reading.timestamp || new Date().toISOString(),
-            source: 'MANUAL',
-            unloaded_t: reading.unloadedTonnes,
-            observed_rate_tph: reading.observedRateTph,
-            unloading_status: 'ACTIVE',
-          }),
-        });
-
-        // The backend returns { reading, prediction, warnings }
-        if (res && res.prediction && voyage) {
-          if (res.prediction.estimated_unload_finish) {
-            voyage.forecastUnloadEnd = res.prediction.estimated_unload_finish;
-          }
-          if (res.prediction.expected_berth_release) {
-            voyage.expectedBerthRelease = res.prediction.expected_berth_release;
-          }
-          this.recalculateAll();
-          this.saveToStorage();
-        }
-      } catch {
-        // Fallback to local forecast
-      }
-    }
-
     return newReading;
   }
 

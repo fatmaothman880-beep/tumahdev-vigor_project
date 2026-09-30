@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Gauge,
   LayoutDashboard,
@@ -64,6 +64,18 @@ export function Sidebar({
 }: SidebarProps) {
   const { user, quickLoginAs } = useAuth();
   const [showRoleMenu, setShowRoleMenu] = useState(false);
+  const drawer = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (!isMobileOpen) return;
+    const dialog = drawer.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    dialog?.showModal();
+    const desktop = window.matchMedia('(min-width: 768px)');
+    const onResize = () => { if (desktop.matches) onCloseMobile(); };
+    desktop.addEventListener('change', onResize);
+    return () => { dialog?.close(); document.body.style.overflow = previousOverflow; desktop.removeEventListener('change', onResize); };
+  }, [isMobileOpen]);
   const unreadAlerts = alerts.filter((a) => !a.acknowledged).length;
 
   const sections: NavSection[] = [
@@ -123,187 +135,39 @@ export function Sidebar({
   };
 
   const content = (
-    <div className="w-[260px] h-full flex flex-col bg-[#14181A] text-[#C9C4B6] select-none">
-      {/* Header with Tasteful VIGOR Logo Box */}
-      <div className="p-4 border-b border-[#3F4A47]/40">
-        <div className="flex items-center justify-between mb-3">
-          {/* Light Rectangular Logo Container as specified in Part 10 */}
-          <div className="bg-white rounded px-3 py-1.5 shadow-xs flex items-center justify-center border border-[#E1DED4] w-full">
-            <div className="text-center">
-              <div className="text-[#0A7A3D] font-extrabold tracking-widest text-sm leading-none font-mono">
-                VIGOR
-              </div>
-              <div className="text-[#14181A] font-bold tracking-wider text-[8px] uppercase mt-0.5 leading-none">
-                CEMENT WORKS
-              </div>
-            </div>
-          </div>
-
-          {/* Close button on mobile */}
-          <button
-            onClick={onCloseMobile}
-            className="md:hidden text-[#C9C4B6] hover:text-white p-1 ml-2"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div>
-          <h2 className="text-xs font-bold tracking-wider text-white uppercase">
-            SMART PORT OPERATIONS
-          </h2>
-          <p className="text-[10px] text-[#C9C4B6]/80 font-medium">
-            Vigor Cement Works · Zanzibar
-          </p>
-        </div>
+    <div className="w-[240px] h-full flex flex-col bg-shell text-muted border-r border-line select-none">
+      <div className="px-5 py-6 border-b border-line flex justify-between items-start">
+        <div><div className="flex items-center gap-2"><span className="w-1 h-6 bg-positive rounded-full" /><span className="text-xl font-bold tracking-[0.16em] text-foreground">VIGOR</span></div>
+          <p className="text-[10px] tracking-[0.18em] text-muted mt-1 ml-3">CEMENT WORKS</p>
+          <p className="text-xs text-muted mt-4">Smart Port Operations</p></div>
+        <button onClick={onCloseMobile} className="icon-button md:hidden" aria-label="Close navigation"><X className="w-4 h-4" /></button>
       </div>
-
-      {/* Navigation Links */}
-      <div className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
-        {sections.map((section) => (
+      <nav aria-label="Main navigation" className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+        {sections.filter(section => section.items.some(item => item.id !== 'admin' || user?.role === 'Admin')).map(section => (
           <div key={section.title}>
-            <div className="px-3 py-1 text-[10px] font-semibold font-mono tracking-wider text-[#C9C4B6]/60 uppercase">
-              {section.title}
-            </div>
-            <div className="space-y-0.5 mt-1">
-              {section.items.filter((item) => item.id !== 'admin' || user?.role === 'Admin').map((item) => {
-                const isActive =
-                  currentPage === item.id ||
-                  (item.id === 'vessels' && currentPage === 'vessel-detail');
-
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleItemClick(item.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-r transition ${
-                      isActive
-                        ? 'bg-[#3F4A47]/60 text-white border-l-[3px] border-[#0C9349] font-semibold pl-[9px]'
-                        : 'text-[#C9C4B6] hover:bg-[#3F4A47]/30 hover:text-white border-l-[3px] border-transparent pl-[9px]'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5 truncate">
-                      <span className={isActive ? 'text-[#0C9349]' : 'text-[#C9C4B6]/80'}>
-                        {item.icon}
-                      </span>
-                      <span className="truncate">{item.label}</span>
-                    </div>
-
-                    {item.badgeCount && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold rounded-full bg-[#AE3B2E] text-white">
-                        {item.badgeCount}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            <p className="px-3 mb-2 text-[10px] font-medium tracking-[0.13em] text-muted">{section.title}</p>
+            <div className="space-y-1">{section.items.filter(item => item.id !== 'admin' || user?.role === 'Admin').map(item => {
+              const active = currentPage === item.id || (item.id === 'vessels' && currentPage === 'vessel-detail');
+              return <button key={item.id} onClick={() => handleItemClick(item.id)} aria-current={active ? 'page' : undefined} className="nav-item">
+                <span className="flex items-center gap-3 min-w-0"><span className={active ? 'text-info' : 'text-muted'}>{item.icon}</span><span className="truncate">{item.label}</span></span>
+                {!!item.badgeCount && <span className="text-[10px] tabular-nums text-danger">{item.badgeCount}</span>}
+              </button>;
+            })}</div>
           </div>
         ))}
-      </div>
-
-      {/* Authenticated Staff Card & Quick Role Testing */}
-      <div className="p-3 border-t border-[#3F4A47]/40 bg-[#14181A]/40">
-        <div className="flex items-center justify-between mb-1.5">
-          <div className="flex items-center gap-2 min-w-0">
-            <div
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-mono font-bold text-white shrink-0 ${
-                user?.role === 'Admin'
-                  ? 'bg-[#5B37B7]'
-                  : user?.role === 'Management'
-                  ? 'bg-[#0F62FE]'
-                  : user?.role === 'Vessel Operation'
-                  ? 'bg-[#0A7A3D]'
-                  : 'bg-[#5A6764]'
-              }`}
-            >
-              {user?.fullName ? user.fullName[0].toUpperCase() : 'T'}
-            </div>
-            <div className="min-w-0">
-              <div className="text-[11px] font-bold text-white truncate">{user?.fullName || 'Turkys Staff'}</div>
-              <div className="text-[9px] font-mono text-[#C9C4B6]/60 truncate">{user?.email || 'Authorized Account'}</div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowRoleMenu(!showRoleMenu)}
-            title="Switch demo evaluation role"
-            className="p-1 text-[#C9C4B6]/70 hover:text-white hover:bg-[#3F4A47]/60 rounded transition cursor-pointer"
-          >
-            <ChevronDown className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Role Pill */}
-        <div className="flex items-center justify-between">
-          <span
-            className={`inline-flex items-center gap-1 text-[9px] font-mono font-bold px-2 py-0.5 rounded ${
-              user?.role === 'Admin'
-                ? 'bg-[#5B37B7]/20 text-[#C1A8F9] border border-[#5B37B7]/40'
-                : user?.role === 'Management'
-                ? 'bg-[#0F62FE]/20 text-[#8BB7FE] border border-[#0F62FE]/40'
-                : user?.role === 'Vessel Operation'
-                ? 'bg-[#0A7A3D]/20 text-[#67E29F] border border-[#0A7A3D]/40'
-                : 'bg-[#3F4A47]/40 text-[#C9C4B6] border border-[#3F4A47]'
-            }`}
-          >
-            <Shield className="w-2.5 h-2.5" />
-            {user?.role || 'Viewer'} Role
-          </span>
-          <span className="text-[9px] font-mono text-[#0C9349]">● ONLINE</span>
-        </div>
-
-        {/* Quick Role Switcher Dropdown for evaluators */}
-        {showRoleMenu && (
-          <div className="mt-2.5 pt-2 border-t border-[#3F4A47]/40 space-y-1">
-            <div className="text-[9px] font-mono text-[#C9C4B6]/50 uppercase tracking-wider mb-1">
-              Switch Test Role:
-            </div>
-            {(['Admin', 'Management', 'Vessel Operation', 'Viewer'] as UserRole[]).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => {
-                  quickLoginAs(r);
-                  setShowRoleMenu(false);
-                }}
-                className={`w-full text-left px-2 py-1 rounded text-[10px] font-medium flex items-center justify-between transition cursor-pointer ${
-                  user?.role === r ? 'bg-[#0C9349] text-white font-bold' : 'text-[#C9C4B6] hover:bg-[#3F4A47]/40 hover:text-white'
-                }`}
-              >
-                <span>{r}</span>
-                {user?.role === r && <UserCheck className="w-3 h-3" />}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Footer Info */}
-      <div className="p-3 border-t border-[#3F4A47]/40 text-[10px] text-[#C9C4B6]/60 font-mono flex items-center justify-between">
-        <span>VIGOR OS v2.4</span>
-        <span className="text-[#0C9349]">ZNZ TERMINAL</span>
+      </nav>
+      <div className="p-3 border-t border-line">
+        <button onClick={() => setShowRoleMenu(!showRoleMenu)} aria-expanded={showRoleMenu} className="nav-item" title="Switch demo evaluation role"><span className="flex items-center gap-2"><Shield className="w-3.5 h-3.5" />Evaluation roles</span><ChevronDown className="w-3.5 h-3.5" /></button>
+        {showRoleMenu && <div className="space-y-1 mt-2">{(['Admin', 'Management', 'Vessel Operation', 'Viewer'] as UserRole[]).map(role => <button key={role} onClick={() => { void quickLoginAs(role); setShowRoleMenu(false); }} className="nav-item"><span>{role}</span>{user?.role === role && <UserCheck className="w-3.5 h-3.5 text-positive" />}</button>)}</div>}
+        <p className="text-[10px] text-muted px-3 pt-4 pb-1">VIGOR OS <span className="float-right">ZNZ terminal</span></p>
       </div>
     </div>
   );
-
-  return (
-    <>
-      {/* Desktop permanent sidebar */}
-      <aside className="hidden md:block w-[260px] h-screen sticky top-0 shrink-0 shadow-lg z-40">
-        {content}
-      </aside>
-
-      {/* Mobile drawer */}
-      {isMobileOpen && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
-            onClick={onCloseMobile}
-          />
-          <div className="relative z-10">{content}</div>
-        </div>
-      )}
-    </>
-  );
+  return <>
+    <aside className="hidden md:block w-[240px] h-dvh sticky top-0 shrink-0 z-40">{content}</aside>
+    {isMobileOpen && <dialog ref={drawer} onCancel={event => { event.preventDefault(); onCloseMobile(); }} aria-label="Navigation"
+      className="fixed inset-y-0 left-0 m-0 p-0 w-[240px] h-dvh max-h-none max-w-none border-0 bg-shell text-foreground backdrop:bg-black/70">
+      {content}
+    </dialog>}
+  </>;
 }

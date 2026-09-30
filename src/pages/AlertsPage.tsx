@@ -85,8 +85,8 @@ export function AlertsPage({
             onClick={() => setSeverityFilter(sev)}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${
               severityFilter === sev
-                ? 'bg-[#14181A] text-white'
-                : 'bg-white text-[#3F4A47] border border-[#E1DED4] hover:bg-[#F7F5F0]'
+                ? 'bg-shell text-white'
+                : 'bg-surface text-muted border border-line hover:bg-canvas'
             }`}
           >
             {sev} ({sev === 'ALL' ? alerts.length : alerts.filter((a) => a.severity === sev).length})
@@ -105,39 +105,39 @@ export function AlertsPage({
               key={alert.id}
               className={`p-4 rounded-xl border transition flex flex-col md:flex-row md:items-center justify-between gap-4 ${
                 isCritical
-                  ? 'bg-[#F8E7E3]/60 border-[#AE3B2E]/40'
+                  ? 'bg-danger-soft/60 border-danger/40'
                   : isWarning
-                  ? 'bg-[#FBF0DD]/60 border-[#B5760F]/40'
-                  : 'bg-white border-[#E1DED4]'
+                  ? 'bg-warning-soft/60 border-warning/40'
+                  : 'bg-surface border-line'
               }`}
             >
               <div className="flex items-start gap-3">
                 <div className="mt-1 shrink-0">
                   {isCritical ? (
-                    <span className="w-3 h-3 rounded-full bg-[#AE3B2E] inline-block animate-pulse" />
+                    <span className="w-3 h-3 rounded-full bg-critical inline-block animate-pulse" />
                   ) : isWarning ? (
-                    <span className="w-3 h-3 rounded-full bg-[#B5760F] inline-block" />
+                    <span className="w-3 h-3 rounded-full bg-warning-strong inline-block" />
                   ) : (
-                    <span className="w-3 h-3 rounded-full bg-[#0E7C86] inline-block" />
+                    <span className="w-3 h-3 rounded-full bg-info-strong inline-block" />
                   )}
                 </div>
 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-[10px] font-bold uppercase px-1.5 py-0.2 rounded bg-white/80 border border-[#E1DED4]">
+                    <span className="font-mono text-[10px] font-bold uppercase px-1.5 py-0.2 rounded bg-surface/80 border border-line">
                       {alert.category}
                     </span>
-                    <h3 className="text-sm font-bold text-[#14181A]">{alert.title}</h3>
+                    <h3 className="text-sm font-bold text-foreground">{alert.title}</h3>
                     {alert.vesselName && (
-                      <span className="text-xs text-[#3F4A47] font-medium flex items-center gap-1">
+                      <span className="text-xs text-muted font-medium flex items-center gap-1">
                         <Ship className="w-3 h-3" /> {alert.vesselName}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-[#3F4A47] leading-relaxed max-w-2xl">
+                  <p className="text-xs text-muted leading-relaxed max-w-2xl">
                     {alert.message}
                   </p>
-                  <div className="text-[10px] font-mono text-[#3F4A47]/80">
+                  <div className="text-[10px] font-mono text-muted/80">
                     Logged: {formatDateTime(alert.timestamp)}
                   </div>
                 </div>
@@ -148,7 +148,7 @@ export function AlertsPage({
                 {alert.vesselId && (
                   <button
                     onClick={() => onSelectVessel(alert.vesselId!)}
-                    className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-white border border-[#E1DED4] hover:bg-[#F7F5F0] text-[#14181A] transition"
+                    className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-surface border border-line hover:bg-canvas text-foreground transition"
                   >
                     Open Vessel
                   </button>
@@ -156,7 +156,7 @@ export function AlertsPage({
                 {alert.category === 'BERTH_CONFLICT' && (
                   <button
                     onClick={onNavigateToBerths}
-                    className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-white border border-[#E1DED4] hover:bg-[#F7F5F0] text-[#14181A] transition"
+                    className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-surface border border-line hover:bg-canvas text-foreground transition"
                   >
                     Berth Console
                   </button>
@@ -164,7 +164,7 @@ export function AlertsPage({
                 {alert.category === 'PAYMENT_REQUIRED' && (
                   <button
                     onClick={onNavigateToPayments}
-                    className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-[#0C9349] text-white hover:bg-[#0A7A3D] transition shadow-xs"
+                    className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-brand text-white hover:bg-brand-hover transition shadow-xs"
                   >
                     Clear Payment
                   </button>
@@ -172,7 +172,7 @@ export function AlertsPage({
                 {!alert.acknowledged && (
                   <button
                     onClick={() => api.acknowledgeAlert(alert.id)}
-                    className="p-1.5 text-xs font-semibold rounded-lg bg-white border border-[#E1DED4] hover:bg-[#F7F5F0] text-[#3F4A47] transition"
+                    className="p-1.5 text-xs font-semibold rounded-lg bg-surface border border-line hover:bg-canvas text-muted transition"
                     title="Acknowledge alert"
                   >
                     <Check className="w-4 h-4" />

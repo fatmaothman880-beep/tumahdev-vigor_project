@@ -75,7 +75,7 @@ export function Fuel({ onSelectVessel, onNavigateToPayments }: FuelProps) {
       >
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-[#0C9349] hover:bg-[#0A7A3D] text-white flex items-center gap-1.5 transition shadow-xs"
+          className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-brand hover:bg-brand-hover text-white flex items-center gap-1.5 transition shadow-xs"
         >
           <Plus className="w-4 h-4" />
           Schedule Bunkering Operation
@@ -114,18 +114,18 @@ export function Fuel({ onSelectVessel, onNavigateToPayments }: FuelProps) {
       </div>
 
       {/* Fuel Operations Table */}
-      <div className="bg-white border border-[#E1DED4] rounded-xl overflow-hidden shadow-xs">
-        <div className="p-4 border-b border-[#E1DED4] flex items-center justify-between">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-[#14181A]">
+      <div className="bg-surface border border-line rounded-xl overflow-hidden shadow-xs">
+        <div className="p-4 border-b border-line flex items-center justify-between">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
             Bunker Delivery Schedules
           </h3>
-          <span className="text-xs font-mono text-[#3F4A47]">Zanzibar Port Anchorage & B01</span>
+          <span className="text-xs font-mono text-muted">Zanzibar Port Anchorage & B01</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-[#F7F5F0] border-b border-[#E1DED4] text-[#3F4A47] font-semibold text-[11px] uppercase tracking-wider">
+              <tr className="bg-canvas border-b border-line text-muted font-semibold text-[11px] uppercase tracking-wider">
                 <th className="py-3 px-4">Vessel</th>
                 <th className="py-3 px-4">Fuel Type & Quantity</th>
                 <th className="py-3 px-4">Supplier & Invoice</th>
@@ -136,44 +136,44 @@ export function Fuel({ onSelectVessel, onNavigateToPayments }: FuelProps) {
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E1DED4]">
+            <tbody className="divide-y divide-line">
               {fuelOperations.map((f) => {
                 const vessel = vessels.find((v) => v.id === f.vesselId);
                 return (
-                  <tr key={f.id} className="hover:bg-[#F7F5F0]/60 transition">
-                    <td className="py-3 px-4 font-bold text-[#14181A]">
+                  <tr key={f.id} className="hover:bg-canvas/60 transition">
+                    <td className="py-3 px-4 font-bold text-foreground">
                       <div className="flex items-center gap-1.5">
-                        <Ship className="w-3.5 h-3.5 text-[#0C9349]" />
+                        <Ship className="w-3.5 h-3.5 text-positive" />
                         {vessel?.name || f.vesselId}
                       </div>
                     </td>
                     <td className="py-3 px-4 font-mono">
-                      <span className="font-bold text-[#14181A]">{f.quantity} Tonnes</span>{' '}
-                      <span className="text-[#3F4A47]">({f.fuelType})</span>
+                      <span className="font-bold text-foreground">{f.quantity} Tonnes</span>{' '}
+                      <span className="text-muted">({f.fuelType})</span>
                     </td>
                     <td className="py-3 px-4">
-                      <div className="font-semibold text-[#14181A]">{f.supplierName}</div>
-                      <div className="text-[10px] font-mono text-[#3F4A47]">
+                      <div className="font-semibold text-foreground">{f.supplierName}</div>
+                      <div className="text-[10px] font-mono text-muted">
                         Inv: {f.invoiceNumber} · {formatCurrency(f.estimatedCost, 'USD')}
                       </div>
                     </td>
                     <td className="py-3 px-4 font-mono text-[11px]">
                       <div>{formatDateTime(f.scheduledStart)}</div>
-                      <div className="text-[#3F4A47]">to {formatTime(f.scheduledEnd)}</div>
+                      <div className="text-muted">to {formatTime(f.scheduledEnd)}</div>
                     </td>
                     <td className="py-3 px-4 text-xs font-medium">
                       {f.deliveryLocation === 'ALONGSIDE_BERTH' ? (
-                        <span className="text-[#0A7A3D]">Alongside Berth B01</span>
+                        <span className="text-positive">Alongside Berth B01</span>
                       ) : (
-                        <span className="text-[#0E7C86]">Anchorage Barge</span>
+                        <span className="text-info">Anchorage Barge</span>
                       )}
                     </td>
                     <td className="py-3 px-4">
                       <span
                         className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
                           f.paymentStatus === 'PAID'
-                            ? 'bg-[#E7F4EB] text-[#0A7A3D]'
-                            : 'bg-[#FBF0DD] text-[#B5760F]'
+                            ? 'bg-positive-soft text-positive'
+                            : 'bg-warning-soft text-warning'
                         }`}
                       >
                         {f.paymentStatus}
@@ -183,10 +183,10 @@ export function Fuel({ onSelectVessel, onNavigateToPayments }: FuelProps) {
                       <span
                         className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
                           f.status === 'COMPLETED'
-                            ? 'bg-[#E7F4EB] text-[#0A7A3D]'
+                            ? 'bg-positive-soft text-positive'
                             : f.status === 'SCHEDULED'
-                            ? 'bg-[#E4F1F2] text-[#0E7C86]'
-                            : 'bg-[#F8E7E3] text-[#AE3B2E]'
+                            ? 'bg-info-soft text-info'
+                            : 'bg-danger-soft text-danger'
                         }`}
                       >
                         {f.status}
@@ -195,7 +195,7 @@ export function Fuel({ onSelectVessel, onNavigateToPayments }: FuelProps) {
                     <td className="py-3 px-4 text-right">
                       <button
                         onClick={() => onSelectVessel(f.vesselId)}
-                        className="text-xs font-semibold text-[#0A7A3D] hover:underline"
+                        className="text-xs font-semibold text-positive hover:underline"
                       >
                         Vessel →
                       </button>
@@ -217,11 +217,11 @@ export function Fuel({ onSelectVessel, onNavigateToPayments }: FuelProps) {
       >
         <form onSubmit={handleScheduleFuel} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-[#14181A] mb-1">Target Fleet Vessel *</label>
+            <label className="block font-semibold text-foreground mb-1">Target Fleet Vessel *</label>
             <select
               value={vesselId}
               onChange={(e) => setVesselId(e.target.value)}
-              className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg"
+              className="w-full p-2 bg-canvas border border-line rounded-lg"
             >
               {vessels.map((v) => (
                 <option key={v.id} value={v.id}>
@@ -233,11 +233,11 @@ export function Fuel({ onSelectVessel, onNavigateToPayments }: FuelProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">Fuel Grade *</label>
+              <label className="block font-semibold text-foreground mb-1">Fuel Grade *</label>
               <select
                 value={fuelType}
                 onChange={(e) => setFuelType(e.target.value as any)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg font-mono"
+                className="w-full p-2 bg-canvas border border-line rounded-lg font-mono"
               >
                 <option value="MGO">MGO (0.1% Marine Gas Oil)</option>
                 <option value="VLSFO">VLSFO (Very Low Sulfur Fuel Oil)</option>
@@ -245,44 +245,44 @@ export function Fuel({ onSelectVessel, onNavigateToPayments }: FuelProps) {
               </select>
             </div>
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">Quantity (Tonnes) *</label>
+              <label className="block font-semibold text-foreground mb-1">Quantity (Tonnes) *</label>
               <input
                 type="number"
                 required
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg font-mono"
+                className="w-full p-2 bg-canvas border border-line rounded-lg font-mono"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">Supplier</label>
+              <label className="block font-semibold text-foreground mb-1">Supplier</label>
               <input
                 type="text"
                 value={supplier}
                 onChange={(e) => setSupplier(e.target.value)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg"
+                className="w-full p-2 bg-canvas border border-line rounded-lg"
               />
             </div>
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">Estimated Cost (USD)</label>
+              <label className="block font-semibold text-foreground mb-1">Estimated Cost (USD)</label>
               <input
                 type="number"
                 value={cost}
                 onChange={(e) => setCost(e.target.value)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg font-mono"
+                className="w-full p-2 bg-canvas border border-line rounded-lg font-mono"
               />
             </div>
           </div>
 
           <div>
-            <label className="block font-semibold text-[#14181A] mb-1">Delivery Location</label>
+            <label className="block font-semibold text-foreground mb-1">Delivery Location</label>
             <select
               value={location}
               onChange={(e) => setLocation(e.target.value as any)}
-              className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg"
+              className="w-full p-2 bg-canvas border border-line rounded-lg"
             >
               <option value="ALONGSIDE_BERTH">Alongside Berth B01 (Post-Discharge Window)</option>
               <option value="ANCHORAGE_BARGE">Zanzibar Outer Anchorage (Barge)</option>
@@ -290,17 +290,17 @@ export function Fuel({ onSelectVessel, onNavigateToPayments }: FuelProps) {
             </select>
           </div>
 
-          <div className="pt-3 border-t border-[#E1DED4] flex justify-end gap-2">
+          <div className="pt-3 border-t border-line flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setIsAddModalOpen(false)}
-              className="px-4 py-2 rounded-lg bg-white border border-[#E1DED4] text-[#3F4A47] font-semibold"
+              className="px-4 py-2 rounded-lg bg-surface border border-line text-muted font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-[#0C9349] hover:bg-[#0A7A3D] text-white font-semibold shadow-xs"
+              className="px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-white font-semibold shadow-xs"
             >
               Confirm Bunkering Order
             </button>

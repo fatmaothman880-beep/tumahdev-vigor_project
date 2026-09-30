@@ -11,7 +11,7 @@ import { canEditOperations } from '../../../shared/roles';
 
 const eatInput = (value?: string | null) => value ? new Date(new Date(value).getTime() + 3 * 3600000).toISOString().slice(0, 16) : '';
 const iso = (value: string) => value ? new Date(`${value}:00+03:00`).toISOString() : null;
-const inputClass = 'mt-1 w-full p-2 border rounded-lg bg-white';
+const inputClass = 'mt-1 w-full p-2 border rounded-lg bg-surface';
 
 export function EditVesselOperation({ row, onClose, onSaved }: {
   row: VisitListItem; onClose: () => void; onSaved: (row: VisitListItem) => void;
@@ -70,26 +70,26 @@ export function EditVesselOperation({ row, onClose, onSaved }: {
     } catch (err) { setError(err instanceof Error ? err.message : 'Unable to save operation.'); }
     finally { setSaving(false); }
   };
-  return <Modal isOpen onClose={() => { if (!saving) onClose(); }} title={`Edit operation — ${record?.name || row.vessel.name}`} subtitle="Prepare vessel details, the visit plan and its operational checklist.">
+  return <Modal isOpen onClose={() => { if (!saving) onClose(); }} title={`${allowed ? 'Manage' : 'View'} operation — ${record?.name || row.vessel.name}`} subtitle="Visit plan, vessel particulars and operational checklist · Times in EAT">
     {loading && <p>Loading operation…</p>}
-    {error && <p role="alert" className="mb-3 text-sm text-[#AE3B2E]">{error}</p>}
-    {message && <p role="status" className="mb-3 text-sm text-[#0A7A3D]">{message}</p>}
+    {error && <p role="alert" className="mb-3 text-sm text-danger">{error}</p>}
+    {message && <p role="status" className="mb-3 text-sm text-positive">{message}</p>}
     {!loading && record && visit && <div className="space-y-6">
-      <form onSubmit={saveIdentity} className="space-y-3 text-xs">
+      <form onSubmit={saveIdentity} className="form-section space-y-3 text-xs">
         <h3 className="font-bold text-sm">Vessel details</h3>
-        <fieldset disabled={!allowed || saving} className="grid sm:grid-cols-2 gap-3">
+        <fieldset disabled={!allowed || saving} className="grid sm:grid-cols-2 gap-4">
           <label>Vessel name *<input required maxLength={150} value={identity.name} onChange={e => setIdentity({ ...identity, name: e.target.value })} className={inputClass} /></label>
           <label>IMO / reference<input maxLength={20} value={identity.reference} onChange={e => setIdentity({ ...identity, reference: e.target.value })} className={inputClass} /></label>
           <label>Verified capacity (tonnes)<input type="number" min="0.01" step="0.01" value={identity.capacity} onChange={e => setIdentity({ ...identity, capacity: e.target.value })} className={inputClass} /><span>Leave blank if not verified.</span></label>
           <label>Agent name<input maxLength={150} value={identity.agent} onChange={e => setIdentity({ ...identity, agent: e.target.value })} className={inputClass} /></label>
           <label>Agent phone<input type="tel" maxLength={30} value={identity.phone} onChange={e => setIdentity({ ...identity, phone: e.target.value })} className={inputClass} /></label>
         </fieldset>
-        {allowed && <button disabled={saving} className="px-3 py-2 rounded-lg bg-[#0C9349] text-white disabled:opacity-50">Save vessel details</button>}
+        {allowed && <button disabled={saving} className="button-primary">Save vessel details</button>}
       </form>
-      <form onSubmit={savePlan} className="space-y-3 text-xs">
+      <form onSubmit={savePlan} className="form-section space-y-3 text-xs">
         <h3 className="font-bold text-sm">Visit plan and progress</h3>
         {closed && <p>This visit is closed. Create a new visit for the next operation.</p>}
-        <fieldset disabled={!allowed || saving || closed} className="grid sm:grid-cols-2 gap-3">
+        <fieldset disabled={!allowed || saving || closed} className="grid sm:grid-cols-2 gap-4">
           <label>Cargo type *<input required maxLength={100} value={plan.cargo} onChange={e => setPlan({ ...plan, cargo: e.target.value })} className={inputClass} /></label>
           <label>Visit cargo (tonnes) *<input required type="number" min="0.01" step="0.01" value={plan.tonnes} onChange={e => setPlan({ ...plan, tonnes: e.target.value })} className={inputClass} /></label>
           <label>Berth *<select required value={plan.berth} onChange={e => setPlan({ ...plan, berth: e.target.value })} className={inputClass}>{!berths.some(b => b.id === plan.berth) && <option value={plan.berth}>Current berth</option>}{berths.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
@@ -101,10 +101,10 @@ export function EditVesselOperation({ row, onClose, onSaved }: {
           <label className="sm:col-span-2">Operational notes<textarea value={plan.notes} onChange={e => setPlan({ ...plan, notes: e.target.value })} className={inputClass} /></label>
         </fieldset>
         <p>Select the status that reflects the actual operation. Arrival and unloading start are recorded automatically when first entering those stages.</p>
-        {allowed && !closed && <button disabled={saving} className="px-3 py-2 rounded-lg bg-[#0C9349] text-white disabled:opacity-50">{saving ? 'Saving…' : 'Save operation'}</button>}
+        {allowed && !closed && <button disabled={saving} className="button-primary">{saving ? 'Saving…' : 'Save operation'}</button>}
       </form>
       <OperationalChecklist vesselId={record.id} visitId={visit.id} readOnly={!allowed || closed} />
     </div>}
-    <button type="button" disabled={saving} onClick={onClose} className="mt-4 px-3 py-2 border rounded-lg text-xs">Close</button>
+    <button type="button" disabled={saving} onClick={onClose} className="button-secondary mt-5">Close</button>
   </Modal>;
 }

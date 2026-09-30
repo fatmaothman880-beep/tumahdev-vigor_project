@@ -1,3 +1,4 @@
+import { canEditOperations } from '../../shared/roles';
 import { useAuth } from '../auth/AuthContext';
 import { rotationInPeriod, RotationPeriod } from '../lib/rotationPeriod';
 import React, { useState } from 'react';
@@ -18,7 +19,7 @@ interface VoyagesProps {
 
 export function Voyages({ onSelectVessel }: VoyagesProps) {
   const { user } = useAuth();
-  const canEdit = user?.role === 'Admin' || user?.role === 'Operations';
+  const canEdit = canEditOperations(user?.role);
   const { voyages, vessels, manufacturers = [], api } = useAppData();
   const [filter, setFilter] = useState<'ALL' | 'ACTIVE' | 'COMPLETED'>('ALL');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -106,7 +107,7 @@ export function Voyages({ onSelectVessel }: VoyagesProps) {
         <button
           disabled={!canEdit}
           onClick={() => setIsAddModalOpen(true)}
-          className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-[#0C9349] hover:bg-[#0A7A3D] text-white flex items-center gap-1.5 transition shadow-xs"
+          className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-brand hover:bg-brand-hover text-white flex items-center gap-1.5 transition shadow-xs"
         >
           <Plus className="w-4 h-4" />
           Initiate New Voyage Rotation
@@ -114,7 +115,7 @@ export function Voyages({ onSelectVessel }: VoyagesProps) {
       </PageHeader>
 
       <div className="flex flex-wrap items-center gap-3 text-xs">
-        <label>Rotation period <select aria-label="Rotation period" value={period} onChange={e => setPeriod(e.target.value as RotationPeriod)} className="p-2 border rounded-lg bg-white">
+        <label>Rotation period <select aria-label="Rotation period" value={period} onChange={e => setPeriod(e.target.value as RotationPeriod)} className="p-2 border rounded-lg bg-surface">
           <option value="DAY">Today</option><option value="WEEK">This week</option><option value="MONTH">This month</option><option value="YEAR">This year</option><option value="ALL">All time</option><option value="CUSTOM">Custom dates</option>
         </select></label>
         {period === 'CUSTOM' && <><label>From <input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label><label>To <input type="date" min={from} value={to} onChange={e => setTo(e.target.value)} /></label></>}
@@ -128,8 +129,8 @@ export function Voyages({ onSelectVessel }: VoyagesProps) {
             onClick={() => setFilter(tab)}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${
               filter === tab
-                ? 'bg-[#14181A] text-white'
-                : 'bg-white text-[#3F4A47] border border-[#E1DED4] hover:bg-[#F7F5F0]'
+                ? 'bg-shell text-white'
+                : 'bg-surface text-muted border border-line hover:bg-canvas'
             }`}
           >
             {tab} Rotations
@@ -139,48 +140,48 @@ export function Voyages({ onSelectVessel }: VoyagesProps) {
 
       {/* Voyage Cards List */}
       <div className="space-y-4">
-        {filteredVoyages.length === 0 && <p className="p-6 bg-white border rounded-xl text-sm">No rotations match this period and status.</p>}
+        {filteredVoyages.length === 0 && <p className="p-6 bg-surface border rounded-xl text-sm">No rotations match this period and status.</p>}
         {filteredVoyages.map((voyage) => (
           <div
             key={voyage.id}
             onClick={() => onSelectVessel(voyage.vesselId)}
-            className="bg-white border border-[#E1DED4] rounded-xl p-5 hover:border-[#3F4A47] transition cursor-pointer shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4"
+            className="bg-surface border border-line rounded-xl p-5 hover:border-line transition cursor-pointer shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4"
           >
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <span className="font-mono text-xs font-bold text-[#0C9349] bg-[#E7F4EB] px-2 py-0.5 rounded">
+                <span className="font-mono text-xs font-bold text-positive bg-positive-soft px-2 py-0.5 rounded">
                   {voyage.voyageNumber}
                 </span>
-                <h3 className="text-base font-bold text-[#14181A] flex items-center gap-1.5">
-                  <Ship className="w-4 h-4 text-[#3F4A47]" />
+                <h3 className="text-base font-bold text-foreground flex items-center gap-1.5">
+                  <Ship className="w-4 h-4 text-muted" />
                   {voyage.vesselName}
                 </h3>
                 <StatusBadge stage={voyage.currentStage} />
                 <OperationsHealthBadge health={voyage.health} />
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono text-[#3F4A47]">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono text-muted">
                 <div>
-                  <span className="text-[10px] text-[#3F4A47] uppercase block font-sans">Route</span>
-                  <span className="font-semibold text-[#14181A]">
+                  <span className="text-[10px] text-muted uppercase block font-sans">Route</span>
+                  <span className="font-semibold text-foreground">
                     {voyage.origin} → {voyage.destination}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[#3F4A47] uppercase block font-sans">Cargo</span>
-                  <span className="font-semibold text-[#14181A]">
+                  <span className="text-[10px] text-muted uppercase block font-sans">Cargo</span>
+                  <span className="font-semibold text-foreground">
                     {formatTonnage(voyage.actualCargoT || voyage.plannedCargoT)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[#3F4A47] uppercase block font-sans">Unloaded</span>
-                  <span className="font-semibold text-[#0A7A3D]">
+                  <span className="text-[10px] text-muted uppercase block font-sans">Unloaded</span>
+                  <span className="font-semibold text-positive">
                     {voyage.unloadedTonnes.toLocaleString()} T
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[#3F4A47] uppercase block font-sans">Mangapwani Berth Release</span>
-                  <span className="font-semibold text-[#14181A]">
+                  <span className="text-[10px] text-muted uppercase block font-sans">Mangapwani Berth Release</span>
+                  <span className="font-semibold text-foreground">
                     {formatTime(voyage.expectedBerthRelease)}
                   </span>
                 </div>
@@ -188,7 +189,7 @@ export function Voyages({ onSelectVessel }: VoyagesProps) {
             </div>
 
             <div className="flex items-center gap-3 self-end md:self-center">
-              <span className="text-xs text-[#0A7A3D] font-semibold flex items-center gap-1">
+              <span className="text-xs text-positive font-semibold flex items-center gap-1">
                 View Cycle Console <ArrowRight className="w-4 h-4" />
               </span>
             </div>
@@ -205,11 +206,11 @@ export function Voyages({ onSelectVessel }: VoyagesProps) {
       >
         <form onSubmit={handleCreateVoyage} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-[#14181A] mb-1">Select Vessel *</label>
+            <label className="block font-semibold text-foreground mb-1">Select Vessel *</label>
             <select
               value={vesselId}
               onChange={(e) => setVesselId(e.target.value)}
-              className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg"
+              className="w-full p-2 bg-canvas border border-line rounded-lg"
             >
               {vessels.map((v) => (
                 <option key={v.id} value={v.id}>
@@ -226,59 +227,59 @@ export function Voyages({ onSelectVessel }: VoyagesProps) {
           </label>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">Voyage Number *</label>
+              <label className="block font-semibold text-foreground mb-1">Voyage Number *</label>
               <input
                 type="text"
                 required
                 value={voyageNum}
                 onChange={(e) => setVoyageNum(e.target.value)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg font-mono"
+                className="w-full p-2 bg-canvas border border-line rounded-lg font-mono"
               />
             </div>
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">Planned Cargo (T) *</label>
+              <label className="block font-semibold text-foreground mb-1">Planned Cargo (T) *</label>
               <input
                 type="number"
                 required
                 value={plannedCargo}
                 onChange={(e) => setPlannedCargo(e.target.value)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg font-mono"
+                className="w-full p-2 bg-canvas border border-line rounded-lg font-mono"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">Origin Port</label>
+              <label className="block font-semibold text-foreground mb-1">Origin Port</label>
               <input
                 type="text"
                 value={origin}
                 onChange={(e) => setOrigin(e.target.value)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg"
+                className="w-full p-2 bg-canvas border border-line rounded-lg"
               />
             </div>
             <div>
-              <label className="block font-semibold text-[#14181A] mb-1">Destination Port</label>
+              <label className="block font-semibold text-foreground mb-1">Destination Port</label>
               <input
                 type="text"
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
-                className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg"
+                className="w-full p-2 bg-canvas border border-line rounded-lg"
               />
             </div>
           </div>
 
-          <div className="pt-3 border-t border-[#E1DED4] flex justify-end gap-2">
+          <div className="pt-3 border-t border-line flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setIsAddModalOpen(false)}
-              className="px-4 py-2 rounded-lg bg-white border border-[#E1DED4] text-[#3F4A47] font-semibold"
+              className="px-4 py-2 rounded-lg bg-surface border border-line text-muted font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-[#0C9349] hover:bg-[#0A7A3D] text-white font-semibold shadow-xs"
+              className="px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-white font-semibold shadow-xs"
             >
               Start Voyage
             </button>

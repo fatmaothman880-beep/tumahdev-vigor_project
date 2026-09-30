@@ -1,61 +1,99 @@
 @import "tailwindcss";
 
+@theme {
+  --color-canvas: #101719;
+  --color-shell: #0d1416;
+  --color-surface: #182225;
+  --color-raised: #223034;
+  --color-line: #334347;
+  --color-foreground: #edf2ef;
+  --color-muted: #adbcba;
+  --color-brand: #087a46;
+  --color-brand-hover: #096639;
+  --color-positive: #77d9a5;
+  --color-positive-soft: #193b2e;
+  --color-info: #8ccbd8;
+  --color-info-soft: #19353c;
+  --color-info-strong: #276574;
+  --color-warning: #e2bb79;
+  --color-warning-soft: #3a3021;
+  --color-warning-strong: #795820;
+  --color-danger: #f0a29b;
+  --color-danger-soft: #3d2727;
+  --color-critical: #a43d37;
+}
+
 @layer base {
-  :root {
-    --color-ink: #14181A;
-    --color-ink-soft: #3F4A47;
-    --color-paper: #F7F5F0;
-    --color-line: #E1DED4;
-    --color-line-strong: #C9C4B6;
-    --color-vigor-green: #0C9349;
-    --color-vigor-green-deep: #0A7A3D;
-    --color-vigor-green-tint: #E7F4EB;
-    --color-teal: #0E7C86;
-    --color-teal-tint: #E4F1F2;
-    --color-sand: #C99A5B;
-    --color-sand-tint: #F4EBDB;
-    --color-amber: #B5760F;
-    --color-amber-tint: #FBF0DD;
-    --color-danger: #AE3B2E;
-    --color-danger-tint: #F8E7E3;
-  }
-
+  :root { color-scheme: dark; }
   body {
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: var(--color-paper);
-    color: var(--color-ink);
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--color-canvas);
+    color: var(--color-foreground);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
   }
-
-  code, kbd, samp, pre, .font-mono {
-    font-family: 'IBM Plex Mono', monospace, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
+  code, kbd, samp, pre, .font-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+  button, a, input, select, textarea, summary { -webkit-tap-highlight-color: transparent; }
+  button, a, summary { transition: background-color 150ms, border-color 150ms, color 150ms; }
+  button:not(:disabled), summary { cursor: pointer; }
+  button:disabled { cursor: not-allowed; opacity: .5; }
+  :focus-visible { outline: 2px solid var(--color-info); outline-offset: 3px; }
+  input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea {
+    background-color: var(--color-canvas);
+    color: var(--color-foreground);
+    border-color: var(--color-line);
+    min-height: 38px;
+    border-radius: 7px;
   }
+  input::placeholder, textarea::placeholder { color: var(--color-muted); opacity: .8; }
+  input, select, textarea { accent-color: var(--color-positive); }
+  select option { background: var(--color-surface); color: var(--color-foreground); }
+  label { color: var(--color-muted); }
+  table { font-variant-numeric: tabular-nums; }
+  th { font-size: 11px; font-weight: 500; letter-spacing: .025em; text-transform: none; color: var(--color-muted); }
+  td { font-size: 12px; line-height: 1.5; }
+  tbody tr { transition: background-color 150ms; }
+  tbody tr:hover { background-color: color-mix(in srgb, var(--color-raised) 55%, transparent); }
+  progress { border: 0; border-radius: 4px; height: 5px; background: var(--color-raised); }
+  progress::-webkit-progress-bar { background: var(--color-raised); border-radius: 4px; }
+  progress::-webkit-progress-value { background: var(--color-positive); border-radius: 4px; }
+  progress::-moz-progress-bar { background: var(--color-positive); border-radius: 4px; }
 }
 
-/* Custom scrollbars for high data density operational panels */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #C9C4B6;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #3F4A47;
+@layer components {
+  .panel { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 12px; }
+  .button-primary, .button-secondary, .button-ghost {
+    display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+    min-height: 36px; padding: .5rem .85rem; border-radius: 7px;
+    font-size: 12px; line-height: 1.3; font-weight: 600; white-space: nowrap;
+  }
+  .button-primary { background: var(--color-brand); color: white; border: 1px solid transparent; }
+  .button-primary:hover { background: var(--color-brand-hover); }
+  .button-secondary { border: 1px solid var(--color-line); background: var(--color-surface); color: var(--color-foreground); }
+  .button-secondary:hover, .button-ghost:hover { background: var(--color-raised); }
+  .button-ghost { color: var(--color-muted); }
+  .icon-button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 7px; color: var(--color-muted); }
+  .icon-button:hover { background: var(--color-raised); color: var(--color-foreground); }
+  .form-section { padding-block: 1.25rem; border-top: 1px solid var(--color-line); }
+  .form-section:first-child { border-top: 0; padding-top: 0; }
+  .form-section > h3 { font-size: 14px; font-weight: 600; margin-bottom: 1rem; }
+  .data-label { font-size: 11px; color: var(--color-muted); }
+  .data-value { font-variant-numeric: tabular-nums; color: var(--color-foreground); }
+  .app-content { width: 100%; max-width: 1560px; margin-inline: auto; padding: clamp(1rem, 2.3vw, 2rem); min-width: 0; flex: 1; }
+  .nav-item { display: flex; align-items: center; justify-content: space-between; gap: .5rem; width: 100%; padding: .65rem .8rem; border-radius: 7px; color: var(--color-muted); font-size: 12px; text-align: left; }
+  .nav-item:hover { background: var(--color-surface); color: var(--color-foreground); }
+  .nav-item[aria-current=page] { color: var(--color-foreground); background: var(--color-raised); box-shadow: inset 2px 0 var(--color-positive); }
 }
 
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 @media print {
-  .no-print {
-    display: none !important;
-  }
-  .print-only {
-    display: block !important;
-  }
-  body {
-    background: white !important;
-    color: black !important;
-  }
+  :root { color-scheme: light; --color-canvas: white; --color-surface: white; --color-raised: #eee; --color-foreground: #111; --color-muted: #444; --color-line: #ccc; --color-positive: #096639; --color-danger: #a43d37; --color-warning: #795820; --color-info: #276574; }
+  .no-print, aside, header { display: none !important; }
+  .print-only { display: block !important; }
+  body { background: white !important; color: black !important; }
 }

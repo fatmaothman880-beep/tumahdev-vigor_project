@@ -51,21 +51,21 @@ export function AddVesselVisit({ onClose, onSaved }: { onClose: () => void; onSa
   if (!canEdit) return null;
 
   return <Modal isOpen onClose={() => { if (!saving) onClose(); }} title="Add Vessel Visit" subtitle="Create a planned visit for a registered vessel at Mangapwani Berth.">
-    <form onSubmit={save} className="space-y-4 text-xs">
+    <form onSubmit={save} className="space-y-5 text-sm">
       {loading && <p>Loading registered vessels…</p>}
-      {error && <p role="alert" className="text-[#AE3B2E]">{error}</p>}
-      <label className="block font-semibold">Registered vessel *
-        <select required value={vesselId} onChange={e => selectVessel(e.target.value)} disabled={loading || saving} className="w-full p-2 mt-1 border rounded-lg bg-white">
+      {error && <p role="alert" className="text-danger">{error}</p>}
+      <label className="block text-xs font-medium">Registered vessel *
+        <select required value={vesselId} onChange={e => selectVessel(e.target.value)} disabled={loading || saving} className="w-full p-2 mt-1 border rounded-lg bg-surface">
           <option value="">Select a registered vessel</option>
           {site?.vessels.map(v => <option key={v.vessel_id} value={v.vessel_id}>{v.name}{v.reported_cargo_t == null ? '' : ` — Reported cargo: ${Number(v.reported_cargo_t).toLocaleString()} t`}</option>)}
         </select>
       </label>
-      <p><strong>Berth:</strong> Mangapwani Berth</p>
-      <label className="block font-semibold">Cargo type *<input required maxLength={100} value={cargoType} onChange={e => setCargoType(e.target.value)} className="w-full p-2 mt-1 border rounded-lg" /></label>
-      <label className="block font-semibold">Visit cargo (tonnes) *<input required type="number" min="0.01" step="0.01" value={cargo} onChange={e => setCargo(e.target.value)} className="w-full p-2 mt-1 border rounded-lg" /></label>
-      <p className="text-[#3F4A47]">Reported cargo is a starting value for this visit, not verified vessel capacity. Adjust it to match this shipment.</p>
-      <label className="block font-semibold">Planned arrival (EAT)<input type="datetime-local" value={arrival} onChange={e => setArrival(e.target.value)} className="w-full p-2 mt-1 border rounded-lg" /></label>
-      <div className="flex justify-end gap-3"><button type="button" disabled={saving} onClick={onClose}>Cancel</button><button type="submit" disabled={loading || saving || !site?.berth_id || !vesselId} className="px-4 py-2 rounded-lg bg-[#0C9349] text-white disabled:opacity-50">{saving ? 'Saving…' : 'Save Visit'}</button></div>
+      <p className="text-xs text-muted">Assigned berth · Mangapwani</p>
+      <label className="block text-xs font-medium">Cargo type *<input required maxLength={100} value={cargoType} onChange={e => setCargoType(e.target.value)} className="w-full p-2 mt-1 border rounded-lg" /></label>
+      <label className="block text-xs font-medium">Visit cargo (tonnes) *<input required type="number" min="0.01" step="0.01" value={cargo} onChange={e => setCargo(e.target.value)} className="w-full p-2 mt-1 border rounded-lg" /></label>
+      <p className="text-xs text-muted leading-relaxed">Reported cargo is a starting value for this visit, not verified vessel capacity. Adjust it to match this shipment.</p>
+      <label className="block text-xs font-medium">Planned arrival (EAT)<input type="datetime-local" value={arrival} onChange={e => setArrival(e.target.value)} className="w-full p-2 mt-1 border rounded-lg" /></label>
+      <div className="flex justify-end gap-3"><button type="button" disabled={saving} onClick={onClose} className="button-secondary">Cancel</button><button type="submit" disabled={loading || saving || !site?.berth_id || !vesselId} className="button-primary">{saving ? 'Saving…' : 'Save Visit'}</button></div>
     </form>
   </Modal>;
 }

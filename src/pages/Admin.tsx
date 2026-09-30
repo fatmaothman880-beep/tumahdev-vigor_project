@@ -305,24 +305,24 @@ AUTH_SECRET=`;
     <div className="space-y-6 pb-12">
       <PageHeader
         eyebrow="CORPORATE GOVERNANCE"
-        title="System Administration & Enterprise Governance"
-        description="User authorization (@turkysgroup.co.tz), role assignments, audit logging, PostgreSQL database integration, and terminal engine calculation rules."
+        title="Administration"
+        description="Manage corporate access, review audit activity, and configure terminal settings."
       />
 
       {/* Tabs Bar */}
-      <div className="flex border-b border-[#E1DED4] gap-2 overflow-x-auto pb-px">
+      <div className="flex border-b border-line gap-2 overflow-x-auto pb-px">
         <button
           type="button"
           onClick={() => setActiveTab('USERS')}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg transition cursor-pointer border-b-2 ${
             activeTab === 'USERS'
-              ? 'border-[#0A7A3D] text-[#0A7A3D] bg-white'
-              : 'border-transparent text-[#5A6764] hover:text-[#14181A]'
+              ? 'border-positive text-positive bg-surface'
+              : 'border-transparent text-muted hover:text-foreground'
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>User Management & RBAC</span>
-          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#E7F4EB] text-[#0A7A3D]">
+          <span>Users & access</span>
+          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-positive-soft text-positive">
             {usersList.length || 4}
           </span>
         </button>
@@ -332,12 +332,12 @@ AUTH_SECRET=`;
           onClick={() => setActiveTab('AUDIT')}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg transition cursor-pointer border-b-2 ${
             activeTab === 'AUDIT'
-              ? 'border-[#0A7A3D] text-[#0A7A3D] bg-white'
-              : 'border-transparent text-[#5A6764] hover:text-[#14181A]'
+              ? 'border-positive text-positive bg-surface'
+              : 'border-transparent text-muted hover:text-foreground'
           }`}
         >
           <FileText className="w-4 h-4" />
-          <span>Activity & Audit Trail</span>
+          <span>Audit trail</span>
         </button>
 
         <button
@@ -345,12 +345,12 @@ AUTH_SECRET=`;
           onClick={() => setActiveTab('CPANEL')}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg transition cursor-pointer border-b-2 ${
             activeTab === 'CPANEL'
-              ? 'border-[#0A7A3D] text-[#0A7A3D] bg-white'
-              : 'border-transparent text-[#5A6764] hover:text-[#14181A]'
+              ? 'border-positive text-positive bg-surface'
+              : 'border-transparent text-muted hover:text-foreground'
           }`}
         >
           <Database className="w-4 h-4" />
-          <span>Database Integration</span>
+          <span>Database</span>
         </button>
 
         <button
@@ -358,18 +358,18 @@ AUTH_SECRET=`;
           onClick={() => setActiveTab('CONFIG')}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg transition cursor-pointer border-b-2 ${
             activeTab === 'CONFIG'
-              ? 'border-[#0A7A3D] text-[#0A7A3D] bg-white'
-              : 'border-transparent text-[#5A6764] hover:text-[#14181A]'
+              ? 'border-positive text-positive bg-surface'
+              : 'border-transparent text-muted hover:text-foreground'
           }`}
         >
           <Sliders className="w-4 h-4" />
-          <span>Terminal Engine & Scenarios</span>
+          <span>Terminal settings</span>
         </button>
       </div>
 
       {/* Action Notification Banner */}
       {userActionMsg && (
-        <div className="p-3 bg-[#E7F4EB] border border-[#0C9349]/30 text-xs text-[#0A7A3D] rounded-lg flex items-center justify-between">
+        <div className="p-3 bg-positive-soft border border-positive/30 text-xs text-positive rounded-lg flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4" />
             <span>{userActionMsg}</span>
@@ -380,11 +380,11 @@ AUTH_SECRET=`;
       {/* ----------------- TAB 1: USERS ----------------- */}
       {activeTab === 'USERS' && (
         <div className="space-y-4">
-          <div className="bg-white border border-[#E1DED4] rounded-xl p-5 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E1DED4]">
+          <div className="bg-surface border border-line rounded-xl p-5 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-line">
               <div>
-                <h3 className="text-base font-bold text-[#14181A]">Authorized Turkys Group Personnel</h3>
-                <p className="text-xs text-[#5A6764]">
+                <h3 className="text-base font-bold text-foreground">Authorized Turkys Group Personnel</h3>
+                <p className="text-xs text-muted">
                   Only users with confirmed corporate emails (<code className="font-mono">@turkysgroup.co.tz</code>)
                   can access the system.
                 </p>
@@ -395,7 +395,7 @@ AUTH_SECRET=`;
                   type="button"
                   onClick={loadUsers}
                   disabled={isLoadingUsers}
-                  className="p-2 bg-[#F7F5F0] hover:bg-[#E1DED4] rounded-lg text-xs transition cursor-pointer"
+                  className="p-2 bg-canvas hover:bg-raised rounded-lg text-xs transition cursor-pointer"
                   title="Refresh user list"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isLoadingUsers ? 'animate-spin' : ''}`} />
@@ -404,7 +404,7 @@ AUTH_SECRET=`;
                 <button
                   type="button"
                   onClick={() => setShowAddUser(true)}
-                  className="px-3 py-2 bg-[#0A7A3D] hover:bg-[#086331] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+                  className="px-3 py-2 bg-brand-hover hover:bg-brand-hover text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
                 >
                   <PlusCircle className="w-4 h-4" />
                   <span>Register Staff</span>
@@ -415,13 +415,13 @@ AUTH_SECRET=`;
             {/* Filter */}
             <div className="pt-3 pb-2 flex items-center gap-2">
               <div className="relative flex-1 max-w-sm">
-                <Search className="w-3.5 h-3.5 text-[#7C8884] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-3.5 h-3.5 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Search staff by name, email, department..."
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg text-xs"
+                  className="w-full pl-8 pr-3 py-1.5 bg-canvas border border-line rounded-lg text-xs"
                 />
               </div>
             </div>
@@ -430,7 +430,7 @@ AUTH_SECRET=`;
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-[#E1DED4] text-[#5A6764] font-semibold">
+                  <tr className="border-b border-line text-muted font-semibold">
                     <th className="py-2.5 px-3">Name & Email</th>
                     <th className="py-2.5 px-3">Department</th>
                     <th className="py-2.5 px-3">Role</th>
@@ -439,33 +439,33 @@ AUTH_SECRET=`;
                     <th className="py-2.5 px-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E1DED4]/60 font-medium">
+                <tbody className="divide-y divide-line/60 font-medium">
                   {filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="text-center py-6 text-xs text-[#5A6764]">
+                      <td colSpan={6} className="text-center py-6 text-xs text-muted">
                         No users match query.
                       </td>
                     </tr>
                   ) : (
                     filteredUsers.map((u) => (
-                      <tr key={u.id} className="hover:bg-[#FAF9F5]">
+                      <tr key={u.id} className="hover:bg-surface">
                         <td className="py-2.5 px-3">
-                          <div className="font-bold text-[#14181A]">{u.fullName}</div>
-                          <div className="text-[11px] font-mono text-[#5A6764]">{u.email}</div>
+                          <div className="font-bold text-foreground">{u.fullName}</div>
+                          <div className="text-[11px] font-mono text-muted">{u.email}</div>
                         </td>
-                        <td className="py-2.5 px-3 text-[#14181A]">{u.department || 'Terminal'}</td>
+                        <td className="py-2.5 px-3 text-foreground">{u.department || 'Terminal'}</td>
                         <td className="py-2.5 px-3">
                           <select
                             value={u.role}
                             onChange={(e) => handleUpdateRole(u.id, e.target.value as UserRole)}
                             className={`p-1 rounded text-[11px] font-semibold border cursor-pointer ${
                               u.role === 'Admin'
-                                ? 'bg-[#F2EDFD] text-[#5B37B7] border-[#5B37B7]/30'
+                                ? 'bg-raised text-muted border-muted/30'
                                 : u.role === 'Management'
-                                ? 'bg-[#EBF2FF] text-[#0F62FE] border-[#0F62FE]/30'
+                                ? 'bg-info-soft text-info border-info/30'
                                 : u.role === 'Vessel Operation'
-                                ? 'bg-[#E7F4EB] text-[#0A7A3D] border-[#0A7A3D]/30'
-                                : 'bg-[#F7F5F0] text-[#5A6764] border-[#E1DED4]'
+                                ? 'bg-positive-soft text-positive border-positive/30'
+                                : 'bg-canvas text-muted border-line'
                             }`}
                           >
                             <option value="Admin">Admin</option>
@@ -478,16 +478,16 @@ AUTH_SECRET=`;
                           <span
                             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                               u.status === 'Active'
-                                ? 'bg-[#E7F4EB] text-[#0A7A3D]'
+                                ? 'bg-positive-soft text-positive'
                                 : u.status === 'Pending'
-                                ? 'bg-[#FFF3D6] text-[#B5760F]'
-                                : 'bg-[#FCEBEA] text-[#AE3B2E]'
+                                ? 'bg-warning-soft text-warning'
+                                : 'bg-danger-soft text-danger'
                             }`}
                           >
                             {u.status}
                           </span>
                         </td>
-                        <td className="py-2.5 px-3 text-[11px] font-mono text-[#5A6764]">
+                        <td className="py-2.5 px-3 text-[11px] font-mono text-muted">
                           {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'Never'}
                         </td>
                         <td className="py-2.5 px-3 text-right">
@@ -495,7 +495,7 @@ AUTH_SECRET=`;
                             <button
                               type="button"
                               onClick={() => handleUpdateStatus(u.id, 'Disabled')}
-                              className="px-2.5 py-1 text-[11px] text-[#AE3B2E] hover:bg-[#FCEBEA] rounded border border-[#AE3B2E]/30 transition cursor-pointer"
+                              className="px-2.5 py-1 text-[11px] text-danger hover:bg-danger-soft rounded border border-danger/30 transition cursor-pointer"
                             >
                               Deactivate
                             </button>
@@ -503,7 +503,7 @@ AUTH_SECRET=`;
                             <button
                               type="button"
                               onClick={() => handleUpdateStatus(u.id, 'Active')}
-                              className="px-2.5 py-1 text-[11px] text-[#0A7A3D] hover:bg-[#E7F4EB] rounded border border-[#0A7A3D]/30 transition cursor-pointer"
+                              className="px-2.5 py-1 text-[11px] text-positive hover:bg-positive-soft rounded border border-positive/30 transition cursor-pointer"
                             >
                               Activate
                             </button>
@@ -520,15 +520,15 @@ AUTH_SECRET=`;
           {/* Add Staff Modal */}
           {showAddUser && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-              <div className="bg-white rounded-xl border border-[#E1DED4] shadow-xl max-w-md w-full p-6 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4]">
-                  <h3 className="font-bold text-sm text-[#14181A] flex items-center gap-2">
-                    <PlusCircle className="w-4 h-4 text-[#0A7A3D]" />
+              <div className="bg-surface rounded-xl border border-line shadow-xl max-w-md w-full p-6 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-line">
+                  <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+                    <PlusCircle className="w-4 h-4 text-positive" />
                     <span>Register Turkys Group Staff</span>
                   </h3>
                   <button
                     onClick={() => setShowAddUser(false)}
-                    className="text-[#5A6764] hover:text-[#14181A] text-lg font-mono leading-none"
+                    className="text-muted hover:text-foreground text-lg font-mono leading-none"
                   >
                     ✕
                   </button>
@@ -536,47 +536,47 @@ AUTH_SECRET=`;
 
                 <form onSubmit={handleCreateUser} className="space-y-3 text-xs">
                   <div>
-                    <label className="block font-semibold text-[#14181A] mb-1">Full Legal Name</label>
+                    <label className="block font-semibold text-foreground mb-1">Full Legal Name</label>
                     <input
                       type="text"
                       required
                       placeholder="e.g. Salim Ali Mwamba"
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
-                      className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg"
+                      className="w-full p-2 bg-canvas border border-line rounded-lg"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-[#14181A] mb-1">Company Email (@turkysgroup.co.tz)</label>
+                    <label className="block font-semibold text-foreground mb-1">Company Email (@turkysgroup.co.tz)</label>
                     <input
                       type="email"
                       required
                       placeholder="staff.name@turkysgroup.co.tz"
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
-                      className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg font-mono"
+                      className="w-full p-2 bg-canvas border border-line rounded-lg font-mono"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-[#14181A] mb-1">Temporary Password</label>
+                    <label className="block font-semibold text-foreground mb-1">Temporary Password</label>
                     <input
                       type="text"
                       required
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg font-mono"
+                      className="w-full p-2 bg-canvas border border-line rounded-lg font-mono"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block font-semibold text-[#14181A] mb-1">Department</label>
+                      <label className="block font-semibold text-foreground mb-1">Department</label>
                       <select
                         value={newDept}
                         onChange={(e) => setNewDept(e.target.value)}
-                        className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg"
+                        className="w-full p-2 bg-canvas border border-line rounded-lg"
                       >
                         <option value="Terminal Operations">Terminal Operations</option>
                         <option value="Marine Dispatch">Marine Dispatch</option>
@@ -588,11 +588,11 @@ AUTH_SECRET=`;
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-[#14181A] mb-1">Assigned Role</label>
+                      <label className="block font-semibold text-foreground mb-1">Assigned Role</label>
                       <select
                         value={newRole}
                         onChange={(e) => setNewRole(e.target.value as UserRole)}
-                        className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg"
+                        className="w-full p-2 bg-canvas border border-line rounded-lg"
                       >
                         <option value="Vessel Operation">Vessel Operation</option>
                         <option value="Management">Management</option>
@@ -602,17 +602,17 @@ AUTH_SECRET=`;
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-[#E1DED4] flex justify-end gap-2">
+                  <div className="pt-3 border-t border-line flex justify-end gap-2">
                     <button
                       type="button"
                       onClick={() => setShowAddUser(false)}
-                      className="px-3 py-1.5 rounded-lg border border-[#E1DED4] text-xs font-semibold hover:bg-[#F7F5F0]"
+                      className="px-3 py-1.5 rounded-lg border border-line text-xs font-semibold hover:bg-canvas"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-1.5 rounded-lg bg-[#0A7A3D] hover:bg-[#086331] text-white text-xs font-semibold cursor-pointer"
+                      className="px-4 py-1.5 rounded-lg bg-brand-hover hover:bg-brand-hover text-white text-xs font-semibold cursor-pointer"
                     >
                       Save & Authorize
                     </button>
@@ -626,11 +626,11 @@ AUTH_SECRET=`;
 
       {/* ----------------- TAB 2: AUDIT LOGS ----------------- */}
       {activeTab === 'AUDIT' && (
-        <div className="bg-white border border-[#E1DED4] rounded-xl p-5 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E1DED4]">
+        <div className="bg-surface border border-line rounded-xl p-5 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-line">
             <div>
-              <h3 className="text-base font-bold text-[#14181A]">Operational Activity & Security Trail</h3>
-              <p className="text-xs text-[#5A6764]">
+              <h3 className="text-base font-bold text-foreground">Operational Activity & Security Trail</h3>
+              <p className="text-xs text-muted">
                 Tamper-evident logs of logins, pneumatic rate submissions, berth clearances, and user management.
               </p>
             </div>
@@ -639,7 +639,7 @@ AUTH_SECRET=`;
               type="button"
               onClick={loadLogs}
               disabled={isLoadingLogs}
-              className="p-2 bg-[#F7F5F0] hover:bg-[#E1DED4] rounded-lg text-xs transition cursor-pointer self-start sm:self-auto"
+              className="p-2 bg-canvas hover:bg-raised rounded-lg text-xs transition cursor-pointer self-start sm:self-auto"
               title="Refresh logs"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoadingLogs ? 'animate-spin' : ''}`} />
@@ -647,20 +647,20 @@ AUTH_SECRET=`;
           </div>
 
           <div className="relative max-w-sm">
-            <Search className="w-3.5 h-3.5 text-[#7C8884] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search audit trail by user, action, details..."
               value={logSearch}
               onChange={(e) => setLogSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg text-xs"
+              className="w-full pl-8 pr-3 py-1.5 bg-canvas border border-line rounded-lg text-xs"
             />
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-[#E1DED4] text-[#5A6764] font-semibold">
+                <tr className="border-b border-line text-muted font-semibold">
                   <th className="py-2.5 px-3">Timestamp (EAT)</th>
                   <th className="py-2.5 px-3">Actor / Email</th>
                   <th className="py-2.5 px-3">Action</th>
@@ -668,31 +668,31 @@ AUTH_SECRET=`;
                   <th className="py-2.5 px-3">Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E1DED4]/60 font-medium">
+              <tbody className="divide-y divide-line/60 font-medium">
                 {filteredLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-6 text-xs text-[#5A6764]">
+                    <td colSpan={5} className="text-center py-6 text-xs text-muted">
                       No audit events recorded yet.
                     </td>
                   </tr>
                 ) : (
                   filteredLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-[#FAF9F5]">
-                      <td className="py-2.5 px-3 font-mono text-[11px] text-[#5A6764] whitespace-nowrap">
+                    <tr key={log.id} className="hover:bg-surface">
+                      <td className="py-2.5 px-3 font-mono text-[11px] text-muted whitespace-nowrap">
                         {new Date(log.timestamp).toLocaleString()}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-[11px] text-[#14181A] font-semibold">
+                      <td className="py-2.5 px-3 font-mono text-[11px] text-foreground font-semibold">
                         {log.userEmail}
                       </td>
                       <td className="py-2.5 px-3">
-                        <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-[#F7F5F0] border border-[#E1DED4] text-[#14181A] font-bold">
+                        <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-canvas border border-line text-foreground font-bold">
                           {log.action}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-[11px] text-[#5A6764]">
+                      <td className="py-2.5 px-3 font-mono text-[11px] text-muted">
                         {log.entityType}: {log.entityId}
                       </td>
-                      <td className="py-2.5 px-3 text-[#14181A]">{log.details}</td>
+                      <td className="py-2.5 px-3 text-foreground">{log.details}</td>
                     </tr>
                   ))
                 )}
@@ -706,15 +706,15 @@ AUTH_SECRET=`;
       {activeTab === 'CPANEL' && (
         <div className="space-y-5">
           {/* Live Status Card */}
-          <div className="bg-white border border-[#E1DED4] rounded-xl p-6 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E1DED4] mb-4">
+          <div className="bg-surface border border-line rounded-xl p-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-line mb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-lg bg-[#E7F4EB] text-[#0A7A3D] border border-[#0C9349]/20">
+                <div className="p-2.5 rounded-lg bg-positive-soft text-positive border border-positive/20">
                   <Database className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-[#14181A]">PostgreSQL Operations Database</h3>
-                  <p className="text-xs text-[#5A6764]">
+                  <h3 className="text-base font-bold text-foreground">PostgreSQL Operations Database</h3>
+                  <p className="text-xs text-muted">
                     Official database engine for VIGOR Cement Works port telemetry and vessel schedules.
                   </p>
                 </div>
@@ -724,7 +724,7 @@ AUTH_SECRET=`;
                 type="button"
                 onClick={checkDbHealth}
                 disabled={isTestingDb}
-                className="px-3 py-1.5 bg-[#0A7A3D] hover:bg-[#086331] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer shadow-2xs self-start sm:self-auto"
+                className="px-3 py-1.5 bg-brand-hover hover:bg-brand-hover text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer shadow-2xs self-start sm:self-auto"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isTestingDb ? 'animate-spin' : ''}`} />
                 <span>{isTestingDb ? 'Testing...' : 'Test Connection'}</span>
@@ -733,38 +733,38 @@ AUTH_SECRET=`;
 
             {/* Health Diagnostics Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs mb-4">
-              <div className="p-3 rounded-lg bg-[#FAF9F5] border border-[#E1DED4]">
-                <div className="text-[10px] text-[#5A6764] uppercase font-mono">Engine State</div>
-                <div className="text-xs font-bold mt-1 text-[#0A7A3D] flex items-center gap-1">
+              <div className="p-3 rounded-lg bg-surface border border-line">
+                <div className="text-[10px] text-muted uppercase font-mono">Engine State</div>
+                <div className="text-xs font-bold mt-1 text-positive flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>{dbHealth?.database === 'connected' ? 'PostgreSQL Connected' : 'Database Unavailable'}</span>
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#FAF9F5] border border-[#E1DED4]">
-                <div className="text-[10px] text-[#5A6764] uppercase font-mono">Host Endpoint</div>
-                <div className="text-xs font-mono font-bold mt-1 text-[#14181A] truncate">
+              <div className="p-3 rounded-lg bg-surface border border-line">
+                <div className="text-[10px] text-muted uppercase font-mono">Host Endpoint</div>
+                <div className="text-xs font-mono font-bold mt-1 text-foreground truncate">
                   {dbHealth?.host || 'localhost (3306)'}
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#FAF9F5] border border-[#E1DED4]">
-                <div className="text-[10px] text-[#5A6764] uppercase font-mono">Target Database</div>
-                <div className="text-xs font-mono font-bold mt-1 text-[#14181A] truncate">
+              <div className="p-3 rounded-lg bg-surface border border-line">
+                <div className="text-[10px] text-muted uppercase font-mono">Target Database</div>
+                <div className="text-xs font-mono font-bold mt-1 text-foreground truncate">
                   {dbHealth?.databaseName || 'Configured PostgreSQL database'}
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#FAF9F5] border border-[#E1DED4]">
-                <div className="text-[10px] text-[#5A6764] uppercase font-mono">Database User</div>
-                <div className="text-xs font-mono font-bold mt-1 text-[#14181A] truncate">
+              <div className="p-3 rounded-lg bg-surface border border-line">
+                <div className="text-[10px] text-muted uppercase font-mono">Database User</div>
+                <div className="text-xs font-mono font-bold mt-1 text-foreground truncate">
                   {dbHealth?.user || 'Configured service account'}
                 </div>
               </div>
             </div>
 
             {dbHealth?.message && (
-              <div className="p-3 rounded-lg bg-[#FAF9F5] border border-[#E1DED4] text-xs font-mono text-[#5A6764]">
+              <div className="p-3 rounded-lg bg-surface border border-line text-xs font-mono text-muted">
                 <strong>Diagnostics:</strong> {dbHealth.message}
               </div>
             )}
@@ -772,57 +772,57 @@ AUTH_SECRET=`;
 
           {/* cPanel Setup Instructions for Turkys IT */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div className="bg-white border border-[#E1DED4] rounded-xl p-5 shadow-xs space-y-3">
-              <h4 className="text-sm font-bold text-[#14181A] flex items-center gap-2">
-                <Server className="w-4 h-4 text-[#0A7A3D]" />
+            <div className="bg-surface border border-line rounded-xl p-5 shadow-xs space-y-3">
+              <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                <Server className="w-4 h-4 text-positive" />
                 <span>Optional MySQL Account Adapter Setup</span>
               </h4>
-              <ol className="list-decimal list-inside space-y-2 text-xs text-[#5A6764] leading-relaxed">
+              <ol className="list-decimal list-inside space-y-2 text-xs text-muted leading-relaxed">
                 <li>
-                  <strong className="text-[#14181A]">Log in to Turkys cPanel:</strong> Navigate to{' '}
+                  <strong className="text-foreground">Log in to Turkys cPanel:</strong> Navigate to{' '}
                   <span className="font-mono">MySQL Databases</span>.
                 </li>
                 <li>
-                  <strong className="text-[#14181A]">Create New Database:</strong> e.g.{' '}
-                  <code className="font-mono bg-[#F7F5F0] px-1 py-0.5 rounded">turkysgr_vigor_port</code>.
+                  <strong className="text-foreground">Create New Database:</strong> e.g.{' '}
+                  <code className="font-mono bg-canvas px-1 py-0.5 rounded">turkysgr_vigor_port</code>.
                 </li>
                 <li>
-                  <strong className="text-[#14181A]">Create Database User:</strong> Generate a strong alphanumeric password and assign it to the user.
+                  <strong className="text-foreground">Create Database User:</strong> Generate a strong alphanumeric password and assign it to the user.
                 </li>
                 <li>
-                  <strong className="text-[#14181A]">Grant Privileges:</strong> Under "Add User to Database", check{' '}
-                  <strong className="text-[#14181A]">ALL PRIVILEGES</strong> and apply changes.
+                  <strong className="text-foreground">Grant Privileges:</strong> Under "Add User to Database", check{' '}
+                  <strong className="text-foreground">ALL PRIVILEGES</strong> and apply changes.
                 </li>
                 <li>
-                  <strong className="text-[#14181A]">Import Relational Schema:</strong> Open{' '}
+                  <strong className="text-foreground">Import Relational Schema:</strong> Open{' '}
                   <span className="font-mono">phpMyAdmin</span>, select the database, click <em>Import</em>, and upload{' '}
-                  <code className="font-mono bg-[#F7F5F0] px-1 py-0.5 rounded">/database/schema.sql</code> followed by{' '}
-                  <code className="font-mono bg-[#F7F5F0] px-1 py-0.5 rounded">/database/demo_seed.sql</code>.
+                  <code className="font-mono bg-canvas px-1 py-0.5 rounded">/database/schema.sql</code> followed by{' '}
+                  <code className="font-mono bg-canvas px-1 py-0.5 rounded">/database/demo_seed.sql</code>.
                 </li>
               </ol>
             </div>
 
-            <div className="bg-white border border-[#E1DED4] rounded-xl p-5 shadow-xs space-y-3">
+            <div className="bg-surface border border-line rounded-xl p-5 shadow-xs space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-bold text-[#14181A] flex items-center gap-2">
-                  <KeyRound className="w-4 h-4 text-[#0A7A3D]" />
+                <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <KeyRound className="w-4 h-4 text-positive" />
                   <span>Environment Variables Template</span>
                 </h4>
                 <button
                   type="button"
                   onClick={copyEnvSnippet}
-                  className="px-2.5 py-1 text-[11px] font-semibold rounded bg-[#F7F5F0] hover:bg-[#E1DED4] border border-[#E1DED4] text-[#14181A] flex items-center gap-1 cursor-pointer"
+                  className="px-2.5 py-1 text-[11px] font-semibold rounded bg-canvas hover:bg-raised border border-line text-foreground flex items-center gap-1 cursor-pointer"
                 >
                   <Copy className="w-3 h-3" />
                   <span>{copiedEnv ? 'Copied!' : 'Copy .env'}</span>
                 </button>
               </div>
 
-              <p className="text-xs text-[#5A6764]">
+              <p className="text-xs text-muted">
                 For the optional account adapter, configure these on the Node gateway <code className="font-mono">.env</code>:
               </p>
 
-              <pre className="p-3 bg-[#14181A] text-[#E7F4EB] rounded-lg font-mono text-[11px] overflow-x-auto whitespace-pre leading-snug">
+              <pre className="p-3 bg-shell text-positive rounded-lg font-mono text-[11px] overflow-x-auto whitespace-pre leading-snug">
                 {envSample}
               </pre>
             </div>
@@ -834,14 +834,14 @@ AUTH_SECRET=`;
       {activeTab === 'CONFIG' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Core Calculation Parameters */}
-          <div className="lg:col-span-2 bg-white border border-[#E1DED4] rounded-xl p-6 shadow-xs">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4] mb-5">
-              <h3 className="text-base font-bold text-[#14181A] flex items-center gap-2">
-                <Sliders className="w-5 h-5 text-[#0A7A3D]" />
+          <div className="lg:col-span-2 bg-surface border border-line rounded-xl p-6 shadow-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-line mb-5">
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                <Sliders className="w-5 h-5 text-positive" />
                 Downstream Calculation Parameters
               </h3>
               {savedSuccess && (
-                <span className="text-xs font-semibold text-[#0A7A3D] flex items-center gap-1">
+                <span className="text-xs font-semibold text-positive flex items-center gap-1">
                   <CheckCircle2 className="w-4 h-4" /> Changes saved
                 </span>
               )}
@@ -849,7 +849,7 @@ AUTH_SECRET=`;
 
             <form onSubmit={handleSaveSettings} className="space-y-5 text-xs">
               <div>
-                <label className="block font-semibold text-[#14181A] mb-1">
+                <label className="block font-semibold text-foreground mb-1">
                   Post-Unload Berth Clearance Buffer (Hours)
                 </label>
                 <div className="flex items-center gap-3">
@@ -858,16 +858,16 @@ AUTH_SECRET=`;
                     step="0.1"
                     value={bufferHours}
                     onChange={(e) => setBufferHours(e.target.value)}
-                    className="w-32 p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg font-mono font-bold"
+                    className="w-32 p-2 bg-canvas border border-line rounded-lg font-mono font-bold"
                   />
-                  <span className="text-[#5A6764]">
+                  <span className="text-muted">
                     Hours required after last cement tonne discharged for pneumatic line purge, disconnect, and castoff clearance (default 1.5h).
                   </span>
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-[#14181A] mb-1">
+                <label className="block font-semibold text-foreground mb-1">
                   Manufacturer Payment Gate Eligibility Threshold (%)
                 </label>
                 <div className="flex items-center gap-3">
@@ -875,18 +875,18 @@ AUTH_SECRET=`;
                     type="number"
                     value={paymentThreshold}
                     onChange={(e) => setPaymentThreshold(e.target.value)}
-                    className="w-32 p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg font-mono font-bold"
+                    className="w-32 p-2 bg-canvas border border-line rounded-lg font-mono font-bold"
                   />
-                  <span className="text-[#5A6764]">
+                  <span className="text-muted">
                     Percentage of advance commercial invoice required cleared in treasury before manufacturer confirms loading slot (Default: 100%).
                   </span>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#E1DED4] flex justify-end">
+              <div className="pt-4 border-t border-line flex justify-end">
                 <button
                   type="submit"
-                  className="px-4 py-2 text-xs font-semibold rounded-lg bg-[#0A7A3D] hover:bg-[#086331] text-white flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                  className="px-4 py-2 text-xs font-semibold rounded-lg bg-brand-hover hover:bg-brand-hover text-white flex items-center gap-1.5 transition shadow-xs cursor-pointer"
                 >
                   <Save className="w-4 h-4" />
                   Apply Engine Parameters
@@ -897,62 +897,62 @@ AUTH_SECRET=`;
 
           {/* Operational Scenarios & Data Management */}
           <div className="space-y-6">
-            <div className="bg-white border border-[#E1DED4] rounded-xl p-5 shadow-xs">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-[#14181A] mb-3 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-[#B5760F]" />
+            <div className="bg-surface border border-line rounded-xl p-5 shadow-xs">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
+                <Zap className="w-4 h-4 text-warning" />
                 Interactive Operational Scenarios
               </h3>
-              <p className="text-xs text-[#5A6764] mb-4">
+              <p className="text-xs text-muted mb-4">
                 Trigger operational test states to preview system-wide recalculations across berths, queues, and financial gates.
               </p>
 
               <div className="space-y-2.5">
                 <button
                   onClick={() => api.loadPresetScenario('BASELINE')}
-                  className="w-full text-left p-3 rounded-lg bg-[#F7F5F0] hover:bg-[#E1DED4]/60 border border-[#E1DED4] transition text-xs cursor-pointer"
+                  className="w-full text-left p-3 rounded-lg bg-canvas hover:bg-raised/60 border border-line transition text-xs cursor-pointer"
                 >
-                  <div className="font-bold text-[#14181A]">1. Reset to Baseline Conflict</div>
-                  <div className="text-[11px] text-[#5A6764] mt-0.5">
+                  <div className="font-bold text-foreground">1. Reset to Baseline Conflict</div>
+                  <div className="text-[11px] text-muted mt-0.5">
                     V01 unloading, V03 arrives early (berth conflict), V01 payment pending.
                   </div>
                 </button>
 
                 <button
                   onClick={() => api.loadPresetScenario('SOLVE_PAYMENT')}
-                  className="w-full text-left p-3 rounded-lg bg-[#E7F4EB] hover:bg-[#0C9349]/20 border border-[#0C9349]/40 transition text-xs cursor-pointer"
+                  className="w-full text-left p-3 rounded-lg bg-positive-soft hover:bg-brand/20 border border-positive/40 transition text-xs cursor-pointer"
                 >
-                  <div className="font-bold text-[#0A7A3D]">2. Solve Manufacturer Payment</div>
-                  <div className="text-[11px] text-[#5A6764] mt-0.5">
+                  <div className="font-bold text-positive">2. Solve Manufacturer Payment</div>
+                  <div className="text-[11px] text-muted mt-0.5">
                     Clears remaining TZS 200M wire, unlocking V01 queue eligibility.
                   </div>
                 </button>
 
                 <button
                   onClick={() => api.loadPresetScenario('SOLVE_BERTH')}
-                  className="w-full text-left p-3 rounded-lg bg-[#E4F1F2] hover:bg-[#0E7C86]/20 border border-[#0E7C86]/40 transition text-xs cursor-pointer"
+                  className="w-full text-left p-3 rounded-lg bg-info-soft hover:bg-info-strong/20 border border-info/40 transition text-xs cursor-pointer"
                 >
-                  <div className="font-bold text-[#0E7C86]">3. Eco-Steaming (Berth Synced)</div>
-                  <div className="text-[11px] text-[#5A6764] mt-0.5">
+                  <div className="font-bold text-info">3. Eco-Steaming (Berth Synced)</div>
+                  <div className="text-[11px] text-muted mt-0.5">
                     Adjusts MV VIGOR 03 speed to 8.5 kts, arriving right as B01 releases.
                   </div>
                 </button>
               </div>
             </div>
 
-            <div className="bg-white border border-[#E1DED4] rounded-xl p-5 shadow-xs">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-[#14181A] mb-3 flex items-center gap-2">
-                <Database className="w-4 h-4 text-[#5A6764]" />
+            <div className="bg-surface border border-line rounded-xl p-5 shadow-xs">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
+                <Database className="w-4 h-4 text-muted" />
                 Data Persistence & Snapshot
               </h3>
-              <p className="text-xs text-[#5A6764] mb-4">
+              <p className="text-xs text-muted mb-4">
                 Export full state snapshot (vessels, voyages, transactions, readings, alerts) for offline backup.
               </p>
 
               <button
                 onClick={handleExportData}
-                className="w-full py-2 px-3 text-xs font-semibold rounded-lg bg-white border border-[#E1DED4] hover:bg-[#F7F5F0] text-[#14181A] flex items-center justify-center gap-2 transition cursor-pointer"
+                className="w-full py-2 px-3 text-xs font-semibold rounded-lg bg-surface border border-line hover:bg-canvas text-foreground flex items-center justify-center gap-2 transition cursor-pointer"
               >
-                <Download className="w-4 h-4 text-[#0A7A3D]" />
+                <Download className="w-4 h-4 text-positive" />
                 <span>Export System State (JSON)</span>
               </button>
             </div>

@@ -99,14 +99,14 @@ export function Dashboard({
         <div className="flex items-center gap-2">
           <button
             onClick={onNavigateToBerths}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-[#C9C4B6] hover:border-[#14181A] transition text-[#14181A] flex items-center gap-1.5"
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface border border-line hover:border-line transition text-foreground flex items-center gap-1.5"
           >
-            <Anchor className="w-3.5 h-3.5 text-[#0C9349]" />
+            <Anchor className="w-3.5 h-3.5 text-positive" />
             Berth B01 Status
           </button>
           <button
             onClick={onNavigateToPayments}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0C9349] hover:bg-[#0A7A3D] transition text-white flex items-center gap-1.5 shadow-xs"
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-brand hover:bg-brand-hover transition text-white flex items-center gap-1.5 shadow-xs"
           >
             <CreditCard className="w-3.5 h-3.5" />
             Finance Center
@@ -152,39 +152,39 @@ export function Dashboard({
 
       {/* Row 2: Secondary Operational Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white border border-[#E1DED4] rounded-lg p-3 flex items-center justify-between">
+        <div className="bg-surface border border-line rounded-lg p-3 flex items-center justify-between">
           <div>
-            <div className="text-[10px] font-semibold uppercase text-[#3F4A47]">Vessels In Transit</div>
-            <div className="text-lg font-mono font-bold text-[#14181A]">{sailingCount} vessels</div>
+            <div className="text-[10px] font-semibold uppercase text-muted">Vessels In Transit</div>
+            <div className="text-lg font-mono font-bold text-foreground">{sailingCount} vessels</div>
           </div>
-          <span className="text-xs font-mono text-[#0E7C86] bg-[#E4F1F2] px-2 py-0.5 rounded">
+          <span className="text-xs font-mono text-info bg-info-soft px-2 py-0.5 rounded">
             V02 & V03
           </span>
         </div>
-        <div className="bg-white border border-[#E1DED4] rounded-lg p-3 flex items-center justify-between">
+        <div className="bg-surface border border-line rounded-lg p-3 flex items-center justify-between">
           <div>
-            <div className="text-[10px] font-semibold uppercase text-[#3F4A47]">At Manufacturer</div>
-            <div className="text-lg font-mono font-bold text-[#14181A]">{atMfrCount} vessel</div>
+            <div className="text-[10px] font-semibold uppercase text-muted">At Manufacturer</div>
+            <div className="text-lg font-mono font-bold text-foreground">{atMfrCount} vessel</div>
           </div>
-          <span className="text-xs font-mono text-[#B5760F] bg-[#FBF0DD] px-2 py-0.5 rounded">
+          <span className="text-xs font-mono text-warning bg-warning-soft px-2 py-0.5 rounded">
             Mtwara Port
           </span>
         </div>
-        <div className="bg-white border border-[#E1DED4] rounded-lg p-3 flex items-center justify-between">
+        <div className="bg-surface border border-line rounded-lg p-3 flex items-center justify-between">
           <div>
-            <div className="text-[10px] font-semibold uppercase text-[#3F4A47]">Payments At Risk</div>
-            <div className="text-lg font-mono font-bold text-[#AE3B2E]">{pmtAtRiskCount} order</div>
+            <div className="text-[10px] font-semibold uppercase text-muted">Payments At Risk</div>
+            <div className="text-lg font-mono font-bold text-danger">{pmtAtRiskCount} order</div>
           </div>
-          <span className="text-xs font-mono text-[#AE3B2E] bg-[#F8E7E3] px-2 py-0.5 rounded">
+          <span className="text-xs font-mono text-danger bg-danger-soft px-2 py-0.5 rounded">
             MV VIGOR 01
           </span>
         </div>
-        <div className="bg-white border border-[#E1DED4] rounded-lg p-3 flex items-center justify-between">
+        <div className="bg-surface border border-line rounded-lg p-3 flex items-center justify-between">
           <div>
-            <div className="text-[10px] font-semibold uppercase text-[#3F4A47]">Fuel Actions Due</div>
-            <div className="text-lg font-mono font-bold text-[#14181A]">{fuelActionsDue} ops</div>
+            <div className="text-[10px] font-semibold uppercase text-muted">Fuel Actions Due</div>
+            <div className="text-lg font-mono font-bold text-foreground">{fuelActionsDue} ops</div>
           </div>
-          <span className="text-xs font-mono text-[#0A7A3D] bg-[#E7F4EB] px-2 py-0.5 rounded">
+          <span className="text-xs font-mono text-positive bg-positive-soft px-2 py-0.5 rounded">
             Post-Discharge
           </span>
         </div>
@@ -193,17 +193,17 @@ export function Dashboard({
       {/* Row 3: Daily Management Brief & Today's Finance Action */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Daily Operations Brief (2 columns) */}
-        <div className="lg:col-span-2 bg-white border border-[#E1DED4] rounded-xl p-5 shadow-xs">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4] mb-4">
+        <div className="lg:col-span-2 bg-surface border border-line rounded-xl p-5 shadow-xs">
+          <div className="flex items-center justify-between pb-3 border-b border-line mb-4">
             <div>
-              <span className="text-[11px] font-mono text-[#0A7A3D] uppercase font-bold tracking-wider">
+              <span className="text-[11px] font-mono text-positive uppercase font-bold tracking-wider">
                 {greeting}, Operations Manager
               </span>
-              <h2 className="text-base font-bold text-[#14181A] tracking-tight">
+              <h2 className="text-base font-bold text-foreground tracking-tight">
                 Today's Operations Brief
               </h2>
             </div>
-            <span className="text-xs font-mono text-[#3F4A47] bg-[#F7F5F0] px-2.5 py-1 rounded border border-[#E1DED4]">
+            <span className="text-xs font-mono text-muted bg-canvas px-2.5 py-1 rounded border border-line">
               {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
             </span>
           </div>
@@ -212,118 +212,118 @@ export function Dashboard({
             {/* V01 Summary */}
             <div
               onClick={() => onSelectVessel('v-01')}
-              className="p-3 bg-[#F7F5F0] rounded-lg border border-[#E1DED4] flex items-start justify-between gap-4 cursor-pointer hover:border-[#3F4A47] transition"
+              className="p-3 bg-canvas rounded-lg border border-line flex items-start justify-between gap-4 cursor-pointer hover:border-line transition"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-[#14181A]">MV VIGOR 01</span>
+                  <span className="text-xs font-bold text-foreground">MV VIGOR 01</span>
                   <StatusBadge stage="UNLOADING" />
                 </div>
-                <p className="text-xs text-[#3F4A47]">
+                <p className="text-xs text-muted">
                   Discharging cement at Berth B01 (72% complete, rate 605 t/h). Forecast unload completion at{' '}
-                  <strong className="text-[#14181A] font-mono">
+                  <strong className="text-foreground font-mono">
                     {formatTime(voyages.find((v) => v.vesselId === 'v-01')?.forecastUnloadEnd)}
                   </strong>
                   . Bunkering scheduled alongside upon release.
                 </p>
               </div>
-              <ArrowRight className="w-4 h-4 text-[#3F4A47] shrink-0 mt-1" />
+              <ArrowRight className="w-4 h-4 text-muted shrink-0 mt-1" />
             </div>
 
             {/* V02 Summary */}
             <div
               onClick={() => onSelectVessel('v-02')}
-              className="p-3 bg-[#F7F5F0] rounded-lg border border-[#E1DED4] flex items-start justify-between gap-4 cursor-pointer hover:border-[#3F4A47] transition"
+              className="p-3 bg-canvas rounded-lg border border-line flex items-start justify-between gap-4 cursor-pointer hover:border-line transition"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-[#14181A]">MV VIGOR 02</span>
+                  <span className="text-xs font-bold text-foreground">MV VIGOR 02</span>
                   <StatusBadge stage="SAILING_TO_MANUFACTURER" />
                 </div>
-                <p className="text-xs text-[#3F4A47]">
+                <p className="text-xs text-muted">
                   Cruising northward in Pemba Channel at 10.8 knots. ETA Mtwara Cement Factory tomorrow{' '}
-                  <strong className="text-[#14181A] font-mono">
+                  <strong className="text-foreground font-mono">
                     {formatTime(voyages.find((v) => v.vesselId === 'v-02')?.manufacturerEtaForecast)}
                   </strong>
                   . 100% manufacturer payment settled; queue eligibility confirmed.
                 </p>
               </div>
-              <ArrowRight className="w-4 h-4 text-[#3F4A47] shrink-0 mt-1" />
+              <ArrowRight className="w-4 h-4 text-muted shrink-0 mt-1" />
             </div>
 
             {/* V03 Summary */}
             <div
               onClick={() => onSelectVessel('v-03')}
-              className="p-3 bg-[#F8E7E3]/60 rounded-lg border border-[#AE3B2E]/30 flex items-start justify-between gap-4 cursor-pointer hover:border-[#AE3B2E] transition"
+              className="p-3 bg-danger-soft/60 rounded-lg border border-danger/30 flex items-start justify-between gap-4 cursor-pointer hover:border-danger transition"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-[#14181A]">MV VIGOR 03</span>
+                  <span className="text-xs font-bold text-foreground">MV VIGOR 03</span>
                   <StatusBadge stage="RETURNING_TO_VIGOR" />
-                  <span className="text-[10px] font-bold text-[#AE3B2E] bg-white px-1.5 py-0.5 rounded border border-[#AE3B2E]/30">
+                  <span className="text-[10px] font-bold text-danger bg-surface px-1.5 py-0.5 rounded border border-danger/30">
                     BERTH CONFLICT
                   </span>
                 </div>
-                <p className="text-xs text-[#14181A]">
+                <p className="text-xs text-foreground">
                   Laden with 9,400T bulk cement. Forecast return ETA{' '}
                   <strong className="font-mono">{formatTime(v3Voyage?.returnEtaForecast)}</strong> precedes Berth B01 release.
                   Anticipated anchorage wait:{' '}
-                  <strong className="text-[#AE3B2E] font-mono">
+                  <strong className="text-danger font-mono">
                     {formatHoursAndMinutes(v3Voyage?.predictedAnchorageWaitHours || 2.7)}
                   </strong>
                   .
                 </p>
               </div>
-              <ArrowRight className="w-4 h-4 text-[#AE3B2E] shrink-0 mt-1" />
+              <ArrowRight className="w-4 h-4 text-danger shrink-0 mt-1" />
             </div>
           </div>
         </div>
 
         {/* Today's Finance Action Card (Part 31) */}
-        <div className="bg-white border-2 border-[#C99A5B] rounded-xl p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-surface border-2 border-warning rounded-xl p-5 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#B5760F] bg-[#F4EBDB] px-2 py-0.5 rounded">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-warning bg-warning-soft px-2 py-0.5 rounded">
                 CRITICAL FINANCE ACTION
               </span>
-              <CreditCard className="w-4 h-4 text-[#C99A5B]" />
+              <CreditCard className="w-4 h-4 text-warning" />
             </div>
-            <h3 className="text-base font-bold text-[#14181A]">MV VIGOR 01</h3>
-            <p className="text-xs text-[#3F4A47] mt-0.5">Mtwara Cement Factory Advance Payment</p>
+            <h3 className="text-base font-bold text-foreground">MV VIGOR 01</h3>
+            <p className="text-xs text-muted mt-0.5">Mtwara Cement Factory Advance Payment</p>
 
-            <div className="mt-4 p-3 bg-[#F7F5F0] rounded-lg border border-[#E1DED4] space-y-2">
+            <div className="mt-4 p-3 bg-canvas rounded-lg border border-line space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-[#3F4A47]">Remaining Balance:</span>
-                <span className="text-sm font-mono font-bold text-[#AE3B2E]">
+                <span className="text-muted">Remaining Balance:</span>
+                <span className="text-sm font-mono font-bold text-danger">
                   {formatCurrency(v1PmtTotals?.remaining || 200000000)}
                 </span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-[#3F4A47]">Invoice Required:</span>
-                <span className="font-mono text-[#14181A]">{formatCurrency(v1MfrPayment?.requiredAmount || 500000000)}</span>
+                <span className="text-muted">Invoice Required:</span>
+                <span className="font-mono text-foreground">{formatCurrency(v1MfrPayment?.requiredAmount || 500000000)}</span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-[#3F4A47]">Payment Deadline:</span>
-                <span className="font-mono font-semibold text-[#14181A]">
+                <span className="text-muted">Payment Deadline:</span>
+                <span className="font-mono font-semibold text-foreground">
                   {formatDateTime(v1MfrPayment?.deadline)}
                 </span>
               </div>
-              <div className="flex justify-between items-center text-xs pt-1 border-t border-[#E1DED4]">
-                <span className="text-[#3F4A47]">Scheduling Eligibility:</span>
-                <span className="text-xs font-mono font-bold text-[#AE3B2E] bg-[#F8E7E3] px-1.5 py-0.2 rounded">
+              <div className="flex justify-between items-center text-xs pt-1 border-t border-line">
+                <span className="text-muted">Scheduling Eligibility:</span>
+                <span className="text-xs font-mono font-bold text-danger bg-danger-soft px-1.5 py-0.2 rounded">
                   NOT YET ELIGIBLE
                 </span>
               </div>
             </div>
 
-            <div className="mt-3 p-2.5 bg-[#FBF0DD] border border-[#B5760F]/30 rounded-lg text-xs text-[#B5760F]">
+            <div className="mt-3 p-2.5 bg-warning-soft border border-warning/30 rounded-lg text-xs text-warning">
               <strong>Potential Downstream Impact:</strong> If balance is not wired by deadline, Mtwara manufacturer loading slot will be deferred, delaying subsequent return rotation by up to 28 hours.
             </div>
           </div>
 
           <button
             onClick={onNavigateToPayments}
-            className="mt-4 w-full py-2 px-3 text-xs font-semibold rounded-lg bg-[#14181A] hover:bg-[#3F4A47] text-white flex items-center justify-center gap-2 transition"
+            className="mt-4 w-full py-2 px-3 text-xs font-semibold rounded-lg bg-shell hover:bg-raised text-white flex items-center justify-center gap-2 transition"
           >
             <span>Record Wire Transaction</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -332,20 +332,20 @@ export function Dashboard({
       </div>
 
       {/* Row 4: Needs Attention Alerts List */}
-      <div className="bg-white border border-[#E1DED4] rounded-xl p-5">
-        <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4] mb-3">
+      <div className="bg-surface border border-line rounded-xl p-5">
+        <div className="flex items-center justify-between pb-3 border-b border-line mb-3">
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#14181A] flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-[#B5760F]" />
+            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-warning" />
               Operational Attention Items ({alerts.length})
             </h3>
-            <p className="text-xs text-[#3F4A47]">
+            <p className="text-xs text-muted">
               Real-time conflicts, deadline countdowns, and rate variance warnings.
             </p>
           </div>
           <button
             onClick={onNavigateToAlerts}
-            className="text-xs font-semibold text-[#0A7A3D] hover:underline"
+            className="text-xs font-semibold text-positive hover:underline"
           >
             View all alerts ({alerts.length}) →
           </button>
@@ -357,29 +357,29 @@ export function Dashboard({
               key={alert.id}
               className={`p-3 rounded-lg border ${
                 alert.severity === 'CRITICAL'
-                  ? 'bg-[#F8E7E3]/60 border-[#AE3B2E]/40'
+                  ? 'bg-danger-soft/60 border-danger/40'
                   : alert.severity === 'WARNING'
-                  ? 'bg-[#FBF0DD]/60 border-[#B5760F]/40'
-                  : 'bg-[#E4F1F2]/60 border-[#0E7C86]/30'
+                  ? 'bg-warning-soft/60 border-warning/40'
+                  : 'bg-info-soft/60 border-info/30'
               } flex items-start gap-3`}
             >
               <div className="mt-0.5 shrink-0">
                 {alert.severity === 'CRITICAL' ? (
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#AE3B2E] inline-block" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-critical inline-block" />
                 ) : alert.severity === 'WARNING' ? (
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#B5760F] inline-block" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-warning-strong inline-block" />
                 ) : (
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#0E7C86] inline-block" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-info-strong inline-block" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <h4 className="text-xs font-bold text-[#14181A] truncate">{alert.title}</h4>
-                  <span className="text-[10px] font-mono text-[#3F4A47] shrink-0">
+                  <h4 className="text-xs font-bold text-foreground truncate">{alert.title}</h4>
+                  <span className="text-[10px] font-mono text-muted shrink-0">
                     {formatTime(alert.timestamp)}
                   </span>
                 </div>
-                <p className="text-xs text-[#3F4A47] mt-0.5 line-clamp-2 leading-relaxed">
+                <p className="text-xs text-muted mt-0.5 line-clamp-2 leading-relaxed">
                   {alert.message}
                 </p>
               </div>
@@ -392,10 +392,10 @@ export function Dashboard({
       <div>
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h3 className="text-base font-bold uppercase tracking-wide text-[#14181A]">
+            <h3 className="text-base font-bold uppercase tracking-wide text-foreground">
               Active Fleet Vessels ({vessels.length})
             </h3>
-            <p className="text-xs text-[#3F4A47]">
+            <p className="text-xs text-muted">
               Click any vessel card to open the Single-Vessel Control Centre.
             </p>
           </div>
@@ -415,17 +415,17 @@ export function Dashboard({
               <div
                 key={vessel.id}
                 onClick={() => onSelectVessel(vessel.id)}
-                className="bg-white border border-[#E1DED4] rounded-xl p-5 shadow-xs hover:border-[#3F4A47] transition cursor-pointer flex flex-col justify-between"
+                className="bg-surface border border-line rounded-xl p-5 shadow-xs hover:border-line transition cursor-pointer flex flex-col justify-between"
               >
                 <div>
                   {/* Card Header */}
-                  <div className="flex items-center justify-between pb-3 border-b border-[#E1DED4] mb-3">
+                  <div className="flex items-center justify-between pb-3 border-b border-line mb-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <Ship className="w-4 h-4 text-[#0C9349]" />
-                        <h4 className="text-sm font-bold text-[#14181A]">{vessel.name}</h4>
+                        <Ship className="w-4 h-4 text-positive" />
+                        <h4 className="text-sm font-bold text-foreground">{vessel.name}</h4>
                       </div>
-                      <span className="text-[10px] font-mono text-[#3F4A47]">
+                      <span className="text-[10px] font-mono text-muted">
                         Ref: {vessel.reference} · IMO {vessel.imo || 'N/A'}
                       </span>
                     </div>
@@ -450,22 +450,22 @@ export function Dashboard({
                           )}
                         />
                       ) : (
-                        <div className="p-3 bg-[#F7F5F0] rounded-lg border border-[#E1DED4] space-y-1.5 text-xs">
+                        <div className="p-3 bg-canvas rounded-lg border border-line space-y-1.5 text-xs">
                           <div className="flex justify-between">
-                            <span className="text-[#3F4A47]">Cargo:</span>
-                            <span className="font-semibold text-[#14181A]">
+                            <span className="text-muted">Cargo:</span>
+                            <span className="font-semibold text-foreground">
                               {formatTonnage(voyage.actualCargoT || 9400)} CEM I
                             </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-[#3F4A47]">Route:</span>
-                            <span className="font-mono text-[#14181A]">
+                            <span className="text-muted">Route:</span>
+                            <span className="font-mono text-foreground">
                               {voyage.origin} → {voyage.destination}
                             </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-[#3F4A47]">Next Key ETA:</span>
-                            <span className="font-mono font-bold text-[#0E7C86]">
+                            <span className="text-muted">Next Key ETA:</span>
+                            <span className="font-mono font-bold text-info">
                               {voyage.currentStage === 'RETURNING_TO_VIGOR'
                                 ? `VIGOR ${formatDateTime(voyage.returnEtaForecast)}`
                                 : `MFR ${formatDateTime(voyage.manufacturerEtaForecast)}`}
@@ -487,15 +487,15 @@ export function Dashboard({
                   )}
 
                   {/* Financial Readiness */}
-                  <div className="pt-2 border-t border-[#E1DED4] text-xs space-y-1.5">
+                  <div className="pt-2 border-t border-line text-xs space-y-1.5">
                     <div className="flex justify-between items-center">
-                      <span className="text-[#3F4A47]">Manufacturer Payment:</span>
+                      <span className="text-muted">Manufacturer Payment:</span>
                       <span className="font-mono font-bold">
                         {pmtTotals ? (
                           pmtTotals.isEligible ? (
-                            <span className="text-[#0A7A3D]">ELIGIBLE (100%)</span>
+                            <span className="text-positive">ELIGIBLE (100%)</span>
                           ) : (
-                            <span className="text-[#AE3B2E]">
+                            <span className="text-danger">
                               {pmtTotals.progressPercent}% ({formatCurrency(pmtTotals.remaining, 'TZS', true)} due)
                             </span>
                           )
@@ -506,7 +506,7 @@ export function Dashboard({
                     </div>
 
                     {voyage?.berthConflict && (
-                      <div className="flex justify-between items-center text-[#AE3B2E]">
+                      <div className="flex justify-between items-center text-danger">
                         <span className="font-semibold">Berth B01 Conflict:</span>
                         <span className="font-mono font-bold">
                           +{voyage.predictedAnchorageWaitHours}h wait
@@ -517,7 +517,7 @@ export function Dashboard({
                 </div>
 
                 {/* Card Footer Button */}
-                <div className="mt-4 pt-3 border-t border-[#E1DED4] flex items-center justify-between text-xs text-[#0A7A3D] font-semibold group">
+                <div className="mt-4 pt-3 border-t border-line flex items-center justify-between text-xs text-positive font-semibold group">
                   <span>Open Vessel Control Center</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition" />
                 </div>

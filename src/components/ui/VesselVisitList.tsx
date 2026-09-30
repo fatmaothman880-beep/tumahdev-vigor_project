@@ -1,3 +1,4 @@
+import { VisitStatusBadge } from './StatusBadge';
 import React, { useEffect, useRef, useState } from 'react';
 import { getVisitList, updateVisit, type VisitListItem } from '../../api/visitApi';
 import { useAuth } from '../../auth/AuthContext';
@@ -67,33 +68,33 @@ export function VesselVisitList({ savedVisit }: { savedVisit: VisitListItem | nu
     }
   };
 
-  return <section className="bg-white border border-[#E1DED4] rounded-xl overflow-hidden shadow-xs" aria-label="Vessel visits">
+  return <section className="bg-surface border border-line rounded-xl overflow-hidden shadow-xs" aria-label="Vessel visits">
     <div className="p-4 flex items-center justify-between gap-3">
-      <div><h2 className="text-sm font-bold text-[#14181A]">Vessel Visits</h2><p className="text-xs text-[#3F4A47]">Planned, active, and past port visits.</p></div>
-      <button type="button" onClick={() => setRefresh(value => value + 1)} disabled={loading || savingId !== null} className="text-xs font-semibold text-[#0A7A3D] disabled:opacity-50">{loading ? 'Refreshing…' : 'Refresh visits'}</button>
+      <div><h2 className="text-sm font-bold text-foreground">Vessel Visits</h2><p className="text-xs text-muted">Planned, active, and past port visits.</p></div>
+      <button type="button" onClick={() => setRefresh(value => value + 1)} disabled={loading || savingId !== null} className="text-xs font-semibold text-positive disabled:opacity-50">{loading ? 'Refreshing…' : 'Refresh visits'}</button>
     </div>
-    {error && <p role="alert" className="px-4 pb-3 text-xs text-[#AE3B2E]">{error}</p>}
-    {message && <p role="status" className="px-4 pb-3 text-xs text-[#0A7A3D]">{message}</p>}
-    {canEdit && <p className="px-4 pb-3 text-xs text-[#3F4A47]">Record each step when it happens. Arrival and unloading start use the current time.</p>}
-    {!loading && !error && rows.length === 0 && <p className="px-4 pb-4 text-xs text-[#3F4A47]">No vessel visits have been recorded yet.</p>}
+    {error && <p role="alert" className="px-4 pb-3 text-xs text-danger">{error}</p>}
+    {message && <p role="status" className="px-4 pb-3 text-xs text-positive">{message}</p>}
+    {canEdit && <p className="px-4 pb-3 text-xs text-muted">Record each step when it happens. Arrival and unloading start use the current time.</p>}
+    {!loading && !error && rows.length === 0 && <p className="px-4 pb-4 text-xs text-muted">No vessel visits have been recorded yet.</p>}
     {rows.length > 0 && <div className="overflow-x-auto"><table className="w-full text-left text-xs">
-      <thead className="bg-[#F7F5F0] text-[#3F4A47]"><tr>{['Vessel', 'Status', 'Cargo', 'Planned arrival (EAT)', 'Actual arrival (EAT)', 'Unloading started (EAT)', 'Recorded (EAT)', ...(canEdit ? ['Actions'] : [])].map(label => <th key={label} className="px-4 py-3">{label}</th>)}</tr></thead>
-      <tbody className="divide-y divide-[#E1DED4]">{rows.map(({ visit, vessel }) => <tr key={visit.id} className={visit.id === savedVisit?.visit.id ? 'bg-[#E7F4EB]/50' : ''}>
+      <thead className="bg-canvas text-muted"><tr>{['Vessel', 'Status', 'Cargo', 'Planned arrival (EAT)', 'Actual arrival (EAT)', 'Unloading started (EAT)', 'Recorded (EAT)', ...(canEdit ? ['Actions'] : [])].map(label => <th key={label} className="px-4 py-3">{label}</th>)}</tr></thead>
+      <tbody className="divide-y divide-line">{rows.map(({ visit, vessel }) => <tr key={visit.id} className={visit.id === savedVisit?.visit.id ? 'bg-positive-soft/50' : ''}>
         <td className="px-4 py-3 font-semibold">{vessel.name}</td>
-        <td className="px-4 py-3"><span className="rounded bg-[#F7F5F0] px-2 py-1">{visit.status.replaceAll('_', ' ')}</span></td>
-        <td className="px-4 py-3">{visit.cargo_type}<div className="text-[#3F4A47]">{visit.cargo_total_t == null ? 'Not recorded' : formatTonnage(Number(visit.cargo_total_t))}</div></td>
+        <td className="px-4 py-3"><VisitStatusBadge status={visit.status} /></td>
+        <td className="px-4 py-3">{visit.cargo_type}<div className="text-muted">{visit.cargo_total_t == null ? 'Not recorded' : formatTonnage(Number(visit.cargo_total_t))}</div></td>
         <td className="px-4 py-3">{visit.planned_arrival ? formatVisitDate(visit.planned_arrival) : 'Not scheduled'}</td>
         <td className="px-4 py-3">{visit.actual_arrival ? formatVisitDate(visit.actual_arrival) : 'Not recorded'}</td>
         <td className="px-4 py-3">{visit.unload_start ? formatVisitDate(visit.unload_start) : 'Not started'}</td>
         <td className="px-4 py-3">{formatVisitDate(visit.created_at)}</td>
         {canEdit && <td className="px-4 py-3">
-          <button type="button" disabled={loading || savingId !== null} onClick={() => setEditing({ visit, vessel })} className="block mb-2 text-[#0A7A3D] font-semibold whitespace-nowrap">Edit operation</button>
+          <button type="button" disabled={loading || savingId !== null} onClick={() => setEditing({ visit, vessel })} className="block mb-2 text-positive font-semibold whitespace-nowrap">Edit operation</button>
           {['PLANNED', 'ARRIVED', 'BERTHED'].includes(visit.status) ? <button
             type="button"
             onClick={() => advanceVisit({ visit, vessel })}
             disabled={loading || savingId !== null}
             aria-label={`${visit.status === 'PLANNED' ? 'Record arrival' : visit.status === 'ARRIVED' ? 'Record berthing' : 'Start unloading'} for ${vessel.name}`}
-            className="px-3 py-2 rounded-lg bg-[#0C9349] text-white font-semibold whitespace-nowrap disabled:opacity-50"
+            className="button-secondary !min-h-7 !py-1"
           >{savingId === visit.id ? 'Saving…' : visit.status === 'PLANNED' ? 'Record arrival' : visit.status === 'ARRIVED' ? 'Record berthing' : 'Start unloading'}</button> : '—'}
         </td>}
       </tr>)}</tbody>

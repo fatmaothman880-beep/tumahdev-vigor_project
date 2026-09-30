@@ -23,6 +23,8 @@ test('authenticated gateway preserves backend semantics and rejects unauthorized
     storedState = req.body.state;
     res.json({ state: req.body.state, revision: 1 });
   });
+  upstream.get(['/api/v1/vessels', '/api/v1/berths', '/api/v1/integration/visits'], (_req, res) => res.json([]));
+  upstream.get('/api/v1/integration/predictions', (_req, res) => res.json({}));
   upstream.get('/api/v1/integration/example', (req, res) => res.json({ query: req.query }));
   const backend = upstream.listen(0, '127.0.0.1');
   await new Promise<void>(resolve => backend.once('listening', resolve));

@@ -1,3 +1,6 @@
+import { VisitStatusBadge } from './StatusBadge';
+import { Feedback } from './Feedback';
+import { SectionHeader } from './KpiCard';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { apiFetch } from '../../api/client';
 import { getVisitList, type VisitListItem } from '../../api/visitApi';
@@ -20,7 +23,7 @@ interface Prediction {
 const date = (value?: string | null) => value ? new Date(value).toLocaleString('en-GB', { timeZone: 'Africa/Dar_es_Salaam', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }) : 'Not recorded';
 const tonnes = (value: string | number | null | undefined) => value == null ? 'Not recorded' : `${Number(value).toLocaleString()} t`;
 
-export function LiveVisitDashboard({ title }: { title: string }) {
+export function LiveVisitDashboard({ title, summary = false }: { title: string; summary?: boolean }) {
   const { user } = useAuth();
   const canEdit = canEditOperations(user?.role);
   const [rows, setRows] = useState<VisitListItem[]>([]);
@@ -72,47 +75,54 @@ export function LiveVisitDashboard({ title }: { title: string }) {
     return () => { mounted.current = false; window.clearInterval(timer); };
   }, [load]);
   const { upcoming, active, unloading, berthed, arrived, delayed } = groupDashboardVisits(rows);
+  const totalRemaining = unloading.reduce((sum, row) => sum + Number(predictions[row.visit.id]?.remaining_t || 0), 0);
+  const checklistValues = Object.values<ChecklistResponse>(checklists);
+  const unassigned = checklistValues.reduce((sum, list) => sum + list.unassigned_count, 0);
+  const overdue = checklistValues.reduce((sum, list) => sum + list.overdue_count, 0);
   const renderVisit = (row: VisitListItem) => {
     const { visit, vessel } = row;
     const prediction = predictions[visit.id];
     const checklist = checklists[visit.id];
-    return <article key={visit.id} className="bg-white border border-[#E1DED4] rounded-xl p-5 space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-bold">{vessel.name}</h3>
-        <span className={`text-xs font-semibold px-2 py-1 rounded ${visit.status === 'DELAYED' ? 'bg-[#F8E7E3] text-[#AE3B2E]' : 'bg-[#E7F4EB] text-[#0A7A3D]'}`}>{visit.status}</span>
+    return <article key={visit.id} className="panel p-5 space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div><h3 className="font-semibold text-base">{vessel.name}</h3><p className="text-xs text-muted mt-1">{visit.cargo_type} · {tonnes(visit.cargo_total_t)}</p></div>
+        <VisitStatusBadge status={visit.status} />
       </div>
-      <p className="text-sm">{visit.cargo_type} · {tonnes(visit.cargo_total_t)}</p>
-      <dl className="grid grid-cols-2 gap-3 text-xs">
-        <div><dt>Planned arrival (EAT)</dt><dd className="font-semibold">{date(visit.planned_arrival)}</dd></div>
-        <div><dt>Actual arrival (EAT)</dt><dd className="font-semibold">{date(visit.actual_arrival)}</dd></div>
-        <div><dt>Unloaded</dt><dd className="font-semibold">{tonnes(prediction?.unloaded_t)}</dd></div>
-        <div><dt>Remaining</dt><dd className="font-semibold">{tonnes(prediction?.remaining_t)}</dd></div>
-        <div><dt>Measured unloading rate</dt><dd className="font-semibold">{prediction?.effective_rate_tph == null ? 'Not available' : `${Number(prediction.effective_rate_tph).toLocaleString()} t/h`}</dd></div>
-        <div><dt>Estimated finish (EAT)</dt><dd className="font-semibold">{prediction?.estimated_unload_finish ? date(prediction.estimated_unload_finish) : 'Not available'}</dd></div>
+      {prediction && <div className="space-y-1.5"><div className="flex justify-between text-xs"><span className="text-muted">Unloaded</span><span className="tabular-nums">{tonnes(prediction.unloaded_t)} <span className="text-muted">/ {Number(prediction.progress_pct).toFixed(1)}%</span></span></div><progress aria-label={`Unloading progress for ${vessel.name}`} max={100} value={Math.min(100, Math.max(0, Number(prediction.progress_pct)))} className="w-full" /></div>}
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+        <div><dt className="data-label">Remaining cargo</dt><dd className="data-value mt-1">{tonnes(prediction?.remaining_t)}</dd></div>
+        <div><dt className="data-label">Estimated finish · EAT</dt><dd className="data-value mt-1">{prediction?.estimated_unload_finish ? date(prediction.estimated_unload_finish) : 'Not available'}</dd></div>
       </dl>
-      {prediction && <div><progress aria-label={`Unloading progress for ${vessel.name}`} max={100} value={Math.min(100, Math.max(0, Number(prediction.progress_pct)))} className="w-full accent-[#0C9349]" /><p className="text-xs">{Number(prediction.progress_pct).toFixed(1)}% unloaded · Data quality: {prediction.data_quality.toLowerCase()}</p></div>}
-      <div className="text-xs border-t pt-3">{checklist ? <><p className="font-semibold">Checklist: {checklist.tasks.filter(task => task.status === 'COMPLETED').length}/{checklist.tasks.length} completed</p><p>{checklist.overdue_count} overdue · {checklist.unassigned_count} unassigned · {checklist.unscheduled_count} unscheduled</p></> : 'Checklist summary unavailable'}</div>
-      <button type="button" onClick={() => setSelected(row)} className="px-3 py-2 text-xs rounded-lg bg-[#0C9349] text-white">{canEdit ? 'Edit operation & checklist' : 'View operation & checklist'}</button>
+      <details className="text-xs text-muted border-t border-line pt-3"><summary>Arrival & reading details</summary><dl className="grid grid-cols-2 gap-3 mt-3"><div><dt>Planned arrival · EAT</dt><dd className="text-foreground mt-1">{date(visit.planned_arrival)}</dd></div><div><dt>Actual arrival · EAT</dt><dd className="text-foreground mt-1">{date(visit.actual_arrival)}</dd></div><div><dt>Measured rate</dt><dd className="text-foreground mt-1">{prediction?.effective_rate_tph == null ? 'Not available' : `${Number(prediction.effective_rate_tph).toLocaleString()} t/h`}</dd></div><div><dt>Data quality</dt><dd className="text-foreground mt-1">{prediction?.data_quality.toLowerCase() || 'Unavailable'}</dd></div></dl></details>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
+        <div className="text-xs text-muted">{checklist ? <><p>{checklist.tasks.filter(task => task.status === 'COMPLETED').length}/{checklist.tasks.length} checklist tasks complete</p>{!!(checklist.overdue_count || checklist.unassigned_count || checklist.unscheduled_count) && <p className="text-warning mt-1">{checklist.overdue_count} overdue · {checklist.unassigned_count} unassigned · {checklist.unscheduled_count} unscheduled</p>}</> : 'Checklist summary unavailable'}</div>
+        <button onClick={() => setSelected(row)} className="button-secondary">{canEdit ? 'Manage operation' : 'View operation'}</button>
+      </div>
     </article>;
   };
-  return <div className="space-y-6 pb-12">
-    <PageHeader title={title} eyebrow="LIVE VESSEL OPERATIONS" description="Saved port visits, cargo progress and operational checklists.">
-      <button onClick={() => void load()} disabled={loading} className="px-3 py-2 rounded-lg border text-xs disabled:opacity-50">{loading ? 'Refreshing…' : 'Refresh dashboard'}</button>
+  const visitTable = (list: VisitListItem[], upcomingTable = false) => <div className="panel overflow-x-auto"><table className="w-full text-left whitespace-nowrap">
+    <thead className="bg-raised/40"><tr><th className="px-5 py-3">Vessel</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">{upcomingTable ? 'Cargo' : 'Remaining'}</th><th className="px-4 py-3">{upcomingTable ? 'Planned arrival · EAT' : 'Estimated finish · EAT'}</th><th className="px-5 py-3">Checklist</th></tr></thead>
+    <tbody className="divide-y divide-line">{list.map(row => {
+      const prediction = predictions[row.visit.id]; const checklist = checklists[row.visit.id];
+      return <tr key={row.visit.id}><td className="px-5 py-4"><button className="font-medium text-foreground hover:text-info text-left" onClick={() => setSelected(row)}>{row.vessel.name}</button><p className="text-[11px] text-muted mt-1">{row.visit.cargo_type}</p></td><td className="px-4 py-4"><VisitStatusBadge status={row.visit.status} /></td><td className="px-4 py-4 text-right tabular-nums">{tonnes(upcomingTable ? row.visit.cargo_total_t : prediction?.remaining_t)}</td><td className="px-4 py-4">{upcomingTable ? date(row.visit.planned_arrival) : prediction?.estimated_unload_finish ? date(prediction.estimated_unload_finish) : 'Not available'}{!upcomingTable && prediction?.data_quality !== 'VALID' && <p className="text-[11px] text-warning mt-1">{prediction?.data_quality === 'STALE' ? 'Reading needs updating' : 'Awaiting usable readings'}</p>}</td><td className="px-5 py-4 text-muted">{checklist ? `${checklist.tasks.filter(task => task.status === 'COMPLETED').length}/${checklist.tasks.length} complete` : 'Unavailable'}{checklist && checklist.overdue_count > 0 && <p className="text-danger text-[11px] mt-1">{checklist.overdue_count} overdue</p>}</td></tr>;
+    })}</tbody>
+  </table></div>;
+  return <div className="space-y-7 pb-6">
+    <PageHeader title={title} eyebrow={summary ? 'TERMINAL OVERVIEW' : 'VESSEL OPERATIONS'} description={summary ? 'Port activity, cargo progress and the work requiring attention.' : 'Manage active visits, review readings and complete operational checklists.'}>
+      <div className="flex items-center gap-3">{updated && <span className="text-[11px] text-muted hidden sm:inline">Updated {date(updated)} EAT</span>}<button onClick={() => void load()} disabled={loading} className="button-secondary">{loading ? 'Refreshing…' : 'Refresh dashboard'}</button></div>
     </PageHeader>
-    {error && <p role="alert" className="text-sm text-[#AE3B2E]">{error}{updated ? ' Showing the last successful update.' : ''}</p>}
-    {warning && <p role="status" className="text-sm text-[#B5760F]">{warning}</p>}
-    {updated && <p className="text-xs text-[#3F4A47]">Updated {date(updated)} EAT · Refreshes every 30 seconds</p>}
-    {loading && !updated && <p role="status">Loading saved vessel visits…</p>}
+    {error && <Feedback kind="error" title="Unable to refresh vessel visits">{error}{updated ? ' Showing the last successful update.' : ''}</Feedback>}
+    {warning && <p role="status" className="text-xs text-warning border-l-2 border-warning pl-3">{warning}</p>}
+    {loading && !updated && <Feedback kind="loading" title="Loading port activity">Retrieving saved visits and operational checklists.</Feedback>}
     {updated && <>
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <KpiCard label="Upcoming visits" value={upcoming.length} />
-        <KpiCard label="Arrived" value={arrived.length} />
-        <KpiCard label="Berthed" value={berthed.length} />
-        <KpiCard label="Unloading" value={unloading.length} variant="success" />
-        <KpiCard label="Delayed" value={delayed.length} />
-      </div>
-      <section className="space-y-3"><h2 className="text-lg font-bold">Active operations ({active.length})</h2>{active.length ? <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-4">{active.map(renderVisit)}</div> : <p className="text-sm">No arrived, berthed, delayed or unloading visits. Record arrival from Vessels → Vessel Visits when the vessel arrives.</p>}</section>
-      <section className="space-y-3"><h2 className="text-lg font-bold">Upcoming arrivals ({upcoming.length})</h2>{upcoming.length ? <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-4">{upcoming.map(renderVisit)}</div> : <p className="text-sm">No planned visits. Add a vessel visit from the Vessels page.</p>}</section>
+      {summary && <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <KpiCard label="Active visits" value={active.length} subtext={`${unloading.length} unloading · ${berthed.length} berthed · ${arrived.length} arrived · ${delayed.length} delayed`} />
+        <KpiCard label="Upcoming arrivals" value={upcoming.length} subtext="Planned port visits" />
+        <KpiCard label="Cargo remaining" value={unloading.every(row => predictions[row.visit.id]) ? tonnes(totalRemaining) : '—'} subtext="Across unloading visits" />
+        <KpiCard label="Unassigned tasks" value={checklistValues.length === active.length + upcoming.length ? unassigned : '—'} subtext={`${overdue} overdue in available checklists`} variant={unassigned || overdue ? 'warning' : 'default'} />
+      </div>}
+      <section><SectionHeader title={summary ? 'Active operations' : `Active operations (${active.length})`} description={summary ? 'Select a vessel to review its operation and checklist.' : undefined} />{active.length ? summary ? visitTable(active) : <div className="grid lg:grid-cols-2 gap-4">{active.map(renderVisit)}</div> : <Feedback kind="empty" title="No active port visits">Record arrival from Vessels → Vessel Visits when the vessel arrives.</Feedback>}</section>
+      <section><SectionHeader title={summary ? 'Upcoming arrivals' : `Upcoming arrivals (${upcoming.length})`} />{upcoming.length ? visitTable(upcoming, true) : <Feedback kind="empty" title="No planned visits">Add a vessel visit from the Vessels page.</Feedback>}</section>
     </>}
     {selected && <EditVesselOperation row={selected} onClose={() => { setSelected(null); void load(); }} onSaved={() => { void load(); }} />}
   </div>;

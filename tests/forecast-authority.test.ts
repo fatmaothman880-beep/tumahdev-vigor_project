@@ -21,7 +21,7 @@ assert.equal(updated.expectedBerthRelease, '');
 assert.doesNotThrow(() => recalculateVoyageDependencies({ ...updated, fuelRequired: true }, data.fuelOperations[0]));
 
 Object.defineProperty(globalThis, 'localStorage', { value: {
-  getItem: (key: string) => key === 'vigor_smart_port_ops_v2' ? JSON.stringify(data) : null,
+  getItem: (key: string) => key === 'vigor_auth_user' ? JSON.stringify({ role: 'Admin' }) : key === 'vigor_smart_port_ops_v2' ? JSON.stringify(data) : null,
   setItem() {},
 } });
 globalThis.fetch = async () => new Response(JSON.stringify({ status: 'offline' }));

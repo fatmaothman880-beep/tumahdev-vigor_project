@@ -1,4 +1,8 @@
-# Native Windows runtime
+# Native runtime
+
+For manual Ubuntu setup and the two-terminal startup commands, see [README](../README.md#start-on-ubuntu). Native processes load `.env`, not `.env.docker`.
+
+## Windows helper scripts
 
 The container definitions and Nginx container configuration have been removed. Startup, stop, and backup scripts now use installed Node.js, Python, and PostgreSQL tools.
 
