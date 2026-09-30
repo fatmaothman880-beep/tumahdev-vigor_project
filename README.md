@@ -1,119 +1,59 @@
 # VIGOR Smart Port Operations
 
-React dashboards, a Node login/AI gateway, and a FastAPI/PostgreSQL backend, running directly on Windows. No containers are required.
+Integrated React dashboard, Node authentication/AI gateway, and FastAPI/PostgreSQL operations backend for VIGOR Cement Works.
 
-## Features
+## Included features
 
-Executive and operations dashboards, fleet details, berth scheduling, voyage rotations, manufacturer queues, fuel, payments, alerts, reports, corporate login, user administration, and a grounded assistant. The backend retains PostgreSQL state persistence, revision checks, normalized visits/readings/delays, predictions, buffer monitoring, site checklists, and atomic visit planning. Live vessel tracking is removed.
+- Executive summary and operations dashboards, fleet details, berth scheduling, voyage rotations, manufacturer queues, fuel, payments, alerts, reports, and history.
+- Corporate login, role-based API access, registration approval, user administration, and audit history from the local vessel system.
+- PostgreSQL operational-state persistence with revision conflicts, normalized vessels/visits/readings/delays, prediction and buffer monitoring, upcoming calls, site checklists, and atomic visit planning from `full-integration`.
+- Grounded operations assistant with a local factual response and optional server-side Gemini enhancement.
+- Live vessel tracking is removed: no tracking page, coordinate feed, position editor, tracking alerts, or position state. Voyage schedules and recorded operational readings remain.
 
-The combined version also includes operational checklists with history, overdue tasks, a site registry, database visit entry, editable manufacturers/works, and calendar-based rotation filters. Existing future-berth configuration and expansion scenarios remain available. See [combined integration notes](docs/combined-integration.md).
+## Start with Docker
 
-## First-time setup
+Install and start Docker Desktop, then run:
 
-Install Node.js 22+, Python, and PostgreSQL. Open PowerShell at the repository root:
+```powershell
+Copy-Item .env.example .env
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-environment.ps1
+```
+
+Open http://localhost:3000. The browser uses the Node gateway on this port for both authentication and operational API requests. PostgreSQL and FastAPI ports are bound to loopback for local maintenance; do not expose FastAPI directly as the public application API because authentication is enforced by the gateway.
+
+Startup applies all Alembic migrations, including removal of old position data, and runs the existing seed. Back up existing databases before upgrading. PostgreSQL data lives in `postgres_data`; local accounts and audit history live in `auth_data`. Keep both volumes when stopping the stack.
+
+For the seeded local demonstration, use `admin@turkysgroup.co.tz`, `ceo@turkysgroup.co.tz`, `ops.dispatcher@turkysgroup.co.tz`, or `auditor@turkysgroup.co.tz` with password `Turkys@2025`. New registrations require administrator activation. Admin has full access, including user approvals, roles, and system settings. Vessel Operation may update operational records. Management has read-only dashboards, analytics, reports, and audit access; Viewer has read-only operational dashboards and reports. The quick role buttons sign in to these demonstration accounts.
+
+Existing local accounts and cached sessions using the old Operations role are mapped to Vessel Operation automatically. For an existing optional MySQL account database, apply `database/migrations/20260917_vessel_operation_role.sql` before deploying; fresh installations use the updated schema and seed.
+
+Set `AUTH_SECRET` to a generated secret to keep sessions valid across restarts. When omitted, a random process secret invalidates sessions on restart. These seeded credentials and quick login are for demonstration; replace them before a production rollout.
+
+## Run separately
+
+Requires Node.js 22+, Python, and PostgreSQL. Copy `.env.example` to `.env` and configure `DATABASE_URL` for your database.
 
 ```powershell
 npm ci
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --default-timeout=120 --retries=10 -r requirements-dev.txt
+python -m pip install -r requirements-dev.txt
+Set-Location backend
+alembic upgrade head
+python -m app.database.seed
+uvicorn app.main:app --reload --port 8000
 ```
 
-If `python` opens the Windows Store, use `py -3 -m venv .venv` or the full path of your installed Python executable.
+In a second terminal at the repository root, run `npm run dev`. Keep `VITE_API_URL=/api/v1` and `OPERATIONS_API_URL=http://127.0.0.1:8000/api/v1`. The gateway serves the browser on port 3000. `GEMINI_API_KEY` is optional and stays on the server. Without it the assistant uses its factual local response.
 
-Choose one database setup:
+`AUTH_DATA_PATH=./data/auth.json` persists accounts and audit history locally. The optional cPanel MySQL account adapter and SQL files are retained in `server/database.ts` and `database/`; PostgreSQL remains the operational database. See [integration notes](docs/full-integration.md) for limitations and verification.
 
-### Project-local PostgreSQL (recommended for development)
-
-```powershell
-.\.venv\Scripts\python.exe scripts/local_database.py setup
-```
-
-This uses installed PostgreSQL binaries to create `.local/postgres`, starts a separate instance bound to `127.0.0.1:55432`, creates `vigor_port` and `vigor_port_test`, and writes generated credentials/signing secret to ignored `.env`. It does not modify an existing Windows PostgreSQL service. Existing `.env` or local database files are never overwritten. Set `POSTGRES_BIN` if binaries are outside PATH and the standard Windows installation folder.
-
-### Existing PostgreSQL server
-
-Create a database and login using pgAdmin, copy `.env.example` to `.env`, and set `DATABASE_URL` to their connection string. URL-encode special characters in the password. Generate an `AUTH_SECRET` with:
-
-```powershell
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-Set the resulting value in `.env`. Keep `VITE_USE_MOCK_API=false` for the real backend.
-
-## Start and stop
-
-First start, including synthetic demonstration records:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-environment.ps1 -Seed
-```
-
-Subsequent starts:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-environment.ps1
-```
-
-The launcher starts the optional project-local database, applies migrations, starts FastAPI and Node in the background, and checks both the web page and PostgreSQL connection. If a service fails, it stops the application processes it launched. Logs are in `artifacts/*.log`.
-
-Open http://localhost:3000. API documentation is at http://127.0.0.1:8000/docs for local development. The browser uses the Node gateway; keep FastAPI private because the gateway enforces authentication.
-
-Demo login: `admin@turkysgroup.co.tz` / `Turkys@2025`. Management, Operations, and Viewer demo buttons are also available. Replace demonstration accounts before a production rollout.
-
-Stop the application:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-environment.ps1
-```
-
-This stops only launcher-recorded processes whose IDs and start times still match. PostgreSQL remains running. To stop the optional project-local database too:
-
-```powershell
-.\.venv\Scripts\python.exe scripts/local_database.py stop
-```
-
-## Run manually to see the logs
-
-Terminal 1:
-
-```powershell
-cd backend
-..\.venv\Scripts\python.exe -m alembic upgrade head
-..\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
-
-Terminal 2, repository root:
-
-```powershell
-npm run dev
-```
-
-Start PostgreSQL first. Press Ctrl+C in each terminal to stop those manually launched services.
-
-## Persistence and backups
-
-Operational records are in PostgreSQL. Local accounts and audit history are in `data/auth.json`. Back up both the database and this account file. Neither `.env`, `.local`, nor `data` belongs in Git.
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/backup-database.ps1
-```
-
-This creates a PostgreSQL custom-format `.dump` under `artifacts/backups`. Restore into a separate database using pgAdmin's Restore action or `pg_restore`. The backup tool passes the password through the child environment, not its command-line arguments.
-
-The optional MySQL account adapter is retained; it does not replace PostgreSQL operational storage. `GEMINI_API_KEY` optionally enables server-side AI enhancement; without it the assistant uses its local factual response.
-
-## Checks
+## Verify
 
 ```powershell
 npm run lint
 npm run build
 npm test
-npm run test:workflow
-npm run test:rotations
-npm run test:preservation
 $env:PYTHONPATH = 'backend'
-.\.venv\Scripts\python.exe -m pytest backend/tests -q
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-test.ps1
+python -m pytest backend/tests
 ```
 
-PostgreSQL integration tests require `TEST_DATABASE_URL` pointing to a dedicated database ending in `_test`. See [native runtime notes](docs/native-runtime.md) and [integration design](docs/full-integration.md).
+Some backend tests require a running PostgreSQL instance. Set `TEST_DATABASE_URL` to a dedicated test database for isolated schema tests. The existing `tests/integration` suite calls a running FastAPI service. API documentation is at http://localhost:8000/docs for local development.

@@ -1,3 +1,5 @@
+import { USE_MOCK_API } from '../api/client';
+import { LiveVisitDashboard } from '../components/ui/LiveVisitDashboard';
 import React from 'react';
 import { useAppData, useLiveClock } from '../hooks/useAppData';
 import { AlertTriangle, ArrowRight } from 'lucide-react';
@@ -52,6 +54,8 @@ export function DashboardSummary({
 
   const v01DepartureTime = formatMilestone(v01Voyage?.expectedBerthRelease, '04:09');
   const v03EtaTime = formatMilestone(v03Voyage?.returnEtaForecast, '01:31');
+
+  if (!USE_MOCK_API) return <LiveVisitDashboard title="Dashboard Summary" />;
 
   return (
     <div

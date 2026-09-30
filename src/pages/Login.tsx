@@ -21,7 +21,7 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [department, setDepartment] = useState('Terminal Operations');
-  const [requestedRole, setRequestedRole] = useState<UserRole>('Operations');
+  const [requestedRole, setRequestedRole] = useState<UserRole>('Vessel Operation');
   const [regSuccess, setRegSuccess] = useState<string | null>(null);
   const [formValidation, setFormValidation] = useState<string | null>(null);
 
@@ -162,7 +162,7 @@ export function Login() {
                       onChange={(e) => setRequestedRole(e.target.value as UserRole)}
                       className="w-full p-2.5 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg focus:outline-none focus:border-[#0A7A3D] text-xs font-medium"
                     >
-                      <option value="Operations">Operations (Port Dispatcher / Berths)</option>
+                      <option value="Vessel Operation">Vessel Operation (Port Dispatcher / Berths)</option>
                       <option value="Management">Management (Executive Dashboard & AI)</option>
                       <option value="Viewer">Viewer (Read-Only Status Monitor)</option>
                     </select>
@@ -243,7 +243,7 @@ export function Login() {
             <div className="flex items-center justify-between mb-2.5">
               <div className="text-[11px] font-bold text-[#14181A] uppercase tracking-wider flex items-center gap-1.5">
                 <Building className="w-3.5 h-3.5 text-[#0A7A3D]" />
-                <span>Management / Reviewer Quick Access</span>
+                <span>Role Quick Access</span>
               </div>
               <span className="text-[10px] text-[#5A6764] font-mono">1-Click Auth</span>
             </div>
@@ -266,9 +266,10 @@ export function Login() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-[#14181A] group-hover:text-[#0A7A3D]">{r}</span>
                       <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#F7F5F0] text-[#5A6764]">
-                        {r === 'Admin' ? 'FULL' : r === 'Management' ? 'CEO' : r === 'Operations' ? 'DISPATCH' : 'READ'}
+                        {r === 'Admin' ? 'FULL' : r === 'Management' ? 'CEO' : r === 'Vessel Operation' ? 'DISPATCH' : 'READ'}
                       </span>
                     </div>
+                    <div className="text-[10px] text-[#5A6764] mt-1">{c.desc}</div>
                     <div className="text-[10px] text-[#5A6764] font-mono truncate mt-0.5">{c.email}</div>
                   </button>
                 );

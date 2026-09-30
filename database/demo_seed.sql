@@ -9,7 +9,7 @@
 INSERT INTO `roles` (`id`, `role_name`, `description`, `permissions`) VALUES
 ('role-admin', 'Admin', 'Full administrative control: user management, master data, system parameters', '["users:manage", "vessels:manage", "schedules:manage", "settings:manage", "reports:view", "audit:view"]'),
 ('role-mgmt', 'Management', 'Executive decision-making: CEO dashboard, vessel schedules, AI assistant, read-only analytics', '["dashboard:view", "vessels:view", "schedules:view", "ai:query", "reports:view"]'),
-('role-ops', 'Operations', 'Port dispatcher & berth controller: vessel arrivals, discharge monitoring, delays, ETA updates', '["vessels:edit", "schedules:edit", "readings:record", "delays:record", "ai:query"]'),
+('role-ops', 'Vessel Operation', 'Port dispatcher & berth controller: vessel arrivals, discharge monitoring, delays, ETA updates', '["vessels:edit", "schedules:edit", "readings:record", "delays:record", "ai:query"]'),
 ('role-viewer', 'Viewer', 'Read-only operational stakeholder access', '["dashboard:view", "vessels:view", "schedules:view"]');
 
 -- 2. AUTHORIZED COMPANY USERS (@turkysgroup.co.tz)
@@ -17,9 +17,9 @@ INSERT INTO `roles` (`id`, `role_name`, `description`, `permissions`) VALUES
 INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `department`, `role`, `status`, `created_at`) VALUES
 ('usr-001', 'admin@turkysgroup.co.tz', '$2a$10$Pq6yZ2aMvQj6YfWJkNuQ.O6H7zU/K7Xo1hQfS7wW4lZgDk6Qv7Z6e', 'Maryam Arshed (System Administrator)', 'Information Technology', 'Admin', 'Active', NOW()),
 ('usr-002', 'ceo@turkysgroup.co.tz', '$2a$10$Pq6yZ2aMvQj6YfWJkNuQ.O6H7zU/K7Xo1hQfS7wW4lZgDk6Qv7Z6e', 'Salim H. Turky (Executive Management)', 'Executive Office', 'Management', 'Active', NOW()),
-('usr-003', 'ops.dispatcher@turkysgroup.co.tz', '$2a$10$Pq6yZ2aMvQj6YfWJkNuQ.O6H7zU/K7Xo1hQfS7wW4lZgDk6Qv7Z6e', 'Khamis Ali (Chief Port Dispatcher)', 'Terminal Operations', 'Operations', 'Active', NOW()),
+('usr-003', 'ops.dispatcher@turkysgroup.co.tz', '$2a$10$Pq6yZ2aMvQj6YfWJkNuQ.O6H7zU/K7Xo1hQfS7wW4lZgDk6Qv7Z6e', 'Khamis Ali (Chief Port Dispatcher)', 'Terminal Operations', 'Vessel Operation', 'Active', NOW()),
 ('usr-004', 'auditor@turkysgroup.co.tz', '$2a$10$Pq6yZ2aMvQj6YfWJkNuQ.O6H7zU/K7Xo1hQfS7wW4lZgDk6Qv7Z6e', 'Zuwena Nassor (Internal Auditor)', 'Compliance & Audit', 'Viewer', 'Active', NOW()),
-('usr-005', 'pending.trainee@turkysgroup.co.tz', '$2a$10$Pq6yZ2aMvQj6YfWJkNuQ.O6H7zU/K7Xo1hQfS7wW4lZgDk6Qv7Z6e', 'Juma Bakari (Operations Trainee)', 'Port Operations', 'Operations', 'Pending', NOW());
+('usr-005', 'pending.trainee@turkysgroup.co.tz', '$2a$10$Pq6yZ2aMvQj6YfWJkNuQ.O6H7zU/K7Xo1hQfS7wW4lZgDk6Qv7Z6e', 'Juma Bakari (Operations Trainee)', 'Port Operations', 'Vessel Operation', 'Pending', NOW());
 
 -- 3. BERTHS
 INSERT INTO `berths` (`id`, `name`, `location`, `type`, `length_m`, `max_draft_m`, `maximum_vessel_size_t`, `default_unloading_rate_tph`, `status`, `notes`) VALUES

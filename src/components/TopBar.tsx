@@ -148,6 +148,7 @@ export function TopBar({
             {/* Reset Demo State Button */}
             <button
               onClick={onResetDemo}
+              disabled={user?.role !== 'Admin' && user?.role !== 'Vessel Operation'}
               className="p-1 rounded-md text-[#7C8884] hover:bg-[#F7F5F0] hover:text-[#14181A] transition"
               title="Reset system to standard baseline demo scenario"
             >
@@ -176,7 +177,7 @@ export function TopBar({
                     ? 'bg-[#5B37B7]'
                     : user?.role === 'Management'
                     ? 'bg-[#0F62FE]'
-                    : user?.role === 'Operations'
+                    : user?.role === 'Vessel Operation'
                     ? 'bg-[#0A7A3D]'
                     : 'bg-[#5A6764]'
                 }`}
@@ -202,7 +203,7 @@ export function TopBar({
                         ? 'bg-[#F2EDFD] text-[#5B37B7]'
                         : user?.role === 'Management'
                         ? 'bg-[#EBF2FF] text-[#0F62FE]'
-                        : user?.role === 'Operations'
+                        : user?.role === 'Vessel Operation'
                         ? 'bg-[#E7F4EB] text-[#0A7A3D]'
                         : 'bg-[#F7F5F0] text-[#5A6764]'
                     }`}

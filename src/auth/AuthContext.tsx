@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export type UserRole = 'Admin' | 'Management' | 'Operations' | 'Viewer';
+import { normalizeUserRole, type UserRole } from '../../shared/roles';
+export type { UserRole } from '../../shared/roles';
 export type UserStatus = 'Active' | 'Disabled' | 'Pending';
 
 export interface AuthUser {
@@ -45,17 +46,17 @@ export const DEMO_CREDENTIALS: Record<UserRole, { email: string; name: string; d
     dept: 'Executive Office',
     desc: 'Executive Management with CEO dashboard, vessel overview, and analytics',
   },
-  Operations: {
+  'Vessel Operation': {
     email: 'ops.dispatcher@turkysgroup.co.tz',
     name: 'Khamis Ali',
     dept: 'Terminal Operations',
-    desc: 'Port Operations Dispatcher with berth control & telemetry logging',
+    desc: 'Update vessel operations, berth assignments, voyages, readings, and delays',
   },
   Viewer: {
     email: 'auditor@turkysgroup.co.tz',
     name: 'Zuwena Nassor',
     dept: 'Compliance & Audit',
-    desc: 'Read-only operational stakeholder & audit access',
+    desc: 'Read-only access to operational dashboards, vessel status, and reports',
   },
 };
 
@@ -72,7 +73,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (savedToken && savedUser) {
         setToken(savedToken);
-        setUser(JSON.parse(savedUser));
+        const cachedUser = JSON.parse(savedUser);
+        cachedUser.role = normalizeUserRole(cachedUser.role);
+        setUser(cachedUser);
+        localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(cachedUser));
       } else {
         // By default, start unauthenticated or initialize with quick demo access if preferred
         // We set to null so the user lands on the corporate login screen, with 1-click demo access ready
@@ -133,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     pass: string,
     fullName: string,
     department: string,
-    role: UserRole = 'Operations'
+    role: UserRole = 'Vessel Operation'
   ): Promise<string> => {
     setIsLoading(true);
     setError(null);

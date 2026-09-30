@@ -166,7 +166,7 @@ export function Sidebar({
               {section.title}
             </div>
             <div className="space-y-0.5 mt-1">
-              {section.items.map((item) => {
+              {section.items.filter((item) => item.id !== 'admin' || user?.role === 'Admin').map((item) => {
                 const isActive =
                   currentPage === item.id ||
                   (item.id === 'vessels' && currentPage === 'vessel-detail');
@@ -211,7 +211,7 @@ export function Sidebar({
                   ? 'bg-[#5B37B7]'
                   : user?.role === 'Management'
                   ? 'bg-[#0F62FE]'
-                  : user?.role === 'Operations'
+                  : user?.role === 'Vessel Operation'
                   ? 'bg-[#0A7A3D]'
                   : 'bg-[#5A6764]'
               }`}
@@ -242,7 +242,7 @@ export function Sidebar({
                 ? 'bg-[#5B37B7]/20 text-[#C1A8F9] border border-[#5B37B7]/40'
                 : user?.role === 'Management'
                 ? 'bg-[#0F62FE]/20 text-[#8BB7FE] border border-[#0F62FE]/40'
-                : user?.role === 'Operations'
+                : user?.role === 'Vessel Operation'
                 ? 'bg-[#0A7A3D]/20 text-[#67E29F] border border-[#0A7A3D]/40'
                 : 'bg-[#3F4A47]/40 text-[#C9C4B6] border border-[#3F4A47]'
             }`}
@@ -259,7 +259,7 @@ export function Sidebar({
             <div className="text-[9px] font-mono text-[#C9C4B6]/50 uppercase tracking-wider mb-1">
               Switch Test Role:
             </div>
-            {(['Admin', 'Management', 'Operations', 'Viewer'] as UserRole[]).map((r) => (
+            {(['Admin', 'Management', 'Vessel Operation', 'Viewer'] as UserRole[]).map((r) => (
               <button
                 key={r}
                 type="button"

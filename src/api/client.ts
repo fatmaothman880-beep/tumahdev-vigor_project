@@ -1,6 +1,4 @@
-import { normalizeSiteTerminology } from '../lib/siteTerminology';
-import { applyBackendForecast, type BackendForecast } from '../lib/backendForecast';
-import { mergeManufacturerCatalogue } from '../lib/manufacturerCatalogue';
+import { normalizeUserRole } from '../../shared/roles';
 /**
  * Central API Client for VIGOR Smart Port Operations
  * Connects frontend to FastAPI (http://localhost:8000/api/v1) + PostgreSQL
@@ -22,7 +20,7 @@ import {
   WhatIfScenario,
 } from '../types';
 import { getInitialDemoData } from '../mock/mockData';
-import { recalculateVoyageDependencies } from '../lib/scheduleEngine';
+import { recalculateVoyageDependencies, calculateUnloadingForecast } from '../lib/scheduleEngine';
 import { generateSystemAlerts } from '../lib/alerts';
 import { calculatePaymentAccountTotals } from '../lib/paymentEngine';
 import {
@@ -151,14 +149,21 @@ export async function apiFetch<T>(
         errorMsg = JSON.stringify(detail);
       }
     } else if (responseData && typeof responseData === 'object' && 'error' in responseData) {
-      const backendError = (responseData as { error?: { message?: unknown } }).error;
-      if (typeof backendError?.message === 'string') {
+      const backendError = (responseData as { error?: string | { message?: unknown } }).error;
+      if (typeof backendError === 'string') {
+        errorMsg = backendError;
+      } else if (typeof backendError?.message === 'string') {
         errorMsg = backendError.message;
       } else if (backendError?.message) {
         errorMsg = JSON.stringify(backendError.message);
       }
     }
 
+    if (response.status === 403) {
+      errorMsg = 'Your role does not allow this action. Please contact an administrator if you need access.';
+    } else if (response.status === 401) {
+      errorMsg = 'Your session has expired. Please sign in again to continue.';
+    }
     throw new ApiError(errorMsg, response.status, responseData);
   }
 
@@ -228,7 +233,6 @@ class ApiClient {
 
   constructor() {
     this.store = this.loadFromStorage();
-    if (!USE_MOCK_API) this.store.voyages.forEach(v => applyBackendForecast(v));
     this.recalculateAll();
 
     // Initialize backend connection testing & polling
@@ -258,7 +262,7 @@ class ApiClient {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        const parsed = normalizeSiteTerminology(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
         delete parsed.vesselPositions;
         if (parsed.vessels && parsed.voyages && parsed.berths) {
           return {
@@ -327,7 +331,7 @@ class ApiClient {
     // Read-only sessions must not attempt to initialize or overwrite shared state.
     try {
       const user = JSON.parse(localStorage.getItem('vigor_auth_user') || 'null');
-      if (!user || !['Admin', 'Operations'].includes(user.role)) return;
+      if (!user || !['Admin', 'Vessel Operation'].includes(user.role)) return;
     } catch { return; }
     if (
       USE_MOCK_API ||
@@ -348,7 +352,7 @@ class ApiClient {
   private async persistOperationalState(): Promise<void> {
     try {
       const user = JSON.parse(localStorage.getItem('vigor_auth_user') || 'null');
-      if (!user || !['Admin', 'Operations'].includes(user.role)) return;
+      if (!user || !['Admin', 'Vessel Operation'].includes(user.role)) return;
     } catch { return; }
     if (this.stateSyncInFlight) {
       this.stateSyncPending = true;
@@ -392,7 +396,21 @@ class ApiClient {
     this.listeners.forEach((l) => l());
   }
 
+  private requireWriteAccess(adminOnly = false): void {
+    let role;
+    try {
+      const user = JSON.parse(localStorage.getItem('vigor_auth_user') || sessionStorage.getItem('vigor_auth_user') || 'null');
+      role = normalizeUserRole(user?.role);
+    } catch {
+      throw new ApiError('Please sign in before changing operational data.', 401);
+    }
+    if (role !== 'Admin' && (adminOnly || role !== 'Vessel Operation')) {
+      throw new ApiError('Your role has read-only access to this data.', 403);
+    }
+  }
+
   public resetDemoData(): void {
+    this.requireWriteAccess();
     const baseline = getInitialDemoData();
     this.store = {
       ...baseline,
@@ -400,7 +418,6 @@ class ApiClient {
         ...this.store.connectionInfo,
       },
     };
-    if (!USE_MOCK_API) this.store.voyages.forEach(v => applyBackendForecast(v));
     this.recalculateAll();
     this.saveToStorage();
   }
@@ -415,14 +432,23 @@ class ApiClient {
   }
 
   private normalizeSite(): void {
-    this.store = normalizeSiteTerminology(this.store);
-    // Extend the catalogue without renaming history or deleting configured berths.
-    this.store.manufacturers = mergeManufacturerCatalogue(
-      this.store.manufacturers, this.store.voyages, this.store.manufacturerQueue
-    );
+    const rename = (value: string) => value
+      .replace(/Tanga Cement PLC \(Mamba Wharf\)|Tanga Cement Works|Tanga Cement PLC|Tanga Cement Wharf|Tanga Cement/g, 'Mtwara Cement Factory')
+      .replace(/VIGOR Berth B01(?: \(Zanzibar\))?/g, 'Mangapwani Berth');
+    for (const rows of [this.store.voyages, this.store.paymentAccounts, this.store.manufacturerQueue]) {
+      for (const row of rows) for (const key of Object.keys(row)) {
+        if (typeof row[key] === 'string') row[key] = rename(row[key]);
+      }
+    }
+    this.store.manufacturers ??= [];
+    if (!this.store.manufacturers.some(m => m.name === 'Mtwara Cement Factory')) {
+      this.store.manufacturers.unshift({ id: 'mtwara', name: 'Mtwara Cement Factory', works: 'Mtwara Cement Factory' });
+    }
+    this.store.berths = this.store.berths.filter(b => b.id === 'B01').map(b => ({ ...b, name: 'Mangapwani Berth', location: 'Mangapwani, Zanzibar' }));
   }
 
   public addManufacturer(name: string, works: string): string {
+    this.requireWriteAccess();
     name = name.trim(); works = works.trim();
     if (!name || !works) throw new Error('Enter both a manufacturer name and works.');
     if (this.store.manufacturers?.some(m => m.name.toLowerCase() === name.toLowerCase() && m.works.toLowerCase() === works.toLowerCase())) {
@@ -435,9 +461,9 @@ class ApiClient {
   }
 
   public addVoyage(voyage: Omit<Voyage, 'id' | 'createdAt' | 'updatedAt'>): Voyage {
+    this.requireWriteAccess();
     const now = new Date().toISOString();
     const created = { ...voyage, id: crypto.randomUUID(), createdAt: now, updatedAt: now };
-    if (!USE_MOCK_API) applyBackendForecast(created);
     this.store.voyages.unshift(created);
     this.recalculateAll();
     this.saveToStorage();
@@ -577,10 +603,6 @@ class ApiClient {
 
     if (isApiHealthy) {
       await this.syncFromBackend();
-    } else {
-      this.store.voyages.forEach(v => applyBackendForecast(v));
-      this.store.connectionInfo.backendActiveDashboard = null;
-      this.recalculateAll();
     }
 
     this.saveToStorage(false);
@@ -589,18 +611,17 @@ class ApiClient {
 
   public async syncFromBackend(): Promise<void> {
     try {
-      const [operationalState, vessels, berths, dashboard, forecasts] = await Promise.allSettled([
+      const [operationalState, vessels, berths, dashboard] = await Promise.allSettled([
         apiFetch<BackendOperationalStateEnvelope>('/operations/state'),
         apiFetch<any[]>('/vessels?limit=50'),
         apiFetch<any[]>('/berths?limit=50'),
         apiFetch<any>('/dashboard/active'),
-        apiFetch<Record<string, BackendForecast>>('/integration/predictions'),
       ]);
 
       const remoteState =
         operationalState.status === 'fulfilled' ? operationalState.value : null;
       if (remoteState?.state) {
-        const state = normalizeSiteTerminology(remoteState.state);
+        const state = remoteState.state;
         const arrayKeys: Array<keyof PersistedOperationalState> = [
           'vessels',
           'berths',
@@ -631,9 +652,13 @@ class ApiClient {
       // Always merge backend master data. A previously persisted state must
       // not hide vessels or berths added later by site configuration.
       if (vessels.status === 'fulfilled' && Array.isArray(vessels.value) && vessels.value.length > 0) {
-          const existingVessels = this.store.vessels;
-          const additions = vessels.value
-            .map(adaptBackendVessel)
+          const backendVessels = vessels.value.map(adaptBackendVessel);
+          const existingVessels = this.store.vessels.map(current => {
+            const saved = backendVessels.find(candidate => candidate.id === current.id);
+            return saved ? { ...current, name: saved.name, imo: saved.imo, reference: saved.reference,
+              capacityT: saved.capacityT, updatedAt: saved.updatedAt } : current;
+          });
+          const additions = backendVessels
             .filter(
               (candidate) =>
                 !existingVessels.some(
@@ -669,13 +694,30 @@ class ApiClient {
         }
       }
 
-      this.store.connectionInfo.backendActiveDashboard =
-        dashboard.status === 'fulfilled' ? dashboard.value : null;
-      // Only an exact database visit ID can receive that visit's forecast.
-      // In particular, never attach an unrelated active visit to demo voy-01.
-      for (const voyage of this.store.voyages) {
-        applyBackendForecast(voyage,
-          forecasts.status === 'fulfilled' ? forecasts.value[voyage.id] : undefined);
+      if (dashboard.status === 'fulfilled' && dashboard.value) {
+        this.store.connectionInfo.backendActiveDashboard = dashboard.value;
+
+        // Synchronize the normalized active visit into its matching full-cycle
+        // voyage. Keep the original demo fallback for a newly initialized site.
+        const activeDash = dashboard.value;
+        const activeVoyage =
+          this.store.voyages.find((v) => v.id === activeDash.visit_id) ||
+          this.store.voyages.find((v) => v.id === 'voy-01');
+        if (activeVoyage && activeDash.unloaded_t !== undefined) {
+          activeVoyage.unloadedTonnes = Number(activeDash.unloaded_t) || activeVoyage.unloadedTonnes;
+          if (activeDash.unloading_rate_tph) {
+            activeVoyage.unloadingRateTph = Number(activeDash.unloading_rate_tph);
+          }
+          if (activeDash.estimated_unload_finish) {
+            activeVoyage.forecastUnloadEnd = activeDash.estimated_unload_finish;
+          }
+          if (activeDash.expected_berth_release) {
+            activeVoyage.expectedBerthRelease = activeDash.expected_berth_release;
+          }
+          if (activeDash.berth_conflict !== undefined) {
+            activeVoyage.berthConflict = activeDash.berth_conflict;
+          }
+        }
       }
 
       this.recalculateAll();
@@ -767,6 +809,7 @@ class ApiClient {
   // -------------------------------------------------------------------------
 
   public addVessel(vessel: Omit<Vessel, 'id' | 'createdAt' | 'updatedAt'>): Vessel {
+    this.requireWriteAccess();
     const newVessel: Vessel = {
       ...vessel,
       id: `v-${Date.now().toString().slice(-4)}`,
@@ -792,6 +835,7 @@ class ApiClient {
   }
 
   public updateVessel(id: string, updates: Partial<Vessel>): void {
+    this.requireWriteAccess();
     const index = this.store.vessels.findIndex((v) => v.id === id);
     if (index >= 0) {
       this.store.vessels[index] = {
@@ -811,6 +855,7 @@ class ApiClient {
   }
 
   public addBerth(berth: Omit<Berth, 'createdAt' | 'updatedAt'>): Berth {
+    this.requireWriteAccess();
     const newBerth: Berth = {
       ...berth,
       createdAt: new Date().toISOString(),
@@ -822,6 +867,7 @@ class ApiClient {
   }
 
   public updateBerth(id: string, updates: Partial<Berth>): void {
+    this.requireWriteAccess();
     const index = this.store.berths.findIndex((b) => b.id === id);
     if (index >= 0) {
       this.store.berths[index] = {
@@ -836,6 +882,7 @@ class ApiClient {
   public addPaymentTransaction(
     txn: Omit<PaymentTransaction, 'id' | 'createdAt'>
   ): PaymentTransaction {
+    this.requireWriteAccess();
     const newTxn: PaymentTransaction = {
       ...txn,
       id: `tx-${Date.now().toString().slice(-6)}`,
@@ -850,35 +897,69 @@ class ApiClient {
   public async addOperationalReading(
     reading: Omit<OperationalReading, 'id'>
   ): Promise<OperationalReading> {
-    // Save first: a rejected reading must not change cargo totals or forecasts.
-    const response = USE_MOCK_API ? null : await apiFetch<any>(
-      `/visits/${encodeURIComponent(reading.voyageId)}/readings`, {
-        method: 'POST',
-        body: JSON.stringify({
-          recorded_at: reading.timestamp,
-          source: 'MANUAL',
-          unloaded_t: reading.unloadedTonnes,
-          observed_rate_tph: reading.observedRateTph,
-          unloading_status: 'ACTIVE',
-          notes: reading.notes,
-        }),
-      });
+    this.requireWriteAccess();
     const newReading: OperationalReading = {
       ...reading,
-      id: response?.reading.id ?? crypto.randomUUID(),
+      id: `rd-${Date.now().toString().slice(-6)}`,
     };
     this.store.operationalReadings.unshift(newReading);
-    const voyage = this.store.voyages.find(v => v.id === reading.voyageId);
+
+    // Update the voyage cargo & rates directly
+    const voyage = this.store.voyages.find((v) => v.id === reading.voyageId);
     if (voyage) {
       voyage.unloadedTonnes = reading.unloadedTonnes;
-      applyBackendForecast(voyage, response?.prediction ?? undefined);
+      voyage.unloadingRateTph = reading.observedRateTph;
+
+      const forecast = calculateUnloadingForecast(
+        voyage,
+        newReading,
+        this.store.systemSettings.postUnloadBerthBufferHours
+      );
+      if (forecast.isAvailable) {
+        voyage.forecastUnloadEnd = forecast.forecastUnloadEnd;
+        voyage.expectedBerthRelease = forecast.expectedBerthRelease;
+      }
     }
+
     this.recalculateAll();
     this.saveToStorage();
+
+    // If connected to FastAPI, post the reading to the backend
+    if (!USE_MOCK_API && this.store.connectionInfo.apiHealth === 'healthy') {
+      try {
+        const visitId = reading.voyageId;
+        const res = await apiFetch<any>(`/visits/${visitId}/readings`, {
+          method: 'POST',
+          body: JSON.stringify({
+            recorded_at: reading.timestamp || new Date().toISOString(),
+            source: 'MANUAL',
+            unloaded_t: reading.unloadedTonnes,
+            observed_rate_tph: reading.observedRateTph,
+            unloading_status: 'ACTIVE',
+          }),
+        });
+
+        // The backend returns { reading, prediction, warnings }
+        if (res && res.prediction && voyage) {
+          if (res.prediction.estimated_unload_finish) {
+            voyage.forecastUnloadEnd = res.prediction.estimated_unload_finish;
+          }
+          if (res.prediction.expected_berth_release) {
+            voyage.expectedBerthRelease = res.prediction.expected_berth_release;
+          }
+          this.recalculateAll();
+          this.saveToStorage();
+        }
+      } catch {
+        // Fallback to local forecast
+      }
+    }
+
     return newReading;
   }
 
   public async addDelayEvent(delay: Omit<DelayEvent, 'id' | 'createdAt'>): Promise<DelayEvent> {
+    this.requireWriteAccess();
     const newDelay: DelayEvent = {
       ...delay,
       id: `del-${Date.now().toString().slice(-6)}`,
@@ -910,6 +991,7 @@ class ApiClient {
   }
 
   public resolveDelay(id: string, endTime = new Date().toISOString()): void {
+    this.requireWriteAccess();
     const delay = this.store.delayEvents.find((d) => d.id === id);
     if (delay) {
       delay.resolved = true;
@@ -925,6 +1007,7 @@ class ApiClient {
     scheduledEnd: string,
     status?: FuelOperation['status']
   ): void {
+    this.requireWriteAccess();
     const fuel = this.store.fuelOperations.find((f) => f.id === id);
     if (fuel) {
       fuel.scheduledStart = scheduledStart;
@@ -941,6 +1024,7 @@ class ApiClient {
     confirmedSlot: string,
     confirmedPosition?: number
   ): void {
+    this.requireWriteAccess();
     const item = this.store.manufacturerQueue.find((q) => q.id === queueId);
     if (item) {
       item.confirmedSlot = confirmedSlot;
@@ -961,6 +1045,7 @@ class ApiClient {
   }
 
   public updateSystemSettings(settings: Partial<SystemSettings>): void {
+    this.requireWriteAccess(true);
     this.store.systemSettings = {
       ...this.store.systemSettings,
       ...settings,
@@ -972,10 +1057,11 @@ class ApiClient {
   public applyWhatIfScenario(scenario: WhatIfScenario | undefined): void {
     this.store.activeScenario = scenario;
     this.recalculateAll();
-    this.saveToStorage();
+    this.saveToStorage(false);
   }
 
   public loadPresetScenario(type: 'BASELINE' | 'SOLVE_PAYMENT' | 'SOLVE_BERTH'): void {
+    this.requireWriteAccess();
     if (type === 'BASELINE') {
       this.resetDemoData();
       return;

@@ -1,10 +1,26 @@
 import { logActivity } from './auth';
+import { isDeepStrictEqual } from 'node:util';
 import type { Request, Response } from 'express';
 
 // All operational records use FastAPI/PostgreSQL, including the full-cycle state.
 export async function proxyOperations(req: Request, res: Response) {
   const base = (process.env.OPERATIONS_API_URL || 'http://127.0.0.1:8000/api/v1').replace(/\/+$/, '');
   try {
+    // Operational editors can save records, but only Admin can change existing settings.
+    if (req.method === 'PUT' && req.path === '/operations/state' && (req as any).user?.role !== 'Admin') {
+      const current = await fetch(`${base}/operations/state`, {
+        signal: AbortSignal.timeout(15000), redirect: 'manual',
+      });
+      if (!current.ok) {
+        res.status(502).json({ detail: 'Unable to verify system settings. No changes were saved.' });
+        return;
+      }
+      const snapshot = await current.json();
+      if (snapshot.state && !isDeepStrictEqual(snapshot.state.systemSettings, req.body?.state?.systemSettings)) {
+        res.status(403).json({ detail: 'Only Admin can change system settings.' });
+        return;
+      }
+    }
     const upstream = await fetch(`${base}${req.url}`, {
       method: req.method,
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },

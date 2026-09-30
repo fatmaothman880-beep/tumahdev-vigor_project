@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { History, Plus } from 'lucide-react';
 import { Modal, SectionHeader } from './KpiCard';
 import { USE_MOCK_API } from '../../api/client';
+import { useAuth } from '../../auth/AuthContext';
+import { canEditOperations } from '../../../shared/roles';
 import * as workflow from '../../api/workflowApi';
 
 const label = (value: string) => value.replaceAll('_', ' ').toLowerCase();
@@ -173,8 +175,10 @@ function TaskEditor({
 }
 
 export function OperationalChecklist({ vesselId, visitId, readOnly = false }: { vesselId: string; visitId?: string; readOnly?: boolean }) {
+  const { user } = useAuth();
+  const locked = readOnly || !canEditOperations(user?.role);
   const [data, setData] = useState<workflow.ChecklistResponse | null>(null);
-  const [actor, setActor] = useState('');
+  const [actor, setActor] = useState(user?.fullName || '');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<workflow.OperationalTask | 'new' | null>(null);
@@ -213,6 +217,7 @@ export function OperationalChecklist({ vesselId, visitId, readOnly = false }: { 
   }, [databaseVisit, load]);
 
   async function addTemplates() {
+    if (locked) return;
     if (!actor.trim()) {
       setError('Enter your name before adding suggested tasks.');
       return;
@@ -246,7 +251,7 @@ export function OperationalChecklist({ vesselId, visitId, readOnly = false }: { 
                 <span className="rounded-lg bg-[#F7F5F0] p-2"><strong>{data.unscheduled_count}</strong> unscheduled</span>
                 <span className="rounded-lg bg-[#E7F4EB] p-2"><strong>{label(data.checklist_state)}</strong></span>
               </div>
-              {!readOnly && (
+              {!locked && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   <input aria-label="Your name for checklist changes" value={actor} onChange={(e) => setActor(e.target.value)} placeholder="Your name (self-reported)" maxLength={150} className="px-3 py-2 text-xs border border-[#E1DED4] rounded-lg" />
                   <button disabled={busy} onClick={addTemplates} className="px-3 py-2 text-xs font-semibold border border-[#C9C4B6] rounded-lg disabled:opacity-60">Add Suggested Checklist</button>
@@ -264,7 +269,7 @@ export function OperationalChecklist({ vesselId, visitId, readOnly = false }: { 
                         <td className="py-3 pr-3"><strong>{task.title}</strong><div className="text-[#3F4A47]">{task.owner_name || 'Unassigned'}{task.blocks_departure ? ' · Departure item' : ''}</div>{task.reason && <div className="mt-1 text-[#3F4A47]">{task.reason}</div>}</td>
                         <td className="py-3 pr-3 font-mono">{displayDate(task.due_at)}{task.completed_at && <div className="text-[#3F4A47]">Completed: {displayDate(task.completed_at)}</div>}</td>
                         <td className={`py-3 pr-3 ${task.timeliness === 'OVERDUE' || task.status === 'BLOCKED' ? 'text-[#AE3B2E]' : ''}`}><span className="font-semibold">{label(task.status)}</span><div>{label(task.timeliness)}{task.delay_minutes > 0 ? ` · ${task.delay_minutes} min late` : ''}</div></td>
-                        <td className="py-3 whitespace-nowrap">{!readOnly && <button onClick={() => setEditing(task)} className="text-[#0E7C86] font-semibold mr-3">Update</button>}<button onClick={async () => { try { setHistory(await workflow.getTaskHistory(databaseVisitId!, task.id)); } catch (error) { setError(errorMessage(error)); } }} className="text-[#0E7C86] font-semibold"><History className="inline w-3.5 h-3.5 mr-1" />History</button></td>
+                        <td className="py-3 whitespace-nowrap">{!locked && <button onClick={() => setEditing(task)} className="text-[#0E7C86] font-semibold mr-3">Update</button>}<button onClick={async () => { try { setHistory(await workflow.getTaskHistory(databaseVisitId!, task.id)); } catch (error) { setError(errorMessage(error)); } }} className="text-[#0E7C86] font-semibold"><History className="inline w-3.5 h-3.5 mr-1" />History</button></td>
                       </tr>
                     ))}</tbody>
                   </table>
@@ -275,7 +280,7 @@ export function OperationalChecklist({ vesselId, visitId, readOnly = false }: { 
           {!data && !error && <p className="text-xs text-[#3F4A47]">Loading checklist…</p>}
         </>
       )}
-      {editing && databaseVisitId && <TaskEditor visitId={databaseVisitId} task={editing === 'new' ? undefined : editing} initialActor={actor} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); void load(); }} />}
+      {!locked && editing && databaseVisitId && <TaskEditor visitId={databaseVisitId} task={editing === 'new' ? undefined : editing} initialActor={actor} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); void load(); }} />}
       <Modal isOpen={history !== null} onClose={() => setHistory(null)} title="Recorded Task Changes" subtitle="Self-reported recorder names; not an authenticated approval log.">
         {!history?.length ? <p className="text-xs text-[#3F4A47]">No history entries.</p> : history.map((entry) => (
           <div key={entry.id} className="py-3 border-b border-[#E1DED4] text-xs"><strong>{entry.performed_by}</strong> · {displayDate(entry.occurred_at)}<p className="text-[#3F4A47]">{String(entry.new_value.change_reason || '')}</p><details className="mt-1"><summary className="cursor-pointer text-[#0E7C86]">Show before / after</summary><pre className="mt-2 whitespace-pre-wrap break-words bg-[#F7F5F0] p-2 rounded">{JSON.stringify({ before: entry.old_value, after: entry.new_value }, null, 2)}</pre></details></div>

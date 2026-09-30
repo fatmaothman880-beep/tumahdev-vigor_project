@@ -115,30 +115,28 @@ def test_empty_predictions_are_read_only(api):
     assert value["estimated_unload_finish"] is None
 
 
-def test_saved_and_live_forecasts_agree_and_live_reads_expire(api):
-    from app.models.models import OperationalReading, Prediction
-    client, db, berth = api
-    payload = plan(berth)
-    payload['status'] = 'UNLOADING'
-    visit_id = client.post('/api/v1/integration/visits', json=payload).json()['visit']['id']
-    measured = datetime.now(timezone.utc) - timedelta(minutes=10)
-    response = client.post(f'/api/v1/visits/{visit_id}/readings', json={
-        'recorded_at': measured.isoformat(), 'unloaded_t': '3000',
-        'observed_rate_tph': '500', 'unloading_status': 'ACTIVE',
-    })
-    assert response.status_code == 201, response.text
-    saved = response.json()['prediction']
-    count = db.scalar(select(func.count()).select_from(Prediction))
-    live = client.get('/api/v1/integration/predictions').json()[visit_id]
-    dashboard = client.get('/api/v1/dashboard/active').json()
-    for key in ('estimated_unload_finish', 'expected_berth_release', 'data_quality'):
-        assert live[key] == saved[key] == dashboard[key]
-    reading = db.scalar(select(OperationalReading).where(OperationalReading.visit_id == uuid.UUID(visit_id)))
-    reading.recorded_at = measured - timedelta(hours=3)
-    db.commit()
-    for value in (client.get('/api/v1/integration/predictions').json()[visit_id],
-                  client.get('/api/v1/dashboard/active').json()):
-        assert value['data_quality'] == 'STALE'
-        assert value['estimated_unload_finish'] is None
-        assert value['expected_berth_release'] is None
-    assert db.scalar(select(func.count()).select_from(Prediction)) == count
+def test_progress_records_actual_times_and_preserves_them():
+    from app.api.routes.integration import apply_plan
+    from app.models.models import VisitStatus
+    visit = VesselVisit(actual_arrival=None, unload_start=None)
+    payload = plan(uuid.uuid4())
+    payload["status"] = "ARRIVED"
+    apply_plan(visit, VisitPlan(**payload))
+    arrived = visit.actual_arrival
+    assert arrived is not None
+    assert visit.unload_start is None
+    payload["status"] = "BERTHED"
+    apply_plan(visit, VisitPlan(**payload))
+    assert visit.actual_arrival == arrived
+    assert visit.status == VisitStatus.BERTHED
+    payload["status"] = "UNLOADING"
+    apply_plan(visit, VisitPlan(**payload))
+    started = visit.unload_start
+    assert started is not None
+    payload.update(cargoTotalT="13000", plannedRateTph="500", notes="Ready to discharge")
+    apply_plan(visit, VisitPlan(**payload))
+    assert visit.actual_arrival == arrived
+    assert visit.unload_start == started
+    assert visit.cargo_total_t == 13000
+    assert visit.planned_rate_tph == 500
+    assert visit.notes == "Ready to discharge"

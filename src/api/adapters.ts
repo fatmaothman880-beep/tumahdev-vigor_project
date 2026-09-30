@@ -54,12 +54,17 @@ export interface BackendBerth {
 export type BackendVisitStatus =
   | 'PLANNED'
   | 'ARRIVED'
+  | 'BERTHED'
+  | 'DELAYED'
   | 'UNLOADING'
   | 'COMPLETED'
   | 'DEPARTED'
   | 'CANCELLED';
 
 export interface BackendVisit {
+  planned_unload_start?: string | null;
+  planned_completion?: string | null;
+  planned_rate_tph?: number | string | null;
   id: string;
   vessel_id: string;
   berth_id: string;

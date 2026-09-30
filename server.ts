@@ -173,8 +173,8 @@ apiRouter.put('/users/:id/status', requireRole(['Admin']), async (req: Request, 
 apiRouter.put('/users/:id/role', requireRole(['Admin']), async (req: Request, res: Response) => {
   try {
     const { role } = req.body;
-    if (!['Admin', 'Management', 'Operations', 'Viewer'].includes(role)) {
-      res.status(400).json({ error: 'Invalid role. Must be Admin, Management, Operations, or Viewer.' });
+    if (!['Admin', 'Management', 'Vessel Operation', 'Viewer'].includes(role)) {
+      res.status(400).json({ error: 'Invalid role. Must be Admin, Management, Vessel Operation, or Viewer.' });
       return;
     }
     const adminEmail = (req as any).user.email;
@@ -186,7 +186,7 @@ apiRouter.put('/users/:id/role', requireRole(['Admin']), async (req: Request, re
 });
 
 // GET /api/v1/activity-logs (Admin & Operations)
-apiRouter.get('/activity-logs', requireRole(['Admin', 'Operations', 'Management']), (req: Request, res: Response) => {
+apiRouter.get('/activity-logs', requireRole(['Admin', 'Vessel Operation', 'Management']), (req: Request, res: Response) => {
   res.json(getActivityLogs());
 });
 
@@ -214,7 +214,7 @@ apiRouter.use((req: Request, res: Response, next: NextFunction) => {
   if (req.method === 'GET' && ['/health', '/health/database'].includes(req.path)) return next();
   requireAuth(req, res, () => {
     if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-      return requireRole(['Admin', 'Operations'])(req, res, next);
+      return requireRole(['Admin', 'Vessel Operation'])(req, res, next);
     }
     next();
   });

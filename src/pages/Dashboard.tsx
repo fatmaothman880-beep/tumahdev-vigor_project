@@ -1,3 +1,5 @@
+import { USE_MOCK_API } from '../api/client';
+import { LiveVisitDashboard } from '../components/ui/LiveVisitDashboard';
 import React from 'react';
 import { useAppData } from '../hooks/useAppData';
 import { PageHeader, KpiCard } from '../components/ui/KpiCard';
@@ -83,6 +85,8 @@ export function Dashboard({
 
   // V3 Berth conflict
   const v3Voyage = voyages.find((v) => v.vesselId === 'v-03');
+
+  if (!USE_MOCK_API) return <LiveVisitDashboard title="Operations Dashboard" />;
 
   return (
     <div className="space-y-6 pb-12">

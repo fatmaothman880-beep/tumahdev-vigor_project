@@ -17,7 +17,7 @@ export interface CreateVesselDto {
 export interface UpdateVesselDto {
   name?: string;
   imo_reference?: string | null;
-  capacity_t?: number;
+  capacity_t?: number | null;
   agent_name?: string | null;
   agent_phone?: string | null;
 }

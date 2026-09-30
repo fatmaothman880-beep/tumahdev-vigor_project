@@ -4,7 +4,8 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { dbManager } from './database';
 
-export type UserRole = 'Admin' | 'Management' | 'Operations' | 'Viewer';
+import { normalizeUserRole, isUserRole, type UserRole } from '../shared/roles';
+export type { UserRole } from '../shared/roles';
 export type UserStatus = 'Active' | 'Disabled' | 'Pending';
 
 export interface User {
@@ -66,7 +67,7 @@ const fallbackUsers: User[] = [
     email: 'ops.dispatcher@turkysgroup.co.tz',
     fullName: 'Khamis Ali',
     department: 'Terminal Operations',
-    role: 'Operations',
+    role: 'Vessel Operation',
     status: 'Active',
     createdAt: '2025-01-11T09:00:00Z',
     lastLoginAt: new Date().toISOString(),
@@ -88,7 +89,7 @@ const fallbackUsers: User[] = [
     email: 'pending.trainee@turkysgroup.co.tz',
     fullName: 'Juma Bakari',
     department: 'Port Operations',
-    role: 'Operations',
+    role: 'Vessel Operation',
     status: 'Pending',
     createdAt: '2025-02-01T11:00:00Z',
     passwordHash: INITIAL_HASH,
@@ -129,7 +130,7 @@ const activityLogs: ActivityLog[] = [
 const authDataPath = process.env.AUTH_DATA_PATH;
 if (authDataPath && fs.existsSync(authDataPath)) {
   const saved = JSON.parse(fs.readFileSync(authDataPath, 'utf8'));
-  fallbackUsers.splice(0, fallbackUsers.length, ...saved.users);
+  fallbackUsers.splice(0, fallbackUsers.length, ...saved.users.map((user: User) => ({ ...user, role: normalizeUserRole(user.role) })));
   activityLogs.splice(0, activityLogs.length, ...saved.logs);
 }
 function persistAuth() {
@@ -229,7 +230,7 @@ export async function findUserByEmail(email: string): Promise<User | null> {
           email: r.email,
           fullName: r.full_name,
           department: r.department,
-          role: r.role,
+          role: normalizeUserRole(r.role),
           status: r.status,
           createdAt: r.created_at,
           lastLoginAt: r.last_login_at,
@@ -259,7 +260,7 @@ export async function listAllUsers(): Promise<Omit<User, 'passwordHash'>[]> {
         email: r.email,
         fullName: r.full_name,
         department: r.department,
-        role: r.role,
+        role: normalizeUserRole(r.role),
         status: r.status,
         createdAt: r.created_at,
         lastLoginAt: r.last_login_at,
@@ -333,8 +334,9 @@ export async function registerUser(
   password: string,
   fullName: string,
   department: string,
-  requestedRole: UserRole = 'Operations'
+  requestedRole: UserRole = 'Vessel Operation'
 ): Promise<Omit<User, 'passwordHash'>> {
+  if (!isUserRole(requestedRole)) throw new Error('Invalid requested role.');
   const normalized = email.trim().toLowerCase();
 
   if (!validateCompanyDomain(normalized)) {

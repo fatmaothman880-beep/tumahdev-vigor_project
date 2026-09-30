@@ -31,6 +31,10 @@ function AppContent() {
     if (isAuthenticated) void api.testConnection();
   }, [isAuthenticated, user?.id]);
 
+  useEffect(() => {
+    if (currentPage === 'admin' && user?.role !== 'Admin') setCurrentPage('dashboard-summary');
+  }, [currentPage, user?.role]);
+
   // Loading indicator while reading storage token
   if (isLoading) {
     return (
@@ -109,9 +113,15 @@ function AppContent() {
           onNavigateToAlerts={() => setCurrentPage('alerts')}
           onResetDemo={() => api.loadPresetScenario('BASELINE')}
           onOpenAssistant={() => setIsAssistantOpen(true)}
-          onNavigateToAdmin={() => setCurrentPage('admin')}
+          onNavigateToAdmin={user?.role === 'Admin' ? () => setCurrentPage('admin') : undefined}
           onTestConnection={() => api.testConnection(true)}
         />
+
+        {(user?.role === 'Management' || user?.role === 'Viewer') && (
+          <div className="px-6 py-2 bg-[#E7F4EB] text-xs text-[#0A7A3D]">
+            {user.role}: read-only access to dashboards, operational data, and reports.
+          </div>
+        )}
 
         {/* Page Content Viewport */}
         <main
@@ -199,7 +209,7 @@ function AppContent() {
 
           {currentPage === 'history' && <History />}
 
-          {currentPage === 'admin' && <Admin />}
+          {currentPage === 'admin' && user?.role === 'Admin' && <Admin />}
         </main>
       </div>
 

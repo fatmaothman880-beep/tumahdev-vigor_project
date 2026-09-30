@@ -99,3 +99,13 @@ export async function completeVisit(visitId: string, departureTime = new Date().
     actual_departure: departureTime,
   });
 }
+
+// Includes vessel names and all visit statuses, independent of the active-cycle cache.
+export interface VisitListItem {
+  visit: BackendVisit;
+  vessel: { name: string };
+}
+
+export function getVisitList(): Promise<VisitListItem[]> {
+  return apiFetch<VisitListItem[]>('/integration/visits');
+}

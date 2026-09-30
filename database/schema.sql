@@ -32,7 +32,7 @@ CREATE TABLE `users` (
   `password_hash` VARCHAR(255) NOT NULL,
   `full_name` VARCHAR(150) NOT NULL,
   `department` VARCHAR(100) DEFAULT 'Operations',
-  `role` ENUM('Admin', 'Management', 'Operations', 'Viewer') NOT NULL DEFAULT 'Viewer',
+  `role` ENUM('Admin', 'Management', 'Vessel Operation', 'Viewer') NOT NULL DEFAULT 'Viewer',
   `status` ENUM('Active', 'Disabled', 'Pending') NOT NULL DEFAULT 'Pending',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

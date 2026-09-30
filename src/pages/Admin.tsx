@@ -80,7 +80,7 @@ export function Admin() {
   const [newPassword, setNewPassword] = useState('Turkys@2025');
   const [newName, setNewName] = useState('');
   const [newDept, setNewDept] = useState('Terminal Operations');
-  const [newRole, setNewRole] = useState<UserRole>('Operations');
+  const [newRole, setNewRole] = useState<UserRole>('Vessel Operation');
 
   // Audit logs state
   const [activityLogs, setActivityLogs] = useState<ActivityLogRecord[]>([]);
@@ -463,14 +463,14 @@ AUTH_SECRET=`;
                                 ? 'bg-[#F2EDFD] text-[#5B37B7] border-[#5B37B7]/30'
                                 : u.role === 'Management'
                                 ? 'bg-[#EBF2FF] text-[#0F62FE] border-[#0F62FE]/30'
-                                : u.role === 'Operations'
+                                : u.role === 'Vessel Operation'
                                 ? 'bg-[#E7F4EB] text-[#0A7A3D] border-[#0A7A3D]/30'
                                 : 'bg-[#F7F5F0] text-[#5A6764] border-[#E1DED4]'
                             }`}
                           >
                             <option value="Admin">Admin</option>
                             <option value="Management">Management</option>
-                            <option value="Operations">Operations</option>
+                            <option value="Vessel Operation">Vessel Operation</option>
                             <option value="Viewer">Viewer</option>
                           </select>
                         </td>
@@ -594,7 +594,7 @@ AUTH_SECRET=`;
                         onChange={(e) => setNewRole(e.target.value as UserRole)}
                         className="w-full p-2 bg-[#F7F5F0] border border-[#E1DED4] rounded-lg"
                       >
-                        <option value="Operations">Operations</option>
+                        <option value="Vessel Operation">Vessel Operation</option>
                         <option value="Management">Management</option>
                         <option value="Admin">Admin</option>
                         <option value="Viewer">Viewer</option>
